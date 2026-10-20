@@ -7,7 +7,12 @@
     "dev": "node ./scripts/dev.mjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "start": "node --enable-source-maps ./artifacts/api-server/dist/index.mjs",
+    "db:migrate": "pnpm --filter @workspace/db run migrate",
+    "db:seed": "pnpm --filter @workspace/scripts run seed",
+    "db:report": "pnpm --filter @workspace/scripts run db-report"
   },
   "private": true,
   "devDependencies": {
