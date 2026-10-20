@@ -1,135 +1,166 @@
 # SimDouane Bénin
 
 SimDouane Bénin est une application web qui aide les importateurs et les
-professionnels à **estimer** certains frais liés à l'importation de véhicules.
-Les résultats sont indicatifs et ne constituent ni une liquidation douanière,
-ni une décision de l'administration.
+professionnels à **estimer** certains frais liés à l'importation de véhicules
+au Port de Cotonou. Les résultats sont indicatifs et ne constituent ni une
+liquidation douanière, ni une décision de l'administration.
+
+> Rapport de migration hors Replit (audit, plan, résultats des tests, actions
+> restantes) : [`docs/MIGRATION.md`](docs/MIGRATION.md).
 
 ## Fonctionnalités
 
-- Simulateur de coûts douaniers et portuaires à partir des données saisies.
-- Résultats détaillés et export PDF.
-- Historique local et, pour les comptes éligibles, historique sauvegardé côté
-  serveur.
+- Simulateur de coûts douaniers et portuaires (`artifacts/simdouane/src/lib/calculator.ts`).
+- Résultats détaillés et export PDF (jsPDF, dans le navigateur).
+- Historique local (`localStorage`) et, avec un compte, historique sauvegardé côté serveur.
 - Comptes, profil et onboarding via Clerk.
-- Tableau de bord d'administration pour les utilisateurs, abonnements et
-  simulations.
-- Interface en français et en anglais.
+- Formules d'abonnement (Gratuit : 3 simulations/mois, limite appliquée par l'API).
+- Demandes d'abonnement Mobile Money traitées à la main par l'administrateur.
+- Tableau de bord d'administration (utilisateurs, abonnements, simulations).
+- Interface en français et en anglais, installable (PWA).
 
-## Structure
+## Architecture
+
+```
+navigateur ──► frontend React (Vite, fichiers statiques)
+          └──► /api/* ──► API Express (Node) ──► PostgreSQL (Drizzle ORM)
+                                  └──► Clerk (vérification des sessions)
+```
 
 | Dossier | Rôle |
 | --- | --- |
-| `artifacts/simdouane` | Application web React, TypeScript et Vite |
-| `artifacts/api-server` | API Express et routes d'application |
-| `lib/db` | Schéma PostgreSQL et accès Drizzle ORM |
+| `artifacts/simdouane` | Application web React 19, TypeScript, Vite 7, Tailwind 4, wouter |
+| `artifacts/api-server` | API Express 5 (routes `/api/*`), compilée avec esbuild |
+| `lib/db` | Schéma PostgreSQL (Drizzle), **migrations SQL versionnées** (`lib/db/migrations`) |
 | `lib/api-spec` | Contrat OpenAPI et configuration Orval |
-| `lib/api-client-react` | Client React Query généré |
-| `lib/api-zod` | Schémas de validation générés |
-| `scripts` | Outils et scripts partagés |
+| `lib/api-client-react` | Client React Query généré depuis l'OpenAPI |
+| `lib/api-zod` | Schémas Zod générés |
+| `scripts` | Seed des formules, rapport de vérification de base |
 
-Les formules de calcul et les règles métier existantes se trouvent dans
-`artifacts/simdouane/src/lib/calculator.ts`. Le contrat API est décrit dans
-`lib/api-spec/openapi.yaml`; après sa modification, régénérez le client avec
-`pnpm --filter @workspace/api-spec run codegen`.
+Le navigateur n'accède **jamais** directement à la base : tout passe par l'API,
+qui vérifie la session Clerk et filtre chaque requête par utilisateur.
 
 ## Prérequis
 
-- Node.js 24
-- pnpm 10 (version testée : 10.26.1)
-- PostgreSQL 14 ou supérieur
-- Un projet Clerk et ses clés de test/développement pour les fonctions protégées
+- Node.js 22 ou 24
+- pnpm 10 (`corepack enable && corepack prepare pnpm@10.26.1 --activate`)
+- PostgreSQL 14+ (local) ou un projet Supabase
+- Un compte [Clerk](https://clerk.com) (offre gratuite suffisante pour démarrer)
 
-## Installation et lancement en local
+## Installation sur un ordinateur
 
 ```sh
-corepack prepare pnpm@10.26.1 --activate
+git clone https://github.com/cadexleader-lgtm/SIMDOUANE-BENIN.git
+cd SIMDOUANE-BENIN
+git checkout migration/hors-replit   # tant que la branche n'est pas fusionnée
 pnpm install
-cp .env.example .env
+cp .env.example .env                  # puis remplissez .env (voir ci-dessous)
 ```
 
-Remplacez ensuite les valeurs fictives de `.env` par les paramètres d'une base
-PostgreSQL **locale** et les clés de votre propre projet Clerk. Configurez
-également les URL de redirection Clerk pour `http://localhost:5173`.
+### 1. Base de données
 
-Pour initialiser le schéma, utilisez une base de développement locale :
+**Option A — PostgreSQL local (développement)**
 
 ```sh
-pnpm --filter @workspace/db run push
+createdb simdouane_dev
+# dans .env : DATABASE_URL=postgresql://<utilisateur>:<mot_de_passe>@localhost:5432/simdouane_dev
+pnpm db:migrate     # crée toutes les tables depuis une base vide
+pnpm db:seed        # crée les 3 formules (Gratuit, Standard, Pro) si absentes
 ```
 
-Ne lancez pas cette commande avec l'URL de la base de production ou de la base
-Replit. Elle synchronise le schéma avec la base fournie dans `DATABASE_URL`.
+**Option B — Supabase**
 
-Démarrez ensuite l'API et le frontend ensemble :
+1. Créez un projet sur [supabase.com](https://supabase.com) (région la plus
+   proche de vos utilisateurs, ex. Europe de l'Ouest).
+2. *Project Settings → Database → Connection string* : copiez la chaîne
+   **Session pooler** (port 5432) et remplacez `[YOUR-PASSWORD]` par le mot de
+   passe de la base. Mettez-la dans `DATABASE_URL` de votre `.env` — jamais
+   dans le code ni sur GitHub.
+3. Recommandé : *Database Settings → SSL Configuration → Download certificate*,
+   enregistrez le fichier hors du dépôt et indiquez son chemin dans
+   `DATABASE_SSL_CA_FILE` (connexion TLS vérifiée).
+4. `pnpm db:migrate` puis `pnpm db:seed` (sauf si vous transférez les données
+   de Replit : voir docs/MIGRATION.md §6, on ne seed pas dans ce cas).
+
+La migration `0001_lock_down_data_api` active Row Level Security sur toutes
+les tables et retire les droits des rôles `anon`/`authenticated` : l'API REST
+publique de Supabase ne peut donc rien lire ni écrire. N'ajoutez pas de policy
+qui ouvrirait ces tables sans revoir le modèle de sécurité.
+
+### 2. Authentification (Clerk)
+
+1. Créez une application sur [dashboard.clerk.com](https://dashboard.clerk.com).
+2. *API Keys* : copiez la clé publique (`pk_…`) dans `CLERK_PUBLISHABLE_KEY` **et**
+   `VITE_CLERK_PUBLISHABLE_KEY`, la clé secrète (`sk_…`) dans `CLERK_SECRET_KEY`.
+3. Ajoutez `http://localhost:5173` aux URL autorisées en développement.
+
+La clé secrète ne doit jamais être préfixée par `VITE_` (tout ce qui commence
+par `VITE_` est intégré au code envoyé au navigateur).
+
+### 3. Lancer en développement
 
 ```sh
 pnpm dev
 ```
 
-Le frontend est disponible sur `http://localhost:5173`. En développement, Vite
-transmet les routes `/api` à l'API locale sur le port 8080. `VITE_API_TARGET`,
-`WEB_PORT` et `API_PORT` peuvent être définis pour changer ces valeurs.
+- Frontend : http://localhost:5173
+- API : http://localhost:8080 (Vite redirige `/api` vers elle)
 
-## Compilation et contrôles
+## Commandes
+
+| Commande | Effet |
+| --- | --- |
+| `pnpm dev` | API + frontend en développement |
+| `pnpm db:migrate` | Applique les migrations SQL (`lib/db/migrations`), sans risque à relancer |
+| `pnpm db:seed` | Crée les formules d'abonnement si la table est vide |
+| `pnpm db:report` | Nombre de lignes + empreinte par table (lecture seule, pour vérifier un transfert) |
+| `pnpm test` | Tests (calculateur ; API si `TEST_DATABASE_URL` est défini) |
+| `pnpm run typecheck` | Vérification TypeScript (8 erreurs préexistantes, voir docs/MIGRATION.md) |
+| `pnpm --filter @workspace/api-server run build` | Compile l'API → `artifacts/api-server/dist` |
+| `pnpm --filter @workspace/simdouane run build` | Compile le frontend → `artifacts/simdouane/dist/public` |
+| `pnpm start` | Lance l'API compilée (production) |
+
+Modifier le schéma : éditez `lib/db/src/schema/*.ts`, puis
+`pnpm --filter @workspace/db run generate --name <description>` crée une
+nouvelle migration SQL à relire et à committer. Ne modifiez jamais une
+migration déjà appliquée. `pnpm --filter @workspace/db run push` (synchronisation
+directe sans migration) est réservé à une base locale jetable.
+
+### Tests de l'API
+
+Les tests d'isolation des données tournent contre une vraie base PostgreSQL
+**jetable** (ses tables sont vidées) :
 
 ```sh
-pnpm --filter @workspace/api-server run build
-PORT=5173 BASE_PATH=/ pnpm --filter @workspace/simdouane run build
-pnpm run typecheck
-pnpm run build
+createdb simdouane_test
+TEST_DATABASE_URL=postgresql://…/simdouane_test pnpm test
 ```
 
-La compilation du frontend produit les fichiers statiques dans
-`artifacts/simdouane/dist/public`. Le lancement local de l'API requiert une base
-PostgreSQL et les clés serveur Clerk décrites dans `.env.example`.
+## Mise en production (hors Replit)
 
-**État des contrôles dans cet export :** les builds séparés de l'API et du
-frontend passent. `pnpm run typecheck` signale actuellement huit erreurs
-TypeScript préexistantes dans l'interface (`App.tsx`, `layout.tsx`, ainsi que
-les pages admin, dashboard, historique, onboarding et simulateur); `pnpm run
-build` s'arrête donc à cette étape. Ces erreurs n'ont pas été corrigées dans
-cet export afin de ne pas modifier les pages ni les règles métier.
+GitHub ne fait qu'héberger le code : il faut un hébergeur qui exécute Node.js
+(Render, Railway, Fly.io, un VPS…). Le plus simple est **un seul processus**
+qui sert l'API et le site :
+
+```sh
+pnpm install --frozen-lockfile
+pnpm --filter @workspace/api-server run build
+pnpm --filter @workspace/simdouane run build   # VITE_* doivent être définies à ce moment
+pnpm db:migrate
+NODE_ENV=production PORT=8080 WEB_DIST_DIR=artifacts/simdouane/dist/public pnpm start
+```
+
+Variables à définir dans le gestionnaire de secrets de l'hébergeur (jamais dans
+le dépôt) : `DATABASE_URL`, `DATABASE_SSL_CA_FILE` (facultatif),
+`CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`,
+`ADMIN_EMAILS`, `VITE_ADMIN_EMAILS`. Avec une clé Clerk de production
+(`pk_live_…`), configurez le domaine et ses enregistrements DNS dans Clerk.
 
 ## Variables d'environnement
 
-| Variable | Utilisation |
-| --- | --- |
-| `DATABASE_URL` | Connexion PostgreSQL utilisée par l'API et Drizzle |
-| `CLERK_SECRET_KEY` | Clé serveur Clerk; ne jamais la placer dans le code client |
-| `CLERK_PUBLISHABLE_KEY` | Clé publique de secours utilisée par le middleware Clerk côté serveur |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clé publique Clerk intégrée au frontend |
-| `VITE_CLERK_PROXY_URL` | URL facultative du proxy Clerk quand la configuration l'exige |
-| `LOG_LEVEL` | Niveau de journalisation de l'API; facultatif |
-| `VITE_API_TARGET` | Cible du proxy API de Vite en développement; facultatif |
-| `PORT`, `BASE_PATH` | Ports et base URL fournis par le script de développement ou la commande de build |
+Voir [`.env.example`](.env.example), commenté variable par variable.
 
-Toutes les valeurs d'exemple sont fictives. Créez `.env` localement et ne le
-commitez pas.
+## Historique local
 
-## Services liés à Replit
-
-- **Base de données :** l'environnement Replit fournit actuellement
-  `DATABASE_URL`. Pour cloner le projet, il faut une base PostgreSQL distincte;
-  aucune donnée ni base Replit n'est exportée ou migrée.
-- **Authentification :** l'application utilise Clerk. L'instance et les
-  paramètres d'authentification gérés dans Replit ne sont pas transférés par
-  GitHub. En local, utilisez les clés et URL de redirection de votre propre
-  instance Clerk. Le proxy Clerk de l'API sert à l'hébergement configuré pour
-  cette fonctionnalité; le développement local peut utiliser Clerk directement.
-- **Routage et publication :** le routage des artefacts, les ports de preview,
-  les workflows et la publication sont propres à Replit et ne sont pas
-  embarqués dans ce dépôt. Le proxy Vite fourni sert uniquement au
-  développement local; un déploiement autonome devra configurer un reverse
-  proxy pour `/api` et héberger les fichiers statiques.
-- **Stockage de fichiers :** le code courant ne nécessite pas de service de
-  stockage objet Replit pour démarrer.
-- Les plugins Vite `@replit/*` apportent des aides à l'édition dans Replit; le
-  démarrage autonome décrit ci-dessus s'appuie sur Vite et l'API locale.
-
-## Historique des données
-
-Les résultats locaux existants utilisent les clés `localStorage`
-`simdouane_history` et `simdouane_current`. Les données cloud restent dans la
-base à laquelle l'API est connectée. Ce dépôt ne contient aucune sauvegarde de
-base de données.
+Les résultats locaux utilisent les clés `localStorage` `simdouane_history` et
+`simdouane_current` ; elles ne sont pas modifiées par la migration.
