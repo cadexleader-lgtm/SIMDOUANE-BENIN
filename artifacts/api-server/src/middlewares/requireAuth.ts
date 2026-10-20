@@ -4,7 +4,12 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-const ADMIN_EMAILS = ["hazoumeclarence@gmail.com"];
+// Server-side admin allowlist (the real barrier; the UI only hides links).
+// ADMIN_EMAILS: comma-separated list. Defaults to the historical admin.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "hazoumeclarence@gmail.com")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const auth = getAuth(req);

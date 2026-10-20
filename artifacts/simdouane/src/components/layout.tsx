@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SimDouaneLogo } from "@/components/logo";
 import { useLang, Lang } from "@/context/language-context";
 import { T } from "@/lib/translations";
+import { isAdminEmail } from "@/lib/admin";
 import { useUser, useClerk } from "@clerk/react";
 
 const SIDEBAR_BG = "#003D24";
@@ -222,7 +223,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const { signOut } = useClerk();
 
-  const isAdmin = user?.emailAddresses?.some(e => e.emailAddress === 'hazoumeclarence@gmail.com');
+  const isAdmin = user?.emailAddresses?.some(e => isAdminEmail(e.emailAddress));
 
   const toolsNav = [
     { path: "/simulateur", icon: Calculator,   label: t.nav.simulation },

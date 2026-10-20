@@ -22,8 +22,13 @@ import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { isAdminEmail } from "@/lib/admin";
 
-const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+// An explicitly configured key always wins. Deriving the key from the host is
+// only for Replit-managed Clerk instances (one instance per domain).
+const clerkPubKey =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  publishableKeyFromHost(window.location.hostname, undefined);
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -161,7 +166,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoaded } = useUser();
   if (!isLoaded) return null;
-  const isAdmin = user?.emailAddresses.some(e => e.emailAddress === 'hazoumeclarence@gmail.com');
+  const isAdmin = user?.emailAddresses.some(e => isAdminEmail(e.emailAddress));
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">

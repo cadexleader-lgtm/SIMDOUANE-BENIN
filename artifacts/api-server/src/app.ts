@@ -1,4 +1,6 @@
 import express, { type Express } from "express";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
@@ -36,20 +38,53 @@ app.use(
 // Clerk proxy must be mounted BEFORE body parsers (streams raw bytes)
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+// The web app calls the API on the same origin, so CORS is only needed for
+// other origins explicitly listed in CORS_ORIGINS (comma-separated).
+// In development every origin stays allowed, as before.
+const corsOrigins = (process.env.CORS_ORIGINS ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    credentials: true,
+    origin: corsOrigins.length
+      ? corsOrigins
+      : process.env.NODE_ENV !== "production",
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Resolve Clerk publishable key from request host (supports multi-domain)
 app.use(
   clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
+    // An explicitly configured key always wins. Deriving the key from the
+    // host is only for Replit-managed Clerk instances (one per domain).
+    publishableKey:
+      process.env.CLERK_PUBLISHABLE_KEY ||
+      publishableKeyFromHost(getClerkProxyHost(req) ?? "", undefined),
   })),
 );
 
 app.use("/api", router);
+
+// Optional: serve the built web app (artifacts/simdouane/dist/public) from
+// this same process, so one Node server can host the whole application
+// outside Replit. Unknown non-API GET routes fall back to index.html.
+const webDistDir = process.env.WEB_DIST_DIR
+  ? path.resolve(process.env.WEB_DIST_DIR)
+  : undefined;
+if (webDistDir) {
+  const indexHtml = path.join(webDistDir, "index.html");
+  if (!existsSync(indexHtml)) {
+    throw new Error(`WEB_DIST_DIR has no index.html: ${webDistDir}`);
+  }
+  app.use(express.static(webDistDir, { index: false, maxAge: "1h" }));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) return next();
+    res.sendFile(indexHtml);
+  });
+}
 
 export default app;

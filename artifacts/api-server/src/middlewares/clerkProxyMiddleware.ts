@@ -5,10 +5,10 @@
  * authentication on custom domains and .replit.app deployments without
  * requiring CNAME DNS configuration.
  *
- * AUTH CONFIGURATION: To manage users, enable/disable login providers
- * (Google, GitHub, etc.), change app branding, or configure OAuth credentials,
- * use the Auth pane in the workspace toolbar. There is no external Clerk
- * dashboard — all auth configuration is done through the Auth pane.
+ * AUTH CONFIGURATION: on Replit, the Clerk instance is managed from the
+ * Replit Auth pane. With your own Clerk account, use the Clerk dashboard and
+ * prefer Clerk's DNS (CNAME) setup; this proxy is then optional. It is only
+ * used by the browser when VITE_CLERK_PROXY_URL points to /api/__clerk.
  *
  * IMPORTANT:
  * - Only active in production (Clerk proxying doesn't work for dev instances)
