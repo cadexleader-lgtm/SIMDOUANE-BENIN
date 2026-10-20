@@ -1,0 +1,725 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.2.0
+  description: SimDouane SaaS API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: simulations
+    description: User simulation history
+  - name: subscriptions
+    description: Subscription plans and user subscriptions
+  - name: users
+    description: User profile management
+  - name: admin
+    description: Admin dashboard (super admin only)
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Simulations ────────────────────────────────────────────────────────────
+  /simulations:
+    get:
+      operationId: getSimulations
+      tags: [simulations]
+      summary: List user's simulations
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: dateFrom
+          in: query
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          schema: { type: string, format: date }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: List of simulations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulationListResponse"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createSimulation
+      tags: [simulations]
+      summary: Save a simulation result
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSimulationInput"
+      responses:
+        "201":
+          description: Simulation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Simulation"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Simulation limit reached
+
+  /simulations/stats:
+    get:
+      operationId: getSimulationStats
+      tags: [simulations]
+      summary: Get user's simulation statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulationStats"
+        "401":
+          description: Unauthorized
+
+  /simulations/{id}:
+    delete:
+      operationId: deleteSimulation
+      tags: [simulations]
+      summary: Delete a simulation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  # ── Subscription plans ─────────────────────────────────────────────────────
+  /subscription-plans:
+    get:
+      operationId: getSubscriptionPlans
+      tags: [subscriptions]
+      summary: Get all active subscription plans
+      responses:
+        "200":
+          description: Plans list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlan"
+
+  # ── User subscription ──────────────────────────────────────────────────────
+  /subscription:
+    get:
+      operationId: getUserSubscription
+      tags: [subscriptions]
+      summary: Get current user's subscription
+      responses:
+        "200":
+          description: User subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSubscription"
+        "401":
+          description: Unauthorized
+
+  # ── User profile ───────────────────────────────────────────────────────────
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [users]
+      summary: Get current user's profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateProfile
+      tags: [users]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileInput"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  # ── Admin ──────────────────────────────────────────────────────────────────
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Get admin dashboard stats
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: List all users
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserListResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/users/{id}/status:
+    put:
+      operationId: updateUserStatus
+      tags: [admin]
+      summary: Update user status (activate/disable/suspend)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserStatusInput"
+      responses:
+        "200":
+          description: Updated
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/simulations:
+    get:
+      operationId: getAdminSimulations
+      tags: [admin]
+      summary: List all simulations (admin)
+      parameters:
+        - name: userId
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: dateFrom
+          in: query
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          schema: { type: string, format: date }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: All simulations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSimulationListResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /upgrade-request:
+    post:
+      operationId: createUpgradeRequest
+      tags: [subscriptions]
+      summary: User requests a subscription upgrade
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUpgradeRequestInput"
+      responses:
+        "201":
+          description: Request created
+        "401":
+          description: Unauthorized
+
+  /admin/upgrade-requests:
+    get:
+      operationId: getAdminUpgradeRequests
+      tags: [admin]
+      summary: List all upgrade requests
+      responses:
+        "200":
+          description: List of upgrade requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UpgradeRequest"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/upgrade-requests/{id}/process:
+    put:
+      operationId: processUpgradeRequest
+      tags: [admin]
+      summary: Mark an upgrade request as processed or dismissed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessUpgradeRequestInput"
+      responses:
+        "200":
+          description: Updated
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/users/{id}/assign-subscription:
+    post:
+      operationId: assignSubscription
+      tags: [admin]
+      summary: Manually assign a subscription plan to a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignSubscriptionInput"
+      responses:
+        "200":
+          description: Subscription assigned
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/users/{id}/subscription:
+    delete:
+      operationId: revokeSubscription
+      tags: [admin]
+      summary: Revoke active subscription for a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Subscription revoked
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/subscription-plans:
+    get:
+      operationId: getAdminSubscriptionPlans
+      tags: [admin]
+      summary: List all subscription plans (admin)
+      responses:
+        "200":
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlan"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+    post:
+      operationId: createSubscriptionPlan
+      tags: [admin]
+      summary: Create a subscription plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlanInput"
+      responses:
+        "201":
+          description: Created plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionPlan"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /admin/subscription-plans/{id}:
+    put:
+      operationId: updateSubscriptionPlan
+      tags: [admin]
+      summary: Update a subscription plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlanInput"
+      responses:
+        "200":
+          description: Updated plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionPlan"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    # ── Simulation schemas ────────────────────────────────────────────────────
+    CreateSimulationInput:
+      type: object
+      required: [marque, modele, annee, cylindree, carburant, valeurCIF, joursAuPort, regime, totalDouane, totalPort, totalGeneral]
+      properties:
+        marque:       { type: string }
+        modele:       { type: string }
+        annee:        { type: integer }
+        cylindree:    { type: string }
+        carburant:    { type: string }
+        valeurCIF:    { type: number }
+        joursAuPort:  { type: integer }
+        regime:       { type: string }
+        totalDouane:  { type: number }
+        totalPort:    { type: number }
+        totalGeneral: { type: number }
+        condition:    { type: string, nullable: true, default: Occasion }
+        powertrain:   { type: string, nullable: true }
+        referenceDate: { type: string, nullable: true }
+        regulatoryYear: { type: integer, nullable: true }
+        calculatorVersion: { type: string, nullable: true }
+        regulatoryConfigVersion: { type: string, nullable: true }
+
+    Simulation:
+      type: object
+      required: [id, userId, marque, modele, annee, cylindree, carburant, valeurCIF, joursAuPort, regime, totalDouane, totalPort, totalGeneral, createdAt]
+      properties:
+        id:           { type: string }
+        userId:       { type: string }
+        marque:       { type: string }
+        modele:       { type: string }
+        annee:        { type: integer }
+        cylindree:    { type: string }
+        carburant:    { type: string }
+        valeurCIF:    { type: number }
+        joursAuPort:  { type: integer }
+        regime:       { type: string }
+        totalDouane:  { type: number }
+        totalPort:    { type: number }
+        totalGeneral: { type: number }
+        condition:    { type: string, nullable: true }
+        powertrain:   { type: string, nullable: true }
+        referenceDate: { type: string, nullable: true }
+        regulatoryYear: { type: integer, nullable: true }
+        calculatorVersion: { type: string, nullable: true }
+        regulatoryConfigVersion: { type: string, nullable: true }
+        createdAt:    { type: string, format: date-time }
+
+    SimulationListResponse:
+      type: object
+      required: [simulations, total]
+      properties:
+        simulations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Simulation"
+        total: { type: integer }
+
+    SimulationStats:
+      type: object
+      required: [totalSimulations, thisMonthSimulations, avgTotal, monthlyLimit, simUsedThisMonth]
+      properties:
+        totalSimulations:     { type: integer }
+        thisMonthSimulations: { type: integer }
+        avgTotal:             { type: number }
+        monthlyLimit:         { type: integer, nullable: true }
+        simUsedThisMonth:     { type: integer }
+
+    # ── Plan schemas ──────────────────────────────────────────────────────────
+    SubscriptionPlan:
+      type: object
+      required: [id, name, slug, priceMonthly, simulationsPerMonth, features, isActive]
+      properties:
+        id:                   { type: string }
+        name:                 { type: string }
+        slug:                 { type: string }
+        priceMonthly:         { type: number }
+        simulationsPerMonth:  { type: integer, nullable: true, description: "null = unlimited" }
+        features:
+          type: array
+          items: { type: string }
+        isActive:             { type: boolean }
+
+    CreatePlanInput:
+      type: object
+      required: [name, slug, priceMonthly, features]
+      properties:
+        name:                 { type: string }
+        slug:                 { type: string }
+        priceMonthly:         { type: number }
+        simulationsPerMonth:  { type: integer, nullable: true }
+        features:
+          type: array
+          items: { type: string }
+
+    UpdatePlanInput:
+      type: object
+      properties:
+        name:                 { type: string }
+        priceMonthly:         { type: number }
+        simulationsPerMonth:  { type: integer, nullable: true }
+        features:
+          type: array
+          items: { type: string }
+        isActive:             { type: boolean }
+
+    # ── User subscription ─────────────────────────────────────────────────────
+    UserSubscription:
+      type: object
+      required: [plan, status, simUsedThisMonth]
+      properties:
+        plan:
+          $ref: "#/components/schemas/SubscriptionPlan"
+        status:              { type: string, enum: [active, expired, cancelled] }
+        startDate:           { type: string, format: date-time, nullable: true }
+        endDate:             { type: string, format: date-time, nullable: true }
+        simUsedThisMonth:    { type: integer }
+
+    # ── Profile schemas ───────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      required: [id, clerkId, email, fullName, status, createdAt, onboarded]
+      properties:
+        id:        { type: string }
+        clerkId:   { type: string }
+        email:     { type: string }
+        fullName:  { type: string }
+        phone:     { type: string, nullable: true }
+        whatsapp:  { type: string, nullable: true }
+        poste:     { type: string, nullable: true }
+        onboarded: { type: boolean }
+        status:    { type: string, enum: [active, disabled, suspended] }
+        createdAt: { type: string, format: date-time }
+
+    UpdateProfileInput:
+      type: object
+      properties:
+        fullName:  { type: string }
+        phone:     { type: string }
+        whatsapp:  { type: string }
+        poste:     { type: string }
+        onboarded: { type: boolean }
+
+    # ── Admin schemas ─────────────────────────────────────────────────────────
+    AdminDashboard:
+      type: object
+      required: [totalUsers, activeSubscribers, totalSimulations, newUsersThisMonth, revenueThisMonth, revenueThisYear]
+      properties:
+        totalUsers:           { type: integer }
+        activeSubscribers:    { type: integer }
+        totalSimulations:     { type: integer }
+        newUsersThisMonth:    { type: integer }
+        revenueThisMonth:     { type: number }
+        revenueThisYear:      { type: number }
+
+    AdminUser:
+      type: object
+      required: [id, clerkId, email, fullName, status, planName, createdAt]
+      properties:
+        id:        { type: string }
+        clerkId:   { type: string }
+        email:     { type: string }
+        fullName:  { type: string }
+        phone:     { type: string, nullable: true }
+        status:    { type: string, enum: [active, disabled, suspended] }
+        planName:  { type: string }
+        createdAt: { type: string, format: date-time }
+
+    AdminUserListResponse:
+      type: object
+      required: [users, total]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total: { type: integer }
+
+    AdminSimulation:
+      allOf:
+        - $ref: "#/components/schemas/Simulation"
+        - type: object
+          properties:
+            userEmail:    { type: string }
+            userFullName: { type: string }
+
+    AdminSimulationListResponse:
+      type: object
+      required: [simulations, total]
+      properties:
+        simulations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminSimulation"
+        total: { type: integer }
+
+    UpdateUserStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [active, disabled, suspended] }
+
+    AssignSubscriptionInput:
+      type: object
+      required: [planId]
+      properties:
+        planId:         { type: string }
+        durationMonths: { type: integer, nullable: true, description: "null = no expiry" }
+        requestId:      { type: string, nullable: true, description: "Links activation atomically to a payment request" }
+
+    CreateUpgradeRequestInput:
+      type: object
+      required: [planWanted, durationMonths, mobileMoneyPhone, mobileMoneyOperator, transactionReference, declaredAmount]
+      properties:
+        planWanted: { type: string, enum: [Standard, Pro] }
+        durationMonths: { type: integer, enum: [1, 3, 6, 12], nullable: true }
+        mobileMoneyPhone: { type: string }
+        mobileMoneyOperator: { type: string, enum: [MTN MoMo, Moov Money, Celtiis Cash] }
+        transactionReference: { type: string }
+        declaredAmount: { type: number, minimum: 1 }
+        receiptUrl: { type: string, nullable: true }
+        message:    { type: string, nullable: true }
+
+    ProcessUpgradeRequestInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [payment_under_review, approved, rejected, cancelled, processed, dismissed] }
+        note: { type: string, nullable: true }
+
+    UpgradeRequest:
+      type: object
+      required: [id, userId, userEmail, status, createdAt]
+      properties:
+        id:           { type: string }
+        userId:       { type: string }
+        userEmail:    { type: string }
+        userFullName: { type: string, nullable: true }
+        planWanted:   { type: string, nullable: true }
+        durationMonths: { type: integer, nullable: true }
+        mobileMoneyPhone: { type: string, nullable: true }
+        mobileMoneyOperator: { type: string, nullable: true }
+        transactionReference: { type: string, nullable: true }
+        declaredAmount: { type: number, nullable: true }
+        receiptUrl: { type: string, nullable: true }
+        message:      { type: string, nullable: true }
+        status:       { type: string, enum: [pending, processed, dismissed, submitted, payment_under_review, approved, activated, rejected, cancelled] }
+        createdAt:    { type: string, format: date-time }
+        processedAt:  { type: string, format: date-time, nullable: true }
+        processedBy:  { type: string, nullable: true }
+        processedNote: { type: string, nullable: true }
+        rejectionReason: { type: string, nullable: true }

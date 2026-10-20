@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SimDouane Bénin</title>
+    <meta name="description" content="Simulateur de droits et frais douaniers pour l'importation de véhicules au Port de Cotonou, Bénin." />
+    <meta name="robots" content="index, follow" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#003D24" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SimDouane" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+
+    <!-- OG / Social -->
+    <meta property="og:title" content="SimDouane Bénin" />
+    <meta property="og:description" content="Simulateur de droits et frais douaniers — Port de Cotonou, Bénin." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SimDouane Bénin" />
+    <meta name="twitter:description" content="Simulateur de droits et frais douaniers — Port de Cotonou, Bénin." />
+
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div
+      id="app-loading"
+      aria-label="Chargement de SimDouane"
+      style="position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#003D24"
+    >
+      <img
+        src="/logo.svg"
+        width="96"
+        height="96"
+        alt="SimDouane"
+        style="width:96px;height:96px;object-fit:contain"
+      />
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "SimDouane Bénin",
+  "short_name": "SimDouane",
+  "description": "Simulateur de droits et frais douaniers pour l'importation de véhicules au Port de Cotonou, Bénin.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#003D24",
+  "theme_color": "#003D24",
+  "categories": ["finance", "utilities"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
