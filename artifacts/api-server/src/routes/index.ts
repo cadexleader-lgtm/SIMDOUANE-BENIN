@@ -7,6 +7,7 @@ import adminRouter from "./admin";
 import upgradeRequestRouter from "./upgrade-request";
 import adminTransitairesRouter from "./admin-transitaires";
 import filesRouter from "./files";
+import casesRouter from "./cases";
 import { transitaireAccessRouter, transitaireSpaceRouter } from "./transitaire-access";
 
 const router: IRouter = Router();
@@ -22,5 +23,6 @@ router.use("/upgrade-request", upgradeRequestRouter);
 router.use("/transitaire-access", transitaireAccessRouter);
 router.use("/transitaire", transitaireSpaceRouter);
 router.use("/files", filesRouter);
+router.use("/cases", casesRouter);
 
 export default router;

@@ -698,3 +698,214 @@ export const ListAuditLogsResponseItem = zod.object({
 export const ListAuditLogsResponse = zod.array(ListAuditLogsResponseItem)
 
 
+/**
+ * @summary The signed-in user's files (archived ones excluded)
+ */
+export const ListCasesResponseItem = zod.object({
+  "id": zod.string(),
+  "reference": zod.string(),
+  "arrivalSituation": zod.enum(['not_arrived', 'arrived']),
+  "status": zod.enum(['draft', 'incomplete', 'ready']),
+  "vehicle": zod.object({
+  "make": zod.string(),
+  "model": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "vin": zod.string().nullish(),
+  "condition": zod.enum(['neuf', 'occasion']).nullish()
+}),
+  "missingCount": zod.number(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListCasesResponse = zod.array(ListCasesResponseItem)
+
+
+/**
+ * @summary Create a file (status draft)
+ */
+export const CreateCaseBody = zod.object({
+  "originCountry": zod.string().nullish(),
+  "departurePort": zod.string().nullish(),
+  "shippedAt": zod.string().nullish(),
+  "estimatedArrivalDate": zod.string().nullish(),
+  "arrivalDate": zod.string().nullish(),
+  "transportReference": zod.string().nullish(),
+  "existingReferences": zod.string().nullish(),
+  "formalitiesDone": zod.string().nullish(),
+  "knownBlockers": zod.string().nullish(),
+  "notes": zod.string().nullish()
+}).describe('Dates use the AAAA-MM-JJ format. Empty strings are stored as empty values.').and(zod.object({
+  "arrivalSituation": zod.enum(['not_arrived', 'arrived']).optional(),
+  "vehicle": zod.object({
+  "make": zod.string().nullish(),
+  "model": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "vin": zod.string().nullish(),
+  "condition": zod.enum(['neuf', 'occasion']).nullish()
+}).optional()
+}))
+
+
+/**
+ * @summary One of the user's files
+ */
+export const GetCaseParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetCaseResponse = zod.object({
+  "id": zod.string(),
+  "reference": zod.string(),
+  "arrivalSituation": zod.enum(['not_arrived', 'arrived']),
+  "status": zod.enum(['draft', 'incomplete', 'ready']),
+  "statusChangedAt": zod.coerce.date(),
+  "vehicle": zod.object({
+  "make": zod.string(),
+  "model": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "vin": zod.string().nullish(),
+  "condition": zod.enum(['neuf', 'occasion']).nullish()
+}),
+  "originCountry": zod.string().nullish(),
+  "departurePort": zod.string().nullish(),
+  "shippedAt": zod.string().nullish(),
+  "estimatedArrivalDate": zod.string().nullish(),
+  "arrivalDate": zod.string().nullish(),
+  "arrivalPort": zod.string(),
+  "transportReference": zod.string().nullish(),
+  "existingReferences": zod.string().nullish(),
+  "formalitiesDone": zod.string().nullish(),
+  "knownBlockers": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "missingFields": zod.array(zod.string()).describe('Fields required before the file can be \"ready\"'),
+  "recommendedFields": zod.array(zod.string()).describe('Useful fields still empty (not blocking)'),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a file (only the fields sent)
+ */
+export const UpdateCaseParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateCaseBody = zod.object({
+  "originCountry": zod.string().nullish(),
+  "departurePort": zod.string().nullish(),
+  "shippedAt": zod.string().nullish(),
+  "estimatedArrivalDate": zod.string().nullish(),
+  "arrivalDate": zod.string().nullish(),
+  "transportReference": zod.string().nullish(),
+  "existingReferences": zod.string().nullish(),
+  "formalitiesDone": zod.string().nullish(),
+  "knownBlockers": zod.string().nullish(),
+  "notes": zod.string().nullish()
+}).describe('Dates use the AAAA-MM-JJ format. Empty strings are stored as empty values.').and(zod.object({
+  "arrivalSituation": zod.enum(['not_arrived', 'arrived']).optional(),
+  "vehicle": zod.object({
+  "make": zod.string().nullish(),
+  "model": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "vin": zod.string().nullish(),
+  "condition": zod.enum(['neuf', 'occasion']).nullish()
+}).optional()
+}))
+
+export const UpdateCaseResponse = zod.object({
+  "id": zod.string(),
+  "reference": zod.string(),
+  "arrivalSituation": zod.enum(['not_arrived', 'arrived']),
+  "status": zod.enum(['draft', 'incomplete', 'ready']),
+  "statusChangedAt": zod.coerce.date(),
+  "vehicle": zod.object({
+  "make": zod.string(),
+  "model": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "vin": zod.string().nullish(),
+  "condition": zod.enum(['neuf', 'occasion']).nullish()
+}),
+  "originCountry": zod.string().nullish(),
+  "departurePort": zod.string().nullish(),
+  "shippedAt": zod.string().nullish(),
+  "estimatedArrivalDate": zod.string().nullish(),
+  "arrivalDate": zod.string().nullish(),
+  "arrivalPort": zod.string(),
+  "transportReference": zod.string().nullish(),
+  "existingReferences": zod.string().nullish(),
+  "formalitiesDone": zod.string().nullish(),
+  "knownBlockers": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "missingFields": zod.array(zod.string()).describe('Fields required before the file can be \"ready\"'),
+  "recommendedFields": zod.array(zod.string()).describe('Useful fields still empty (not blocking)'),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Archive a file (hidden, kept)
+ */
+export const ArchiveCaseParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+/**
+ * @summary Check completeness; status becomes incomplete or ready
+ */
+export const CheckCaseParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const CheckCaseResponse = zod.object({
+  "id": zod.string(),
+  "reference": zod.string(),
+  "arrivalSituation": zod.enum(['not_arrived', 'arrived']),
+  "status": zod.enum(['draft', 'incomplete', 'ready']),
+  "statusChangedAt": zod.coerce.date(),
+  "vehicle": zod.object({
+  "make": zod.string(),
+  "model": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "vin": zod.string().nullish(),
+  "condition": zod.enum(['neuf', 'occasion']).nullish()
+}),
+  "originCountry": zod.string().nullish(),
+  "departurePort": zod.string().nullish(),
+  "shippedAt": zod.string().nullish(),
+  "estimatedArrivalDate": zod.string().nullish(),
+  "arrivalDate": zod.string().nullish(),
+  "arrivalPort": zod.string(),
+  "transportReference": zod.string().nullish(),
+  "existingReferences": zod.string().nullish(),
+  "formalitiesDone": zod.string().nullish(),
+  "knownBlockers": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "missingFields": zod.array(zod.string()).describe('Fields required before the file can be \"ready\"'),
+  "recommendedFields": zod.array(zod.string()).describe('Useful fields still empty (not blocking)'),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary History of a file, most recent first
+ */
+export const ListCaseEventsParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const ListCaseEventsResponseItem = zod.object({
+  "id": zod.string(),
+  "type": zod.string(),
+  "fromStatus": zod.string().nullish(),
+  "toStatus": zod.string().nullish(),
+  "sourceCategory": zod.string(),
+  "actorName": zod.string().nullish(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListCaseEventsResponse = zod.array(ListCaseEventsResponseItem)
+
+

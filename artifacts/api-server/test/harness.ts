@@ -13,6 +13,7 @@ import { clerkUsers } from "./clerkMock";
 export const TEST_DB = process.env.TEST_DATABASE_URL;
 
 export const ALL_TABLES =
+  "case_events, clearance_cases, vehicles, " +
   "audit_logs, transitaire_access_decisions, transitaire_application_documents, transitaire_applications, " +
   "stored_files, organization_members, organizations, admin_logs, upgrade_requests, simulations, " +
   "subscriptions, subscription_plans, users";

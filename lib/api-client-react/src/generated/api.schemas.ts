@@ -503,6 +503,130 @@ export interface UpgradeRequest {
   rejectionReason?: string | null;
 }
 
+export type CaseArrivalSituation = typeof CaseArrivalSituation[keyof typeof CaseArrivalSituation];
+
+
+export const CaseArrivalSituation = {
+  not_arrived: 'not_arrived',
+  arrived: 'arrived',
+} as const;
+
+export type CaseStatus = typeof CaseStatus[keyof typeof CaseStatus];
+
+
+export const CaseStatus = {
+  draft: 'draft',
+  incomplete: 'incomplete',
+  ready: 'ready',
+} as const;
+
+export type VehicleCondition = typeof VehicleCondition[keyof typeof VehicleCondition];
+
+
+export const VehicleCondition = {
+  neuf: 'neuf',
+  occasion: 'occasion',
+} as const;
+
+export interface CaseVehicle {
+  make: string;
+  model?: string | null;
+  year?: number | null;
+  vin?: string | null;
+  condition?: VehicleCondition | null;
+}
+
+export interface CaseVehicleInput {
+  make?: string | null;
+  model?: string | null;
+  year?: number | null;
+  vin?: string | null;
+  condition?: VehicleCondition | null;
+}
+
+/**
+ * Dates use the AAAA-MM-JJ format. Empty strings are stored as empty values.
+ */
+export interface CaseFieldsInput {
+  originCountry?: string | null;
+  departurePort?: string | null;
+  shippedAt?: string | null;
+  estimatedArrivalDate?: string | null;
+  arrivalDate?: string | null;
+  transportReference?: string | null;
+  existingReferences?: string | null;
+  formalitiesDone?: string | null;
+  knownBlockers?: string | null;
+  notes?: string | null;
+}
+
+export type CreateCaseInput = CaseFieldsInput & {
+  arrivalSituation?: CaseArrivalSituation;
+  vehicle?: CaseVehicleInput;
+};
+
+export type UpdateCaseInput = CaseFieldsInput & {
+  arrivalSituation?: CaseArrivalSituation;
+  vehicle?: CaseVehicleInput;
+};
+
+export interface ClearanceCase {
+  id: string;
+  reference: string;
+  arrivalSituation: CaseArrivalSituation;
+  status: CaseStatus;
+  statusChangedAt: string;
+  vehicle: CaseVehicle;
+  originCountry?: string | null;
+  departurePort?: string | null;
+  shippedAt?: string | null;
+  estimatedArrivalDate?: string | null;
+  arrivalDate?: string | null;
+  arrivalPort: string;
+  transportReference?: string | null;
+  existingReferences?: string | null;
+  formalitiesDone?: string | null;
+  knownBlockers?: string | null;
+  notes?: string | null;
+  /** Fields required before the file can be "ready" */
+  missingFields: string[];
+  /** Useful fields still empty (not blocking) */
+  recommendedFields: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClearanceCaseSummary {
+  id: string;
+  reference: string;
+  arrivalSituation: CaseArrivalSituation;
+  status: CaseStatus;
+  vehicle: CaseVehicle;
+  missingCount: number;
+  updatedAt: string;
+}
+
+export type CaseEventDetails = { [key: string]: unknown } | null;
+
+export interface CaseEvent {
+  id: string;
+  type: string;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  sourceCategory: string;
+  actorName?: string | null;
+  details?: CaseEventDetails;
+  createdAt: string;
+}
+
+export type ValidationErrorResponseFieldErrors = {[key: string]: string};
+
+export interface ValidationErrorResponse {
+  error: string;
+  message?: string;
+  fieldErrors: ValidationErrorResponseFieldErrors;
+}
+
 export type GetSimulationsParams = {
 search?: string;
 dateFrom?: string;

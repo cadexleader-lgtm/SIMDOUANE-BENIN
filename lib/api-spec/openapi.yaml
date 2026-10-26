@@ -20,6 +20,8 @@ tags:
     description: Admin dashboard (super admin only)
   - name: transitaire
     description: Transitaire access requests and transitaire-only features
+  - name: cases
+    description: Vehicle import files (dossiers) of the signed-in owner
 
 paths:
   /healthz:
@@ -672,6 +674,121 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/AuditLogEntry" }
 
+  # ── Dossiers véhicules (phase 3) ───────────────────────────────────────────
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: The signed-in user's files (archived ones excluded)
+      responses:
+        "200":
+          description: Files, most recently updated first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ClearanceCaseSummary" }
+        "401": { description: Unauthorized }
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create a file (status draft)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCaseInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClearanceCase" }
+        "400":
+          description: Validation errors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /cases/{id}:
+    get:
+      operationId: getCase
+      tags: [cases]
+      summary: One of the user's files
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: File
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClearanceCase" }
+        "404": { description: "Not found (also for another user's file)" }
+    patch:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update a file (only the fields sent)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCaseInput" }
+      responses:
+        "200":
+          description: Updated file
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClearanceCase" }
+        "400":
+          description: Validation errors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+        "404": { description: Not found }
+    delete:
+      operationId: archiveCase
+      tags: [cases]
+      summary: Archive a file (hidden, kept)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Archived }
+        "404": { description: Not found }
+
+  /cases/{id}/check:
+    post:
+      operationId: checkCase
+      tags: [cases]
+      summary: Check completeness; status becomes incomplete or ready
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: File with its new status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClearanceCase" }
+        "404": { description: Not found }
+
+  /cases/{id}/events:
+    get:
+      operationId: listCaseEvents
+      tags: [cases]
+      summary: History of a file, most recent first
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CaseEvent" }
+        "404": { description: Not found }
+
 components:
   schemas:
     HealthStatus:
@@ -1092,3 +1209,136 @@ components:
         processedBy:  { type: string, nullable: true }
         processedNote: { type: string, nullable: true }
         rejectionReason: { type: string, nullable: true }
+
+    CaseArrivalSituation:
+      type: string
+      enum: [not_arrived, arrived]
+
+    CaseStatus:
+      type: string
+      enum: [draft, incomplete, ready]
+
+    VehicleCondition:
+      type: string
+      enum: [neuf, occasion]
+
+    CaseVehicle:
+      type: object
+      required: [make]
+      properties:
+        make:      { type: string }
+        model:     { type: string, nullable: true }
+        year:      { type: integer, nullable: true }
+        vin:       { type: string, nullable: true }
+        condition:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/VehicleCondition" }]
+
+    CaseVehicleInput:
+      type: object
+      properties:
+        make:      { type: string, nullable: true }
+        model:     { type: string, nullable: true }
+        year:      { type: integer, nullable: true }
+        vin:       { type: string, nullable: true }
+        condition:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/VehicleCondition" }]
+
+    CaseFieldsInput:
+      type: object
+      description: Dates use the AAAA-MM-JJ format. Empty strings are stored as empty values.
+      properties:
+        originCountry:        { type: string, nullable: true }
+        departurePort:        { type: string, nullable: true }
+        shippedAt:            { type: string, nullable: true }
+        estimatedArrivalDate: { type: string, nullable: true }
+        arrivalDate:          { type: string, nullable: true }
+        transportReference:   { type: string, nullable: true }
+        existingReferences:   { type: string, nullable: true }
+        formalitiesDone:      { type: string, nullable: true }
+        knownBlockers:        { type: string, nullable: true }
+        notes:                { type: string, nullable: true }
+
+    CreateCaseInput:
+      allOf:
+        - { $ref: "#/components/schemas/CaseFieldsInput" }
+        - type: object
+          properties:
+            arrivalSituation: { $ref: "#/components/schemas/CaseArrivalSituation" }
+            vehicle:          { $ref: "#/components/schemas/CaseVehicleInput" }
+
+    UpdateCaseInput:
+      allOf:
+        - { $ref: "#/components/schemas/CaseFieldsInput" }
+        - type: object
+          properties:
+            arrivalSituation: { $ref: "#/components/schemas/CaseArrivalSituation" }
+            vehicle:          { $ref: "#/components/schemas/CaseVehicleInput" }
+
+    ClearanceCase:
+      type: object
+      required: [id, reference, arrivalSituation, status, statusChangedAt, arrivalPort, vehicle, missingFields, recommendedFields, createdAt, updatedAt]
+      properties:
+        id:                   { type: string }
+        reference:            { type: string }
+        arrivalSituation:     { $ref: "#/components/schemas/CaseArrivalSituation" }
+        status:               { $ref: "#/components/schemas/CaseStatus" }
+        statusChangedAt:      { type: string, format: date-time }
+        vehicle:              { $ref: "#/components/schemas/CaseVehicle" }
+        originCountry:        { type: string, nullable: true }
+        departurePort:        { type: string, nullable: true }
+        shippedAt:            { type: string, nullable: true }
+        estimatedArrivalDate: { type: string, nullable: true }
+        arrivalDate:          { type: string, nullable: true }
+        arrivalPort:          { type: string }
+        transportReference:   { type: string, nullable: true }
+        existingReferences:   { type: string, nullable: true }
+        formalitiesDone:      { type: string, nullable: true }
+        knownBlockers:        { type: string, nullable: true }
+        notes:                { type: string, nullable: true }
+        missingFields:
+          description: Fields required before the file can be "ready"
+          type: array
+          items: { type: string }
+        recommendedFields:
+          description: Useful fields still empty (not blocking)
+          type: array
+          items: { type: string }
+        createdAt:            { type: string, format: date-time }
+        updatedAt:            { type: string, format: date-time }
+
+    ClearanceCaseSummary:
+      type: object
+      required: [id, reference, arrivalSituation, status, vehicle, missingCount, updatedAt]
+      properties:
+        id:               { type: string }
+        reference:        { type: string }
+        arrivalSituation: { $ref: "#/components/schemas/CaseArrivalSituation" }
+        status:           { $ref: "#/components/schemas/CaseStatus" }
+        vehicle:          { $ref: "#/components/schemas/CaseVehicle" }
+        missingCount:     { type: integer }
+        updatedAt:        { type: string, format: date-time }
+
+    CaseEvent:
+      type: object
+      required: [id, type, sourceCategory, createdAt]
+      properties:
+        id:             { type: string }
+        type:           { type: string }
+        fromStatus:     { type: string, nullable: true }
+        toStatus:       { type: string, nullable: true }
+        sourceCategory: { type: string }
+        actorName:      { type: string, nullable: true }
+        details:        { type: object, nullable: true, additionalProperties: true }
+        createdAt:      { type: string, format: date-time }
+
+    ValidationErrorResponse:
+      type: object
+      required: [error, fieldErrors]
+      properties:
+        error:   { type: string }
+        message: { type: string }
+        fieldErrors:
+          type: object
+          additionalProperties: { type: string }

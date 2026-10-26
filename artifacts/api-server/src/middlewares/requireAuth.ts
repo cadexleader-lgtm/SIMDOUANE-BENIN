@@ -26,7 +26,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-/** requireAuth + loads (or creates) the application user as req.currentUser. */
+/** requireAuth + loads (or creates) the application user as req.currentUser; account must be active. */
 export async function requireUser(req: Request, res: Response, next: NextFunction) {
   const auth = getAuth(req);
   if (!auth?.userId) {
@@ -35,7 +35,14 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
   }
   try {
     (req as AuthedRequest).clerkUserId = auth.userId;
-    (req as AuthedRequest).currentUser = await getOrCreateUser(auth.userId);
+    const user = await getOrCreateUser(auth.userId);
+    // Accounts disabled or suspended by an administrator cannot use the
+    // features built on requireUser (files, transitaire access).
+    if (user.status !== "active") {
+      res.status(403).json({ error: "ACCOUNT_DISABLED", message: "Ce compte est désactivé. Contactez l'administrateur." });
+      return;
+    }
+    (req as AuthedRequest).currentUser = user;
     next();
   } catch (err) {
     sendError(req, res, err);
