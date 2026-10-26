@@ -29,6 +29,7 @@ uniquement.** Ce fichier ne contient aucun secret.
 | Conseiller sécurité Supabase | 1 avertissement (`search_path` de la fonction des historiques) **corrigé par la migration 0004** ; restent les notes « RLS sans règle », **voulues** (accès public fermé) |
 | Conseiller performance | 12 clés étrangères sans index **corrigées** (migration 0004) ; restent des notes « index pas encore utilisé », normales sur une base vide |
 | Droits des rôles publics `anon` / `authenticated` | 16 tables, toutes avec RLS, **aucune accessible** (ni la séquence des références de dossiers) ; schéma `drizzle` inaccessible ; lecture de `users` sous le rôle `anon` → `permission denied` |
+| Test fonctionnel des dossiers en transaction **annulée** (comptes fictifs) | Historique non modifiable et non supprimable, un véhicule par dossier, propriétaire obligatoire, aucune lecture par `anon`/`authenticated` (ni de la séquence des références) ; base vérifiée vide ensuite, compteur des références remis à 1 |
 | Après 0005/0006 (phase 3) | Conseiller sécurité : aucun avertissement, 16 notes « RLS sans règle » voulues ; conseiller performance : uniquement « index pas encore utilisé » ; déclencheur d'historique des dossiers présent |
 | Stockage | Bucket privé, RLS actif sur `storage.objects`, aucune règle d'accès |
 
@@ -38,6 +39,8 @@ dépôt/téléchargement de fichier par l'application (il faut la clé
 `service_role`, voir ci-dessous).
 
 ## Brancher l'application (sur votre ordinateur)
+
+Procédure pas à pas avec deux comptes de test : [`RECETTE-PHASE3.md`](RECETTE-PHASE3.md).
 
 Dans le tableau de bord Supabase du projet `simdouane-dev` :
 

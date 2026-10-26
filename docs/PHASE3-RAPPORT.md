@@ -180,7 +180,16 @@ obligatoires et ignorés, les messages d'erreur et la cohérence des dates.
   JavaScript principal de l'interface dépasse 500 Ko (1,2 Mo, 373 Ko
   compressé). À découper plus tard.
 
-## 8. Coûts
+## 8. Correctifs issus de la préparation de la recette (2026-10-26)
+
+| Problème trouvé | Correctif | Vérification |
+| --- | --- | --- |
+| `pnpm db:migrate`, `pnpm db:seed`, `db:report` et `storage-setup` ne lisaient pas le fichier `.env` (seul `pnpm dev` le faisait) : la procédure du README échouait dès la première commande | `lib/db/src/load-env.ts`, importé en premier par ces commandes ; une variable déjà définie dans l'environnement reste prioritaire (CI et tests inchangés) | Commandes lancées avec un `.env` temporaire et sans variable : ✅ ; priorité de l'environnement : ✅ ; sans `.env` : message clair « DATABASE_URL must be set » |
+| Page « Mes dossiers » **vide sans message** si l'API répondait par une erreur (compte désactivé, base ou Clerk injoignable) ; fiche affichant « Dossier introuvable » quelle que soit la cause ; échec silencieux de « Vérifier le dossier » et « Archiver » | Message de l'API affiché (ou message générique) avec bouton « Réessayer » ; « Dossier introuvable » réservé au 404 | Aperçu navigateur avec API simulée (403, API injoignable, 404, 503, 500) : ✅ messages affichés, aucune erreur JavaScript |
+
+Procédure de recette réelle : [`RECETTE-PHASE3.md`](RECETTE-PHASE3.md).
+
+## 9. Coûts
 
 **Aucun.** Supabase : offre gratuite (le projet se met en pause après une
 semaine sans activité). Clerk : non utilisé dans cet environnement. GitHub

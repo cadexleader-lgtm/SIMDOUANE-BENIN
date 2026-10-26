@@ -10,6 +10,7 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/SPECIFICATION-MVP.md`](docs/SPECIFICATION-MVP.md) et [`docs/MVP-PHASE0.md`](docs/MVP-PHASE0.md) — MVP « dossier véhicule » ;
 > - [`docs/PHASE2-RAPPORT.md`](docs/PHASE2-RAPPORT.md) — comptes, rôles, accès transitaire ;
 > - [`docs/PHASE3-RAPPORT.md`](docs/PHASE3-RAPPORT.md) — dossiers véhicules ;
+> - [`docs/RECETTE-PHASE3.md`](docs/RECETTE-PHASE3.md) — recette avec le vrai Clerk et Supabase, deux comptes de test ;
 > - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
 > - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
 
@@ -62,7 +63,7 @@ qui vérifie la session Clerk et filtre chaque requête par utilisateur.
 ```sh
 git clone https://github.com/cadexleader-lgtm/SIMDOUANE-BENIN.git
 cd SIMDOUANE-BENIN
-git checkout migration/hors-replit   # tant que la branche n'est pas fusionnée
+git checkout mvp/dossiers            # branche de travail, pas encore fusionnée
 pnpm install
 cp .env.example .env                  # puis remplissez .env (voir ci-dessous)
 ```
@@ -130,6 +131,10 @@ pnpm dev
 | `pnpm --filter @workspace/api-server run build` | Compile l'API → `artifacts/api-server/dist` |
 | `pnpm --filter @workspace/simdouane run build` | Compile le frontend → `artifacts/simdouane/dist/public` |
 | `pnpm start` | Lance l'API compilée (production) |
+
+Les commandes `pnpm dev`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm db:report` et
+`storage-setup` lisent le fichier `.env` de la racine ; une variable déjà définie
+dans l'environnement (terminal, CI, hébergeur) reste prioritaire.
 
 Modifier le schéma : éditez `lib/db/src/schema/*.ts`, puis
 `pnpm --filter @workspace/db run generate --name <description>` crée une
