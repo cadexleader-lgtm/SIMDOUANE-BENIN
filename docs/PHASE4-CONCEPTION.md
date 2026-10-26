@@ -1,9 +1,11 @@
 # Phase 4 — Checklist et documents : conception (avant développement)
 
-**État : préparation seulement, aucune ligne de code de la phase 4.** Le
-développement commence quand la recette réelle de la phase 3
-([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) est réussie et que les décisions du
-§6 sont prises. Branche `mvp/dossiers`, rien dans `main`.
+**État : préparation seulement, aucune ligne de code de la phase 4.**
+Décisions D1 à D7 confirmées le 2026-10-26 (§6). Le développement n'est
+**pas autorisé** tant que la recette réelle de la phase 3
+([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) n'est pas terminée et que le
+porteur du projet n'a pas donné son accord explicite. Branche `mvp/dossiers`,
+rien dans `main`.
 
 ## 1. Checklist provisoire (version « 2026-10-provisoire-1 »)
 
@@ -200,6 +202,18 @@ qui ne demandent aucun secret.
 | D5 | Document déposé par erreur | **Retrait sans effacement** en phase 4 : masqué, fichier et historique conservés. Une vraie suppression dépend de la politique de conservation, à fixer avec un juriste |
 | D6 | Pièce d'identité | Laisser « à confirmer », avec le conseil « ne la déposez que si votre transitaire la demande » |
 | D7 | Contenu de la checklist provisoire (§1) | À valider ou corriger par vous, puis par un ou deux transitaires |
+
+### Décisions confirmées par le porteur du projet (2026-10-26)
+
+| N° | Décision |
+| --- | --- |
+| D1 | Partage minimal d'un dossier, **uniquement** avec un transitaire approuvé et activé par l'administrateur (`transitaire_status = active`, vérifié par le serveur au partage **et** à chaque accès). Un compte qui se déclare simplement transitaire ne peut jamais recevoir l'accès. Le propriétaire peut révoquer à tout moment |
+| D2 | Pas de dépôt par le transitaire en phase 4 : il consulte les pièces autorisées, les télécharge, demande une correction et signale qu'une pièce a été vérifiée |
+| D3 | Supabase reste le stockage des documents (privé, permissions vérifiées par le serveur) |
+| D4 | Créer le bucket privé séparé `simdouane-dossiers` |
+| D5 | Retrait logique d'un document déposé par erreur : **plus aucun accès** au document retiré (ni consultation, ni lien de téléchargement), fichier original et historique conservés. Pas de suppression définitive automatique avant la définition d'une politique de conservation |
+| D6 | La pièce d'identité reste « à confirmer », jamais obligatoire par défaut |
+| D7 | La checklist reste **provisoire** jusqu'à la vérification directe des sources officielles et la consultation d'un ou deux transitaires ; aucune pièce n'est présentée comme obligatoire sans cela |
 
 ## 7. Coûts prévisionnels avant une mise en production
 

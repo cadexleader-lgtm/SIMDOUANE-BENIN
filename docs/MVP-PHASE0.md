@@ -13,7 +13,7 @@ fusionné dans `main`. Spécification : [`SPECIFICATION-MVP.md`](SPECIFICATION-M
 | 1 bis — TypeScript et intégration continue | ✅ |
 | 2 — Comptes, rôles, accès transitaire | ✅ ([`PHASE2-RAPPORT.md`](PHASE2-RAPPORT.md)) |
 | 3 — Dossiers véhicules | ✅ en attente de votre validation ([`PHASE3-RAPPORT.md`](PHASE3-RAPPORT.md)) |
-| 4 — Checklist et documents | ⏸ conception prête ([`PHASE4-CONCEPTION.md`](PHASE4-CONCEPTION.md)) ; développement après la recette réelle de la phase 3 ([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) et vos décisions |
+| 4 — Checklist et documents | ⏸ conception prête, décisions D1-D7 confirmées ([`PHASE4-CONCEPTION.md`](PHASE4-CONCEPTION.md)) ; développement **non autorisé** avant la fin de la recette réelle de la phase 3 ([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) et votre accord |
 
 ## 2. Ce que l'existant apporte au MVP (constats vérifiés dans le code)
 
