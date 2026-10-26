@@ -15,6 +15,8 @@ import {
   useGetAdminUpgradeRequests,
   useProcessUpgradeRequest,
   getGetAdminUsersQueryKey,
+  getGetAdminDashboardQueryKey,
+  getGetAdminSimulationsQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,7 +217,7 @@ export default function Admin() {
   };
 
   const { data: dashboard, isLoading: dashLoading } = useGetAdminDashboard({
-    query: { enabled: activeTab === "dashboard" },
+    query: { enabled: activeTab === "dashboard", queryKey: getGetAdminDashboardQueryKey() },
   });
   const { data: usersData, isLoading: usersLoading } = useGetAdminUsers(
     { search: searchUsers || undefined, limit: 50 },
@@ -223,7 +225,7 @@ export default function Admin() {
   );
   const { data: simsData, isLoading: simsLoading } = useGetAdminSimulations(
     { search: searchSims || undefined, limit: 50 },
-    { query: { enabled: activeTab === "simulations" } }
+    { query: { enabled: activeTab === "simulations", queryKey: getGetAdminSimulationsQueryKey({ search: searchSims || undefined, limit: 50 }) } }
   );
 
   const statusMutation = useUpdateUserStatus();

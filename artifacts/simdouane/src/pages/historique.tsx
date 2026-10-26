@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "@/context/language-context";
 import { T } from "@/lib/translations";
 import { useUser } from "@clerk/react";
-import { useGetSimulations, useDeleteSimulation, getGetSimulationsQueryKey, useGetUserSubscription } from "@workspace/api-client-react";
+import { useGetSimulations, useDeleteSimulation, getGetSimulationsQueryKey, useGetUserSubscription, getGetUserSubscriptionQueryKey } from "@workspace/api-client-react";
 import { queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 
@@ -37,7 +37,7 @@ export default function Historique() {
     return () => clearTimeout(timer);
   };
 
-  const { data: subData } = useGetUserSubscription({ query: { enabled: !!user } });
+  const { data: subData } = useGetUserSubscription({ query: { enabled: !!user, queryKey: getGetUserSubscriptionQueryKey() } });
   // Cloud history available for paid plans only (simulationsPerMonth > 3 OR null = unlimited)
   const isPaidPlan = !!user && (
     subData?.plan.simulationsPerMonth === null || 

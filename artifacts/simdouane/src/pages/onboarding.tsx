@@ -65,7 +65,7 @@ export default function Onboarding() {
             <div key={s} className="flex items-center gap-2">
               <div className={cn(
                 "h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
-                step === "done" || (i === 0 && step !== "poste") || (i === 1 && step === "done")
+                step === "done" || (i === 0 && step !== "poste")
                   ? "bg-[#FCD116] text-[#003D24]"
                   : step === s
                   ? "bg-white text-[#003D24]"

@@ -388,7 +388,6 @@ export function Layout({ children }: { children: ReactNode }) {
               <button
                 onClick={() => setMobileMenuOpen(true)}
                 className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0 overflow-hidden ring-2 transition-all"
-                style={{ ringColor: "rgba(252,209,22,0.4)" }}
               >
                 {user.imageUrl ? (
                   <img src={user.imageUrl} className="w-full h-full object-cover" alt="" />

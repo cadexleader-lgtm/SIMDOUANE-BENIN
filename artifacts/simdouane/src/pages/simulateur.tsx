@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useLang } from "@/context/language-context";
 import { T } from "@/lib/translations";
 import { useUser } from "@clerk/react";
-import { useCreateSimulation, useGetUserSubscription } from "@workspace/api-client-react";
+import { useCreateSimulation, useGetUserSubscription, getGetUserSubscriptionQueryKey } from "@workspace/api-client-react";
 import { UpgradeRequestForm } from "@/components/upgrade-request-form";
 import { getRegulatoryNotice, Powertrain, VehicleCondition } from "@/lib/regulatory-config-2026";
 
@@ -183,7 +183,7 @@ export default function Simulateur() {
   createMutationRef.current = createSimulation.mutate;
 
   const { data: subscription } = useGetUserSubscription({
-    query: { enabled: !!user },
+    query: { enabled: !!user, queryKey: getGetUserSubscriptionQueryKey() },
   });
 
   const simUsed    = subscription?.simUsedThisMonth ?? 0;
