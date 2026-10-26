@@ -29,6 +29,13 @@
       "when": 1792999984305,
       "tag": "0003_protect_new_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793002119082,
+      "tag": "0004_foreign_key_indexes",
+      "breakpoints": true
     }
   ]
 }

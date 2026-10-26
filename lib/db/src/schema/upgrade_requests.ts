@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, integer, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, integer, numeric, index } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 /**
@@ -36,6 +36,6 @@ export const upgradeRequestsTable = pgTable("upgrade_requests", {
   processedBy: text("processed_by"),
   processedNote: text("processed_note"),
   rejectionReason: text("rejection_reason"),
-});
+}, (t) => [index("upgrade_requests_user_id_idx").on(t.userId)]);
 
 export type UpgradeRequest = typeof upgradeRequestsTable.$inferSelect;

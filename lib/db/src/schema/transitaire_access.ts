@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, primaryKey, uniqueIndex, check } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, primaryKey, uniqueIndex, check, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { usersTable } from "./users";
 import { storedFilesTable } from "./stored_files";
@@ -29,6 +29,8 @@ export const transitaireApplicationsTable = pgTable(
     uniqueIndex("transitaire_applications_one_submitted_per_user")
       .on(t.userId)
       .where(sql`${t.status} = 'submitted'`),
+    index("transitaire_applications_user_id_idx").on(t.userId),
+    index("transitaire_applications_decided_by_user_id_idx").on(t.decidedByUserId),
   ],
 );
 
@@ -68,6 +70,9 @@ export const transitaireAccessDecisionsTable = pgTable(
       "transitaire_access_decisions_reason_required",
       sql`${t.decision} NOT IN ('suspended', 'revoked') OR length(trim(coalesce(${t.reason}, ''))) > 0`,
     ),
+    index("transitaire_access_decisions_user_id_idx").on(t.userId),
+    index("transitaire_access_decisions_application_id_idx").on(t.applicationId),
+    index("transitaire_access_decisions_decided_by_user_id_idx").on(t.decidedByUserId),
   ],
 );
 

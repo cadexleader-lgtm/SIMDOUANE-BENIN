@@ -1,4 +1,4 @@
-import { pgTable, text, integer, numeric, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, numeric, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -24,7 +24,7 @@ export const simulationsTable = pgTable("simulations", {
   calculatorVersion: text("calculator_version").notNull().default("historical"),
   regulatoryConfigVersion: text("regulatory_config_version"),
   createdAt:    timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [index("simulations_user_id_created_at_idx").on(t.userId, t.createdAt)]);
 
 export const insertSimulationSchema = createInsertSchema(simulationsTable).omit({ id: true, createdAt: true });
 export type InsertSimulation = z.infer<typeof insertSimulationSchema>;

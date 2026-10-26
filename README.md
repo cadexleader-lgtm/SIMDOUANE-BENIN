@@ -9,7 +9,8 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/MIGRATION.md`](docs/MIGRATION.md) — sortie de Replit, transfert des données ;
 > - [`docs/SPECIFICATION-MVP.md`](docs/SPECIFICATION-MVP.md) et [`docs/MVP-PHASE0.md`](docs/MVP-PHASE0.md) — MVP « dossier véhicule » ;
 > - [`docs/PHASE2-RAPPORT.md`](docs/PHASE2-RAPPORT.md) — comptes, rôles, accès transitaire ;
-> - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données.
+> - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
+> - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
 
 ## Fonctionnalités
 
@@ -80,9 +81,9 @@ pnpm db:seed        # crée les 3 formules (Gratuit, Standard, Pro) si absentes
    **Session pooler** (port 5432) et remplacez `[YOUR-PASSWORD]` par le mot de
    passe de la base. Mettez-la dans `DATABASE_URL` de votre `.env` — jamais
    dans le code ni sur GitHub.
-3. Recommandé : *Database Settings → SSL Configuration → Download certificate*,
+3. **Obligatoire** : *Database Settings → SSL Configuration → Download certificate*,
    enregistrez le fichier hors du dépôt et indiquez son chemin dans
-   `DATABASE_SSL_CA_FILE` (connexion TLS vérifiée).
+   `DATABASE_SSL_CA_FILE` (sans lui, la connexion n'est pas chiffrée).
 4. `pnpm db:migrate` puis `pnpm db:seed` (sauf si vous transférez les données
    de Replit : voir docs/MIGRATION.md §6, on ne seed pas dans ce cas).
 

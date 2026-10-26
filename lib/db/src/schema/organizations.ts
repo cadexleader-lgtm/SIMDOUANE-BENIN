@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, primaryKey, index } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 // Phase 2: an "entreprise" account owns exactly one organization holding its
@@ -15,7 +15,7 @@ export const organizationsTable = pgTable("organizations", {
   createdByUserId: text("created_by_user_id").notNull().references(() => usersTable.id),
   createdAt:       timestamp("created_at").notNull().defaultNow(),
   updatedAt:       timestamp("updated_at").notNull().defaultNow(),
-});
+}, (t) => [index("organizations_created_by_user_id_idx").on(t.createdByUserId)]);
 
 export const organizationMembersTable = pgTable(
   "organization_members",
@@ -25,7 +25,10 @@ export const organizationMembersTable = pgTable(
     role:           organizationMemberRoleEnum("role").notNull(),
     createdAt:      timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.organizationId, t.userId] })],
+  (t) => [
+    primaryKey({ columns: [t.organizationId, t.userId] }),
+    index("organization_members_user_id_idx").on(t.userId),
+  ],
 );
 
 export type Organization = typeof organizationsTable.$inferSelect;

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
 // Metadata of every private file. The bytes live in the private file store
@@ -17,6 +17,6 @@ export const storedFilesTable = pgTable("stored_files", {
   sha256:           text("sha256").notNull(),
   createdAt:        timestamp("created_at").notNull().defaultNow(),
   deletedAt:        timestamp("deleted_at"),
-});
+}, (t) => [index("stored_files_uploaded_by_user_id_idx").on(t.uploadedByUserId)]);
 
 export type StoredFile = typeof storedFilesTable.$inferSelect;
