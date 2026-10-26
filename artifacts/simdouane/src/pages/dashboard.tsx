@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@clerk/react";
-import { useGetSimulationStats, useGetUserSubscription, useGetSimulations, useCreateUpgradeRequest } from "@workspace/api-client-react";
+import { useGetSimulationStats, useGetUserSubscription, useGetSimulations } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { 
@@ -14,16 +14,17 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formatFCFA } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UpgradeRequestForm } from "@/components/upgrade-request-form";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [requestSent, setRequestSent] = useState(false);
+  const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const { user } = useUser();
   
   const { data: stats, isLoading: statsLoading } = useGetSimulationStats();
   const { data: subscription, isLoading: subLoading } = useGetUserSubscription();
   const { data: recentSims, isLoading: simsLoading } = useGetSimulations({ limit: 5 });
-  const createRequest = useCreateUpgradeRequest();
 
   const isLoading = statsLoading || subLoading || simsLoading;
 
@@ -161,20 +162,29 @@ export default function Dashboard() {
             {requestSent ? (
               <span className="px-4 py-2 rounded-xl bg-[#FCD116] text-[#003D24] text-xs font-bold">✓ Demande envoyée</span>
             ) : (
+              // The API requires the full Mobile Money details: open the same
+              // form as the simulator instead of sending an incomplete request.
               <button
-                onClick={() => createRequest.mutate(
-                  { data: { planWanted: "Standard" } },
-                  { onSuccess: () => setRequestSent(true) }
-                )}
-                disabled={createRequest.isPending}
+                onClick={() => setShowUpgradeForm(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FCD116] text-[#003D24] text-xs font-bold hover:bg-yellow-300 transition-colors disabled:opacity-60"
               >
                 <Crown className="h-3.5 w-3.5" />
-                {createRequest.isPending ? "…" : "Demander un upgrade"}
+                Demander un upgrade
               </button>
             )}
           </div>
         </div>
+      )}
+      {isOverLimit && showUpgradeForm && !requestSent && (
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="pt-6">
+            <UpgradeRequestForm
+              defaultPlan="Standard"
+              onSuccess={() => { setRequestSent(true); setShowUpgradeForm(false); }}
+              onCancel={() => setShowUpgradeForm(false)}
+            />
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
