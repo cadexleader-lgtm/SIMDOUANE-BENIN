@@ -177,9 +177,12 @@ cette fourchette. À réajuster après la phase 2.
 `pnpm test` ✅ 15/15 (10 calculateur, 5 API) ; `pnpm run build` (typecheck +
 builds) ✅, pour la première fois.
 
+**GitHub Actions** : premier passage réussi sur `74b0f39` (typecheck,
+migrations sur base vide, 10 + 5 tests — les tests d'API ont bien tourné sur
+la base PostgreSQL de la CI, pas ignorés —, compilation API et frontend).
+
 **Non vérifié** : affichage des écrans modifiés dans un navigateur connecté
-(il faut des clés Clerk) ; premier passage de GitHub Actions (visible après
-l'envoi).
+(il faut des clés Clerk).
 
 **GitHub Actions** (`.github/workflows/ci.yml`) : à chaque envoi et chaque
 demande de fusion : installation, typecheck, migrations sur base vide, tests
