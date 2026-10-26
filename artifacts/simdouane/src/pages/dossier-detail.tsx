@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CaseForm, caseToForm, fieldErrorsOf, formToPayload, type CaseFormState } from "@/components/cases/case-form";
+import { CaseForm, caseToForm, errorMessageOf, errorStatusOf, fieldErrorsOf, formToPayload, type CaseFormState } from "@/components/cases/case-form";
 import { CaseDisclaimer, CaseStatusBadge } from "@/components/cases/case-status-badge";
 import { queryClient } from "@/lib/queryClient";
 import { formatDateTime, useMvpTexts } from "@/lib/mvp-texts";
@@ -34,7 +34,7 @@ export default function DossierDetail() {
   const [, params] = useRoute("/dossiers/:id");
   const id = params?.id ?? "";
   const [, setLocation] = useLocation();
-  const { data: file, isLoading, isError } = useGetCase(id, { query: { queryKey: getGetCaseQueryKey(id), retry: false } });
+  const { data: file, isLoading, isError, error, refetch, isFetching } = useGetCase(id, { query: { queryKey: getGetCaseQueryKey(id), retry: false } });
   const { data: events } = useListCaseEvents(id, { query: { queryKey: getListCaseEventsQueryKey(id), enabled: !!file } });
   const update = useUpdateCase();
   const check = useCheckCase();
@@ -49,10 +49,16 @@ export default function DossierDetail() {
 
   if (isLoading) return <div className="max-w-3xl mx-auto"><Skeleton className="h-64 w-full rounded-2xl" /></div>;
   if (isError || !file) {
+    // 404 = not one of the user's files (or archived); anything else is a real
+    // failure (disabled account, API or database unreachable) and says so.
+    const notFound = !isError || errorStatusOf(error) === 404;
     return (
-      <div className="max-w-3xl mx-auto space-y-4 text-center py-16">
-        <p className="font-semibold text-slate-700">{t.cases.notFound}</p>
-        <Link href="/dossiers" className="text-[#003D24] underline">{t.cases.back}</Link>
+      <div className="max-w-3xl mx-auto space-y-4 text-center py-16" role={notFound ? undefined : "alert"}>
+        <p className="font-semibold text-slate-700">{notFound ? t.cases.notFound : errorMessageOf(error, t.cases.loadCaseError)}</p>
+        {!notFound && (
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="h-10">{t.cases.retry}</Button>
+        )}
+        <Link href="/dossiers" className="block text-[#003D24] underline">{t.cases.back}</Link>
       </div>
     );
   }
@@ -69,8 +75,13 @@ export default function DossierDetail() {
     );
   };
 
-  const runCheck = () =>
-    check.mutate({ id }, { onSuccess: (c) => { refresh(c); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+  const runCheck = () => {
+    setFieldErrors({});
+    check.mutate({ id }, {
+      onSuccess: (c) => { refresh(c); window.scrollTo({ top: 0, behavior: "smooth" }); },
+      onError: (err) => setFieldErrors({ _: errorMessageOf(err, t.common.errorGeneric) }),
+    });
+  };
 
   const doArchive = () =>
     archive.mutate({ id }, {
@@ -78,6 +89,7 @@ export default function DossierDetail() {
         queryClient.invalidateQueries({ queryKey: getListCasesQueryKey() });
         setLocation("/dossiers");
       },
+      onError: (err) => setFieldErrors({ _: errorMessageOf(err, t.common.errorGeneric) }),
     });
 
   const label = (key: string) => t.cases.fields[key] ?? key;

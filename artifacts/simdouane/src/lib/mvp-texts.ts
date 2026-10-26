@@ -162,6 +162,9 @@ const fr = {
       archived: "Dossier archivé",
     } as Record<string, string>,
     notFound: "Dossier introuvable.",
+    loadError: "Impossible de charger vos dossiers pour le moment.",
+    loadCaseError: "Impossible de charger ce dossier pour le moment.",
+    retry: "Réessayer",
     fixErrors: "Certaines informations sont à corriger.",
   },
 } as const;

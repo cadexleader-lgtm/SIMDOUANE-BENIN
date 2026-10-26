@@ -199,6 +199,16 @@ export function CaseForm({
   );
 }
 
+/** HTTP status of an API error (0 when the request never reached the API). */
+export function errorStatusOf(err: unknown): number {
+  return (err as { status?: number } | null)?.status ?? 0;
+}
+
+/** The API's French message when it sent one (e.g. disabled account), else the fallback. */
+export function errorMessageOf(err: unknown, fallback: string): string {
+  return (err as { data?: { message?: string } } | null)?.data?.message ?? fallback;
+}
+
 export function fieldErrorsOf(err: unknown): Record<string, string> {
   const data = (err as { data?: { fieldErrors?: Record<string, string>; message?: string } } | null)?.data;
   if (data?.fieldErrors) return data.fieldErrors;

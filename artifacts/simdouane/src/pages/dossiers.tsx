@@ -4,11 +4,12 @@ import { useListCases } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CaseDisclaimer, CaseStatusBadge } from "@/components/cases/case-status-badge";
+import { errorMessageOf } from "@/components/cases/case-form";
 import { useMvpTexts } from "@/lib/mvp-texts";
 
 export default function Dossiers() {
   const t = useMvpTexts();
-  const { data: cases, isLoading } = useListCases();
+  const { data: cases, isLoading, isError, error, refetch, isFetching } = useListCases();
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-10">
@@ -24,6 +25,13 @@ export default function Dossiers() {
       <CaseDisclaimer />
 
       {isLoading && <Skeleton className="h-24 w-full rounded-2xl" />}
+
+      {isError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 space-y-3" role="alert">
+          <p>{errorMessageOf(error, t.cases.loadError)}</p>
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="h-10">{t.cases.retry}</Button>
+        </div>
+      )}
 
       {cases?.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
