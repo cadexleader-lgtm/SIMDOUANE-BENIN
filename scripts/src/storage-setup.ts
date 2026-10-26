@@ -6,6 +6,7 @@
  *
  * Never makes a bucket public; stops if an existing bucket is public.
  */
+import "@workspace/db/load-env";
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.SUPABASE_URL;

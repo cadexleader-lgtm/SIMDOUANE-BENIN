@@ -7,6 +7,7 @@
  *
  * Read-only: it only runs SELECT statements.
  */
+import "@workspace/db/load-env";
 import { pool } from "@workspace/db";
 
 // Child tables after their parents; same order as the restore procedure.

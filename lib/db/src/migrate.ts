@@ -3,6 +3,7 @@
  * Already applied migrations are recorded in drizzle.__drizzle_migrations
  * and skipped, so the command can be re-run safely.
  */
+import "./load-env";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { drizzle } from "drizzle-orm/node-postgres";

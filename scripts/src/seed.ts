@@ -1,3 +1,4 @@
+import "@workspace/db/load-env";
 import { db } from "@workspace/db";
 import { subscriptionPlansTable } from "@workspace/db";
 
