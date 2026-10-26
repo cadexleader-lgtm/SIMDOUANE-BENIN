@@ -72,3 +72,6 @@ Ce que vérifient les 22 tests de la phase 2 (contre la vraie base, Clerk simul�
   conservation à décider (`SECURITE-DONNEES.md` §5).
 - `pg_dump` ne sauvegarde pas les fichiers du stockage Supabase : sauvegarde
   séparée à prévoir en production.
+- Un compte **révoqué** qui refait une demande puis est **refusé** revient au
+  statut « aucun accès » (et non « révoqué ») ; les deux décisions restent
+  dans l'historique. À changer si vous préférez conserver « révoqué ».
