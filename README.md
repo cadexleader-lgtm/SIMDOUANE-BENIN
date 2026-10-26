@@ -11,6 +11,7 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/PHASE2-RAPPORT.md`](docs/PHASE2-RAPPORT.md) — comptes, rôles, accès transitaire ;
 > - [`docs/PHASE3-RAPPORT.md`](docs/PHASE3-RAPPORT.md) — dossiers véhicules ;
 > - [`docs/RECETTE-PHASE3.md`](docs/RECETTE-PHASE3.md) — recette avec le vrai Clerk et Supabase, deux comptes de test ;
+> - [`docs/PHASE4-CONCEPTION.md`](docs/PHASE4-CONCEPTION.md) — checklist provisoire et sources, conception des documents (avant développement) ;
 > - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
 > - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
 
