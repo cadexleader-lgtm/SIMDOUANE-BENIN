@@ -15,6 +15,9 @@ import Profil from "@/pages/profil";
 import Admin from "@/pages/admin";
 import Accueil from "@/pages/accueil";
 import Onboarding from "@/pages/onboarding";
+import Dossiers from "@/pages/dossiers";
+import DossierNouveau from "@/pages/dossier-nouveau";
+import DossierDetail from "@/pages/dossier-detail";
 
 import { useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
@@ -254,6 +257,9 @@ function ClerkProviderWithRoutes() {
               <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
               <Route path="/abonnement" component={() => <ProtectedRoute component={Abonnement} />} />
               <Route path="/profil" component={() => <ProtectedRoute component={Profil} />} />
+              <Route path="/dossiers" component={() => <ProtectedRoute component={Dossiers} />} />
+              <Route path="/dossiers/nouveau" component={() => <ProtectedRoute component={DossierNouveau} />} />
+              <Route path="/dossiers/:id" component={() => <ProtectedRoute component={DossierDetail} />} />
               <Route path="/admin" component={() => <ProtectedRoute component={() => <AdminRoute component={Admin} />} />} />
               <Route component={NotFound} />
             </Switch>

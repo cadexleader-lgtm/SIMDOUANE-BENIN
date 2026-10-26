@@ -3,6 +3,7 @@ import {
   Calculator, BookOpen, History as HistoryIcon, Info, Phone, Mail,
   MessageCircle, FileText, LayoutDashboard, CreditCard, UserCircle,
   LogOut, Shield, LogIn, ChevronRight, Globe,
+  FolderOpen,
 } from "lucide-react";
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -235,6 +236,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const accountNav = [
     { path: "/dashboard",  icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/dossiers",   icon: FolderOpen,       label: lang === "fr" ? "Mes dossiers" : "My files" },
     { path: "/abonnement", icon: CreditCard,       label: lang === "fr" ? "Abonnement" : "Subscription" },
     { path: "/profil",     icon: UserCircle,       label: lang === "fr" ? "Mon profil" : "My profile" },
     ...(isAdmin ? [{ path: "/admin", icon: Shield, label: "Administration" }] : []),
@@ -250,13 +252,16 @@ export function Layout({ children }: { children: ReactNode }) {
     "/dashboard":  "Dashboard",
     "/abonnement": lang === "fr" ? "Mon abonnement" : "My subscription",
     "/profil":     lang === "fr" ? "Mon profil" : "My profile",
+    "/dossiers":   lang === "fr" ? "Mes dossiers" : "My files",
+    "/dossiers/nouveau": lang === "fr" ? "Nouveau dossier" : "New file",
     "/admin":      "Administration",
   };
 
   const isActive = (path: string) =>
-    location === path || (location === "/" && path === "/simulateur");
+    location === path || location.startsWith(`${path}/`) || (location === "/" && path === "/simulateur");
 
-  const pageTitle = PAGE_TITLES[location] ?? "SimDouane";
+  const pageTitle =
+    PAGE_TITLES[location] ?? (location.startsWith("/dossiers/") ? (lang === "fr" ? "Dossier" : "File") : "SimDouane");
 
   const mobileNavItems = [
     { path: "/simulateur", icon: Calculator,  label: t.nav.simulation.split(" ")[0] },
@@ -567,6 +572,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <div className="px-3 py-2">
               {[
                 { icon: LayoutDashboard, label: "Dashboard",   path: "/dashboard" },
+                { icon: FolderOpen,      label: "Mes dossiers", path: "/dossiers" },
                 { icon: UserCircle,      label: "Mon profil",  path: "/profil" },
                 { icon: CreditCard,      label: "Abonnement",  path: "/abonnement" },
                 ...(isAdmin ? [{ icon: Shield, label: "Administration", path: "/admin" }] : []),
