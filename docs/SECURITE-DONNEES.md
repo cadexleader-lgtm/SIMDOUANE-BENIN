@@ -5,7 +5,7 @@
 > être vérifiées par un juriste **avant d'accepter le moindre document réel**
 > (voir §8). Jusque-là : données et documents **fictifs** uniquement.
 
-État au 2026-10-26 (fin de la phase 2), branche `mvp/dossiers`.
+État au 2026-10-26 (fin de la phase 3), branche `mvp/dossiers`.
 
 ## 1. Données traitées
 
@@ -19,6 +19,8 @@
 | Décisions sur les droits transitaire (auteur, date, motif) | `transitaire_access_decisions` | Administrateur |
 | Journal de sécurité (qui, quoi, quand, sur quoi) | `audit_logs` — **aucune adresse IP enregistrée** | Système |
 | Simulations sauvegardées | `simulations` | Utilisateur |
+| Dossiers véhicules : véhicule (marque, modèle, année, châssis), provenance, dates d'expédition et d'arrivée, référence de transport, notes, formalités et blocages déclarés | `vehicles`, `clearance_cases` | Utilisateur |
+| Historique des dossiers (qui, quoi, quand, ancien/nouveau statut) | `case_events` (non modifiable) | Système |
 | Demandes d'abonnement : téléphone Mobile Money, référence de transaction, montant | `upgrade_requests` | Utilisateur |
 | Historique local des simulations | `localStorage` du navigateur (jamais envoyé) | Utilisateur |
 
@@ -39,7 +41,8 @@ Trois rôles dans le MVP. **Toutes les règles sont appliquées par l'API**
 | Demander l'accès transitaire, déposer ses justificatifs | ❌ | ✅ | — | ✅ (mais ne peut pas se l'accorder) |
 | Fonctions réservées aux transitaires (`/api/transitaire/*`) | ❌ | ❌ | ✅ | ❌ s'il n'est pas lui-même transitaire actif |
 | Consulter un justificatif | ❌ | Les siens | Les siens | **Seulement** ceux d'une demande d'accès, chaque consultation journalisée |
-| Documents des futurs dossiers véhicules | ❌ | (phase 3+) | (phase 5, dossiers partagés) | **Aucun accès dans le MVP** |
+| Créer, voir, modifier, vérifier, archiver un dossier véhicule | ❌ | **Les siens uniquement** | Les siens (dossiers partagés : phase 5) | **Aucun accès** (testé) |
+| Documents des dossiers véhicules | ❌ | (phase 4, pas encore de dépôt) | (phase 5, dossiers partagés) | **Aucun accès dans le MVP** |
 | Approuver / refuser / suspendre / rétablir / révoquer | ❌ | ❌ | ❌ | ✅, jamais pour lui-même |
 
 Règles d'attribution :
@@ -50,8 +53,13 @@ Règles d'attribution :
 - La validation SimDouane d'un transitaire n'est **pas** une certification
   officielle de son agrément ; c'est affiché à l'utilisateur et à l'administrateur.
 
+Un dossier d'autrui, archivé ou inexistant reçoit la même réponse (404), pour
+ne pas révéler son existence. Un compte désactivé par l'administrateur est
+refusé (403) sur les dossiers, l'accès transitaire et les justificatifs.
+
 Code : `middlewares/requireAuth.ts` (`requireUser`, `requireActiveTransitaire`,
-`requireAdmin`), `routes/transitaire-access.ts`, `routes/admin-transitaires.ts`.
+`requireAdmin`), `routes/transitaire-access.ts`, `routes/admin-transitaires.ts`,
+`routes/cases.ts` et `lib/cases/access.ts` (décision d'accès unique aux dossiers).
 Tests : `artifacts/api-server/test/*.test.ts`.
 
 ## 3. Mesures de sécurité en place

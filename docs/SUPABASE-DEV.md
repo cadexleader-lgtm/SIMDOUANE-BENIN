@@ -14,8 +14,8 @@ uniquement.** Ce fichier ne contient aucun secret.
 
 ## Ce qui a été appliqué
 
-1. Migrations `0000` à `0004` du dépôt (`lib/db/migrations`), contenu identique
-   aux fichiers.
+1. Migrations `0000` à `0006` du dépôt (`lib/db/migrations`), contenu identique
+   aux fichiers (`0005`/`0006` : dossiers véhicules, phase 3).
 2. Registre Drizzle `drizzle.__drizzle_migrations` rempli avec les empreintes
    SHA-256 des fichiers : `pnpm db:migrate` reconnaît ces migrations et
    n'appliquera que les suivantes.
@@ -26,9 +26,10 @@ uniquement.** Ce fichier ne contient aucun secret.
 
 | Contrôle | Résultat |
 | --- | --- |
-| Conseiller sécurité Supabase | 1 avertissement (`search_path` de la fonction des historiques) **corrigé par la migration 0004** ; restent 13 notes « RLS sans règle », **voulues** (accès public fermé) |
+| Conseiller sécurité Supabase | 1 avertissement (`search_path` de la fonction des historiques) **corrigé par la migration 0004** ; restent les notes « RLS sans règle », **voulues** (accès public fermé) |
 | Conseiller performance | 12 clés étrangères sans index **corrigées** (migration 0004) ; restent des notes « index pas encore utilisé », normales sur une base vide |
-| Droits des rôles publics `anon` / `authenticated` | 13 tables, toutes avec RLS, **aucune accessible** ; schéma `drizzle` inaccessible ; lecture de `users` sous le rôle `anon` → `permission denied` |
+| Droits des rôles publics `anon` / `authenticated` | 16 tables, toutes avec RLS, **aucune accessible** (ni la séquence des références de dossiers) ; schéma `drizzle` inaccessible ; lecture de `users` sous le rôle `anon` → `permission denied` |
+| Après 0005/0006 (phase 3) | Conseiller sécurité : aucun avertissement, 16 notes « RLS sans règle » voulues ; conseiller performance : uniquement « index pas encore utilisé » ; déclencheur d'historique des dossiers présent |
 | Stockage | Bucket privé, RLS actif sur `storage.objects`, aucune règle d'accès |
 
 Non vérifié : un appel réel à l'API publique de Supabase depuis l'extérieur

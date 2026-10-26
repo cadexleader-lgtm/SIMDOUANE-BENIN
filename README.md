@@ -9,6 +9,7 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/MIGRATION.md`](docs/MIGRATION.md) — sortie de Replit, transfert des données ;
 > - [`docs/SPECIFICATION-MVP.md`](docs/SPECIFICATION-MVP.md) et [`docs/MVP-PHASE0.md`](docs/MVP-PHASE0.md) — MVP « dossier véhicule » ;
 > - [`docs/PHASE2-RAPPORT.md`](docs/PHASE2-RAPPORT.md) — comptes, rôles, accès transitaire ;
+> - [`docs/PHASE3-RAPPORT.md`](docs/PHASE3-RAPPORT.md) — dossiers véhicules ;
 > - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
 > - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
 
@@ -19,6 +20,10 @@ liquidation douanière, ni une décision de l'administration.
 - Historique local (`localStorage`) et, avec un compte, historique sauvegardé côté serveur.
 - Comptes, profil et onboarding via Clerk ; type de compte particulier ou entreprise.
 - Accès transitaire sur demande, avec justificatifs privés, activé par l'administrateur.
+- Dossiers véhicules (« Mes dossiers ») : véhicule pas encore arrivé ou déjà arrivé
+  au port de Cotonou, statut brouillon / à compléter / prêt pour la préparation
+  administrative, historique. Aide à la préparation uniquement : rien n'est
+  déposé auprès des Douanes, du GUCE ou de Bénin Control.
 - Formules d'abonnement (Gratuit : 3 simulations/mois, limite appliquée par l'API).
 - Demandes d'abonnement Mobile Money traitées à la main par l'administrateur.
 - Tableau de bord d'administration (utilisateurs, abonnements, simulations).

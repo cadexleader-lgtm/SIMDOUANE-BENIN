@@ -37,7 +37,7 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
     (req as AuthedRequest).clerkUserId = auth.userId;
     const user = await getOrCreateUser(auth.userId);
     // Accounts disabled or suspended by an administrator cannot use the
-    // features built on requireUser (files, transitaire access).
+    // features built on requireUser (files, transitaire access, vehicle files).
     if (user.status !== "active") {
       res.status(403).json({ error: "ACCOUNT_DISABLED", message: "Ce compte est désactivé. Contactez l'administrateur." });
       return;

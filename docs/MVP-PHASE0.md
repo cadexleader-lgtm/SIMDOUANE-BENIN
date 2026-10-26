@@ -9,7 +9,11 @@ fusionné dans `main`. Spécification : [`SPECIFICATION-MVP.md`](SPECIFICATION-M
 | --- | --- |
 | 0 — Audit et sauvegarde | ✅ Audit complet ([`MIGRATION.md`](MIGRATION.md)) + ce document |
 | 1 — Indépendance technique | ✅ en grande partie : l'application s'installe, se compile, se teste et démarre hors de Replit ; migrations SQL versionnées ; transfert de données répété avec succès sur données fictives |
-| 1 — reste | ⏳ choix du fournisseur de comptes (§4, décision 1), transfert des vraies données Replit (action du propriétaire), projet Supabase réel |
+| 1 — reste | ⏳ transfert des vraies données Replit (action du propriétaire) ; Clerk conservé (décision 1) ; projet Supabase de développement créé ([`SUPABASE-DEV.md`](SUPABASE-DEV.md)) |
+| 1 bis — TypeScript et intégration continue | ✅ |
+| 2 — Comptes, rôles, accès transitaire | ✅ ([`PHASE2-RAPPORT.md`](PHASE2-RAPPORT.md)) |
+| 3 — Dossiers véhicules | ✅ en attente de votre validation ([`PHASE3-RAPPORT.md`](PHASE3-RAPPORT.md)) |
+| 4 — Checklist et documents | ⏸ pas commencée (attend votre accord) |
 
 ## 2. Ce que l'existant apporte au MVP (constats vérifiés dans le code)
 
@@ -121,8 +125,9 @@ Règle en base : un événement « officiel confirmé » sans preuve est refusé
 
 ## 7. Liste de non-régression (à rejouer à chaque phase)
 
-Automatique : `pnpm test` (10 tests calculateur, 5 tests API), builds API et
-frontend, `pnpm db:migrate` sur base vide.
+Automatique : `pnpm test` (69 tests à la fin de la phase 3 : 17 interface dont
+10 calculateur, 52 API), builds API et frontend, `pnpm db:migrate` sur base
+vide — le tout rejoué par GitHub Actions à chaque envoi.
 
 Manuel, dans le navigateur :
 - Accueil `/accueil`, Simulateur `/simulateur` → Résultats `/resultats` : mêmes
@@ -135,6 +140,8 @@ Manuel, dans le navigateur :
 - Quota gratuit (3 simulations/mois).
 - Administration `/admin` : utilisateurs, abonnements, simulations, demandes.
 - Pages Guide, Procédure, À propos ; bascule FR/EN ; installation PWA.
+- Mes dossiers `/dossiers` : création (pas encore arrivé / déjà arrivé), fiche,
+  vérification, archivage ; un 2e compte ne voit pas le dossier.
 
 ## 8. Plan d'exécution
 
