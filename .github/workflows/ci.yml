@@ -1,0 +1,66 @@
+# Contrôles automatiques à chaque envoi sur GitHub : installation, vérification
+# TypeScript, tests (calculateur + API sur une base PostgreSQL jetable) et
+# compilation. Aucun secret n'est nécessaire.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: simdouane_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d simdouane_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Base jetable du conteneur ci-dessus, vidée par les tests d'API.
+      TEST_DATABASE_URL: postgresql://ci:ci@localhost:5432/simdouane_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Vérification TypeScript
+        run: pnpm run typecheck
+
+      - name: Migrations sur base vide
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Compilation API
+        run: pnpm --filter @workspace/api-server run build
+
+      - name: Compilation frontend
+        run: pnpm --filter @workspace/simdouane run build
