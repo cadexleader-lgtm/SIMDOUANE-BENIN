@@ -36,6 +36,20 @@
       "when": 1793002119082,
       "tag": "0004_foreign_key_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793002824846,
+      "tag": "0005_clearance_cases",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793002825990,
+      "tag": "0006_protect_clearance_cases",
+      "breakpoints": true
     }
   ]
 }
