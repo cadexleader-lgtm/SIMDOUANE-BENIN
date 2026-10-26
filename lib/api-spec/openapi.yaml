@@ -18,6 +18,8 @@ tags:
     description: User profile management
   - name: admin
     description: Admin dashboard (super admin only)
+  - name: transitaire
+    description: Transitaire access requests and transitaire-only features
 
 paths:
   /healthz:
@@ -462,6 +464,214 @@ paths:
         "403":
           description: Forbidden
 
+  # ── Accès transitaire (demande, justificatifs) ─────────────────────────────
+  /transitaire-access:
+    get:
+      operationId: getTransitaireAccess
+      tags: [transitaire]
+      summary: Current user's transitaire status and applications
+      responses:
+        "200":
+          description: Status and applications
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitaireAccess" }
+        "401": { description: Unauthorized }
+
+  /transitaire-access/applications:
+    post:
+      operationId: createTransitaireApplication
+      tags: [transitaire]
+      summary: Request transitaire access (declared agrément number)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateTransitaireApplicationInput" }
+      responses:
+        "201":
+          description: Application created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitaireApplication" }
+        "400": { description: Invalid input }
+        "409": { description: "Already active, suspended or an application is pending" }
+
+  /transitaire-access/applications/{id}/documents:
+    post:
+      operationId: uploadTransitaireDocument
+      tags: [transitaire]
+      summary: Attach a supporting document (PDF, JPEG or PNG, raw bytes)
+      description: The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Document stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StoredDocument" }
+        "404": { description: Application not found }
+        "409": { description: Application already decided or document limit reached }
+        "413": { description: File too large }
+        "415": { description: Unsupported file type }
+
+  /transitaire-access/applications/{id}/documents/{fileId}/download-link:
+    post:
+      operationId: createTransitaireDocumentLink
+      tags: [transitaire]
+      summary: Short-lived download link for one of the user's own documents (logged)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: fileId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Temporary link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DownloadLink" }
+        "404": { description: Not found }
+
+  /transitaire/space:
+    get:
+      operationId: getTransitaireSpace
+      tags: [transitaire]
+      summary: Entry point of the transitaire space (active transitaires only)
+      responses:
+        "200":
+          description: Transitaire space
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransitaireSpace" }
+        "403": { description: Transitaire access not active }
+
+  /admin/transitaire-applications:
+    get:
+      operationId: listAdminTransitaireApplications
+      tags: [admin]
+      summary: Transitaire access applications
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [submitted, approved, rejected, all] } }
+      responses:
+        "200":
+          description: Applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminTransitaireApplication" }
+
+  /admin/transitaire-applications/{id}:
+    get:
+      operationId: getAdminTransitaireApplication
+      tags: [admin]
+      summary: Application detail with documents and decision history
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTransitaireApplicationDetail" }
+        "404": { description: Not found }
+
+  /admin/transitaire-applications/{id}/documents/{fileId}/download-link:
+    post:
+      operationId: createAdminTransitaireDocumentLink
+      tags: [admin]
+      summary: Short-lived link to a supporting document (every call is logged)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: fileId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Temporary link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DownloadLink" }
+        "404": { description: Not found }
+
+  /admin/transitaire-applications/{id}/decision:
+    post:
+      operationId: decideTransitaireApplication
+      tags: [admin]
+      summary: Approve or reject an application
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransitaireDecisionInput" }
+      responses:
+        "200":
+          description: Decision recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTransitaireApplicationDetail" }
+        "403": { description: Self-decision forbidden }
+        "409": { description: Already decided }
+        "422": { description: Approval requires at least one supporting document }
+
+  /admin/transitaires:
+    get:
+      operationId: listAdminTransitaires
+      tags: [admin]
+      summary: Accounts with transitaire rights (active, suspended, revoked)
+      responses:
+        "200":
+          description: Accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminTransitaireUser" }
+
+  /admin/users/{id}/transitaire-status:
+    post:
+      operationId: changeTransitaireStatus
+      tags: [admin]
+      summary: Suspend, reinstate or revoke transitaire rights
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransitaireStatusChangeInput" }
+      responses:
+        "200":
+          description: New status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTransitaireUser" }
+        "400": { description: Reason required }
+        "409": { description: Transition not allowed from the current status }
+
+  /admin/audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [admin]
+      summary: Security journal (most recent first)
+      parameters:
+        - { name: targetType, in: query, schema: { type: string } }
+        - { name: targetId, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        "200":
+          description: Entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AuditLogEntry" }
+
 components:
   schemas:
     HealthStatus:
@@ -604,15 +814,174 @@ components:
         onboarded: { type: boolean }
         status:    { type: string, enum: [active, disabled, suspended] }
         createdAt: { type: string, format: date-time }
+        accountKind: { type: string, enum: [particulier, entreprise] }
+        organization:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/Organization" }]
+        transitaireStatus: { $ref: "#/components/schemas/TransitaireStatus" }
 
     UpdateProfileInput:
       type: object
       properties:
-        fullName:  { type: string }
-        phone:     { type: string }
-        whatsapp:  { type: string }
-        poste:     { type: string }
+        fullName:  { type: string, nullable: true }
+        phone:     { type: string, nullable: true }
+        whatsapp:  { type: string, nullable: true }
+        poste:     { type: string, nullable: true }
         onboarded: { type: boolean }
+        accountKind: { type: string, enum: [particulier, entreprise] }
+        legalName: { type: string, nullable: true }
+        ifu:       { type: string, nullable: true }
+
+    Organization:
+      type: object
+      required: [id, legalName]
+      properties:
+        id:        { type: string }
+        legalName: { type: string }
+        ifu:       { type: string, nullable: true }
+
+    TransitaireStatus:
+      type: string
+      enum: [none, pending, active, suspended, revoked]
+
+    StoredDocument:
+      type: object
+      required: [id, originalName, contentType, sizeBytes, createdAt]
+      properties:
+        id:           { type: string }
+        originalName: { type: string }
+        contentType:  { type: string }
+        sizeBytes:    { type: integer }
+        createdAt:    { type: string, format: date-time }
+
+    TransitaireApplication:
+      type: object
+      required: [id, agrementNumber, status, createdAt, documents]
+      properties:
+        id:             { type: string }
+        agrementNumber: { type: string }
+        message:        { type: string, nullable: true }
+        status:         { type: string, enum: [submitted, approved, rejected] }
+        createdAt:      { type: string, format: date-time }
+        decidedAt:      { type: string, format: date-time, nullable: true }
+        decisionReason: { type: string, nullable: true }
+        documents:
+          type: array
+          items: { $ref: "#/components/schemas/StoredDocument" }
+
+    TransitaireAccess:
+      type: object
+      required: [status, canApply, applications]
+      properties:
+        status:          { $ref: "#/components/schemas/TransitaireStatus" }
+        statusChangedAt: { type: string, format: date-time, nullable: true }
+        canApply:        { type: boolean }
+        applications:
+          type: array
+          items: { $ref: "#/components/schemas/TransitaireApplication" }
+
+    CreateTransitaireApplicationInput:
+      type: object
+      required: [agrementNumber]
+      properties:
+        agrementNumber: { type: string, minLength: 2, maxLength: 60 }
+        message:        { type: string, maxLength: 1000 }
+
+    DownloadLink:
+      type: object
+      required: [url, expiresInSeconds]
+      properties:
+        url:              { type: string }
+        expiresInSeconds: { type: integer }
+
+    TransitaireSpace:
+      type: object
+      required: [status]
+      properties:
+        status:      { $ref: "#/components/schemas/TransitaireStatus" }
+        activeSince: { type: string, format: date-time, nullable: true }
+
+    TransitaireApplicant:
+      type: object
+      required: [id, fullName, email, accountKind, transitaireStatus]
+      properties:
+        id:                { type: string }
+        fullName:          { type: string }
+        email:             { type: string }
+        poste:             { type: string, nullable: true }
+        accountKind:       { type: string, enum: [particulier, entreprise] }
+        transitaireStatus: { $ref: "#/components/schemas/TransitaireStatus" }
+
+    AdminTransitaireApplication:
+      type: object
+      required: [id, agrementNumber, status, createdAt, documentsCount, user]
+      properties:
+        id:             { type: string }
+        agrementNumber: { type: string }
+        status:         { type: string, enum: [submitted, approved, rejected] }
+        createdAt:      { type: string, format: date-time }
+        decidedAt:      { type: string, format: date-time, nullable: true }
+        documentsCount: { type: integer }
+        user:           { $ref: "#/components/schemas/TransitaireApplicant" }
+
+    TransitaireDecisionRecord:
+      type: object
+      required: [id, decision, createdAt]
+      properties:
+        id:            { type: string }
+        decision:      { type: string, enum: [approved, rejected, suspended, reinstated, revoked] }
+        reason:        { type: string, nullable: true }
+        decidedByName: { type: string, nullable: true }
+        applicationId: { type: string, nullable: true }
+        createdAt:     { type: string, format: date-time }
+
+    AdminTransitaireApplicationDetail:
+      type: object
+      required: [application, user, decisions]
+      properties:
+        application: { $ref: "#/components/schemas/TransitaireApplication" }
+        user:        { $ref: "#/components/schemas/TransitaireApplicant" }
+        decisions:
+          type: array
+          items: { $ref: "#/components/schemas/TransitaireDecisionRecord" }
+
+    TransitaireDecisionInput:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approve, reject] }
+        reason:   { type: string, maxLength: 1000 }
+
+    TransitaireStatusChangeInput:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [suspend, reinstate, revoke] }
+        reason: { type: string, maxLength: 1000 }
+
+    AdminTransitaireUser:
+      type: object
+      required: [id, fullName, email, transitaireStatus]
+      properties:
+        id:                         { type: string }
+        fullName:                   { type: string }
+        email:                      { type: string }
+        transitaireStatus:          { $ref: "#/components/schemas/TransitaireStatus" }
+        transitaireStatusChangedAt: { type: string, format: date-time, nullable: true }
+
+    AuditLogEntry:
+      type: object
+      required: [id, actorRole, action, createdAt]
+      properties:
+        id:          { type: string }
+        actorUserId: { type: string, nullable: true }
+        actorName:   { type: string, nullable: true }
+        actorRole:   { type: string }
+        action:      { type: string }
+        targetType:  { type: string, nullable: true }
+        targetId:    { type: string, nullable: true }
+        details:     { type: object, nullable: true, additionalProperties: true }
+        createdAt:   { type: string, format: date-time }
 
     # ── Admin schemas ─────────────────────────────────────────────────────────
     AdminDashboard:

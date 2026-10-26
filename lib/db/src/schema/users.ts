@@ -1,19 +1,39 @@
-import { pgTable, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const userStatusEnum = pgEnum("user_status", ["active", "disabled", "suspended"]);
 
+// Particulier or company importer. Company details live in `organizations`
+// so that multi-member organizations can be added later without migration.
+export const accountKindEnum = pgEnum("account_kind", ["particulier", "entreprise"]);
+
+// Only "active" grants transitaire permissions. It changes exclusively through
+// an administrator decision (see transitaire_access_decisions), never from the
+// self-declared `poste` field.
+export const transitaireStatusEnum = pgEnum("transitaire_status", [
+  "none",
+  "pending",
+  "active",
+  "suspended",
+  "revoked",
+]);
+
 export const usersTable = pgTable("users", {
   id:        text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   clerkId:   text("clerk_id").notNull().unique(),
   email:     text("email").notNull().unique(),
+  // Whether Clerk reported `email` as verified. Required for admin rights.
+  emailVerified: boolean("email_verified").notNull().default(false),
   fullName:  text("full_name").notNull(),
   phone:     text("phone"),
   whatsapp:  text("whatsapp"),
-  poste:     text("poste"),   // e.g. Transitaire, Importateur, Commissionnaire en douane
+  poste:     text("poste"),   // e.g. Transitaire, Importateur, Commissionnaire en douane (declarative only)
   onboarded: text("onboarded").notNull().default("false"), // "true" after onboarding form
   status:    userStatusEnum("status").notNull().default("active"),
+  accountKind: accountKindEnum("account_kind").notNull().default("particulier"),
+  transitaireStatus: transitaireStatusEnum("transitaire_status").notNull().default("none"),
+  transitaireStatusChangedAt: timestamp("transitaire_status_changed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -5,11 +5,15 @@
  * SimDouane SaaS API specification
  * OpenAPI spec version: 0.2.0
  */
+import type { UpdateProfileInputAccountKind } from './updateProfileInputAccountKind';
 
 export interface UpdateProfileInput {
-  fullName?: string;
-  phone?: string;
-  whatsapp?: string;
-  poste?: string;
+  fullName?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  poste?: string | null;
   onboarded?: boolean;
+  accountKind?: UpdateProfileInputAccountKind;
+  legalName?: string | null;
+  ifu?: string | null;
 }

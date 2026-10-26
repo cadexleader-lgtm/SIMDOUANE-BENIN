@@ -1,8 +1,8 @@
 /**
  * Integration test against a real PostgreSQL database (schema from the
- * versioned migrations). Clerk is replaced by a stub: the caller identity is
- * taken from the `x-test-user` header, so the test checks OUR authorization
- * code (ownership filters, admin gate), not Clerk itself.
+ * versioned migrations). Clerk is replaced by a stub (test/clerkMock.ts): the
+ * caller identity is taken from the `x-test-user` header, so the test checks
+ * OUR authorization code (ownership filters, admin gate), not Clerk itself.
  *
  *   TEST_DATABASE_URL=postgresql://... pnpm --filter @workspace/api-server test
  *
@@ -10,27 +10,9 @@
  * database holding real data. Skipped when TEST_DATABASE_URL is not set.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AddressInfo } from "node:net";
-import type { Server } from "node:http";
+import { startTestApp, TEST_DB } from "./harness";
 
-const TEST_DB = process.env.TEST_DATABASE_URL;
-
-vi.mock("@clerk/express", () => ({
-  clerkMiddleware: () => (_req: unknown, _res: unknown, next: () => void) => next(),
-  getAuth: (req: { headers: Record<string, string | undefined> }) => ({
-    userId: req.headers["x-test-user"] ?? null,
-  }),
-  createClerkClient: () => ({
-    users: {
-      getUser: async (id: string) => ({
-        emailAddresses: [{ emailAddress: `${id}@test.local` }],
-        firstName: id,
-        lastName: null,
-        username: null,
-      }),
-    },
-  }),
-}));
+vi.mock("@clerk/express", async () => (await import("./clerkMock")).default);
 
 const simulation = {
   marque: "Toyota",
@@ -47,44 +29,19 @@ const simulation = {
 };
 
 describe.skipIf(!TEST_DB)("isolation des données entre utilisateurs", () => {
-  let server: Server;
-  let baseUrl: string;
-  let pool: typeof import("@workspace/db").pool;
-
-  const call = (user: string | null, method: string, path: string, body?: unknown) =>
-    fetch(`${baseUrl}/api${path}`, {
-      method,
-      headers: {
-        "content-type": "application/json",
-        ...(user ? { "x-test-user": user } : {}),
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+  let app: Awaited<ReturnType<typeof startTestApp>>;
+  const call = (...args: Parameters<typeof app.call>) => app.call(...args);
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = TEST_DB;
-    process.env.ADMIN_EMAILS = "admin@test.local";
-    process.env.LOG_LEVEL ??= "silent";
-    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
-    const { drizzle } = await import("drizzle-orm/node-postgres");
-    ({ pool } = await import("@workspace/db"));
-    await migrate(drizzle(pool), {
-      migrationsFolder: new URL("../../../lib/db/migrations", import.meta.url).pathname,
-    });
-    const { default: app } = await import("../src/app");
-    server = app.listen(0);
-    baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    app = await startTestApp();
   });
 
   beforeEach(async () => {
-    await pool.query(
-      "TRUNCATE admin_logs, upgrade_requests, simulations, subscriptions, subscription_plans, users CASCADE",
-    );
+    await app.reset();
   });
 
   afterAll(async () => {
-    server?.close();
-    await pool?.end();
+    await app?.close();
   });
 
   it("refuse les appels sans session", async () => {

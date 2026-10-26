@@ -5,6 +5,9 @@ import { plansRouter, subscriptionRouter } from "./subscriptions";
 import profileRouter from "./profile";
 import adminRouter from "./admin";
 import upgradeRequestRouter from "./upgrade-request";
+import adminTransitairesRouter from "./admin-transitaires";
+import filesRouter from "./files";
+import { transitaireAccessRouter, transitaireSpaceRouter } from "./transitaire-access";
 
 const router: IRouter = Router();
 
@@ -14,6 +17,10 @@ router.use("/subscription-plans", plansRouter);
 router.use("/subscription", subscriptionRouter);
 router.use("/profile", profileRouter);
 router.use("/admin", adminRouter);
+router.use("/admin", adminTransitairesRouter);
 router.use("/upgrade-request", upgradeRequestRouter);
+router.use("/transitaire-access", transitaireAccessRouter);
+router.use("/transitaire", transitaireSpaceRouter);
+router.use("/files", filesRouter);
 
 export default router;

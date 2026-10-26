@@ -4,6 +4,7 @@ import { simulationsTable, usersTable, subscriptionsTable, subscriptionPlansTabl
 import { eq, and, desc, gte, lte, ilike, or, sql, count, SQL, or as drizzleOr, isNull, gt } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
+import { sendError } from "../lib/httpErrors";
 
 const router = Router();
 
@@ -41,8 +42,7 @@ router.get("/", requireAuth, async (req, res) => {
 
     res.json({ simulations: rows.map(mapSim), total: totalRows[0]?.count ?? 0 });
   } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal error" });
+    sendError(req, res, err);
   }
 });
 
@@ -115,8 +115,7 @@ router.post("/", requireAuth, async (req, res) => {
 
     res.status(201).json(mapSim(sim));
   } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal error" });
+    sendError(req, res, err);
   }
 });
 
@@ -150,8 +149,7 @@ router.get("/stats", requireAuth, async (req, res) => {
       simUsedThisMonth: monthly[0]?.count ?? 0,
     });
   } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal error" });
+    sendError(req, res, err);
   }
 });
 
@@ -173,8 +171,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
     }
     res.status(204).send();
   } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal error" });
+    sendError(req, res, err);
   }
 });
 

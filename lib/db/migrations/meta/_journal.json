@@ -15,6 +15,20 @@
       "when": 1792495427840,
       "tag": "0001_lock_down_data_api",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792999983182,
+      "tag": "0002_accounts_transitaire_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792999984305,
+      "tag": "0003_protect_new_tables",
+      "breakpoints": true
     }
   ]
 }

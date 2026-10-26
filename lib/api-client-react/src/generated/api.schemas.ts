@@ -118,6 +118,31 @@ export const UserProfileStatus = {
   suspended: 'suspended',
 } as const;
 
+export type UserProfileAccountKind = typeof UserProfileAccountKind[keyof typeof UserProfileAccountKind];
+
+
+export const UserProfileAccountKind = {
+  particulier: 'particulier',
+  entreprise: 'entreprise',
+} as const;
+
+export interface Organization {
+  id: string;
+  legalName: string;
+  ifu?: string | null;
+}
+
+export type TransitaireStatus = typeof TransitaireStatus[keyof typeof TransitaireStatus];
+
+
+export const TransitaireStatus = {
+  none: 'none',
+  pending: 'pending',
+  active: 'active',
+  suspended: 'suspended',
+  revoked: 'revoked',
+} as const;
+
 export interface UserProfile {
   id: string;
   clerkId: string;
@@ -129,14 +154,196 @@ export interface UserProfile {
   onboarded: boolean;
   status: UserProfileStatus;
   createdAt: string;
+  accountKind?: UserProfileAccountKind;
+  organization?: Organization | null;
+  transitaireStatus?: TransitaireStatus;
 }
 
+export type UpdateProfileInputAccountKind = typeof UpdateProfileInputAccountKind[keyof typeof UpdateProfileInputAccountKind];
+
+
+export const UpdateProfileInputAccountKind = {
+  particulier: 'particulier',
+  entreprise: 'entreprise',
+} as const;
+
 export interface UpdateProfileInput {
-  fullName?: string;
-  phone?: string;
-  whatsapp?: string;
-  poste?: string;
+  fullName?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  poste?: string | null;
   onboarded?: boolean;
+  accountKind?: UpdateProfileInputAccountKind;
+  legalName?: string | null;
+  ifu?: string | null;
+}
+
+export interface StoredDocument {
+  id: string;
+  originalName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export type TransitaireApplicationStatus = typeof TransitaireApplicationStatus[keyof typeof TransitaireApplicationStatus];
+
+
+export const TransitaireApplicationStatus = {
+  submitted: 'submitted',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface TransitaireApplication {
+  id: string;
+  agrementNumber: string;
+  message?: string | null;
+  status: TransitaireApplicationStatus;
+  createdAt: string;
+  decidedAt?: string | null;
+  decisionReason?: string | null;
+  documents: StoredDocument[];
+}
+
+export interface TransitaireAccess {
+  status: TransitaireStatus;
+  statusChangedAt?: string | null;
+  canApply: boolean;
+  applications: TransitaireApplication[];
+}
+
+export interface CreateTransitaireApplicationInput {
+  /**
+     * @minLength 2
+     * @maxLength 60
+     */
+  agrementNumber: string;
+  /** @maxLength 1000 */
+  message?: string;
+}
+
+export interface DownloadLink {
+  url: string;
+  expiresInSeconds: number;
+}
+
+export interface TransitaireSpace {
+  status: TransitaireStatus;
+  activeSince?: string | null;
+}
+
+export type TransitaireApplicantAccountKind = typeof TransitaireApplicantAccountKind[keyof typeof TransitaireApplicantAccountKind];
+
+
+export const TransitaireApplicantAccountKind = {
+  particulier: 'particulier',
+  entreprise: 'entreprise',
+} as const;
+
+export interface TransitaireApplicant {
+  id: string;
+  fullName: string;
+  email: string;
+  poste?: string | null;
+  accountKind: TransitaireApplicantAccountKind;
+  transitaireStatus: TransitaireStatus;
+}
+
+export type AdminTransitaireApplicationStatus = typeof AdminTransitaireApplicationStatus[keyof typeof AdminTransitaireApplicationStatus];
+
+
+export const AdminTransitaireApplicationStatus = {
+  submitted: 'submitted',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface AdminTransitaireApplication {
+  id: string;
+  agrementNumber: string;
+  status: AdminTransitaireApplicationStatus;
+  createdAt: string;
+  decidedAt?: string | null;
+  documentsCount: number;
+  user: TransitaireApplicant;
+}
+
+export type TransitaireDecisionRecordDecision = typeof TransitaireDecisionRecordDecision[keyof typeof TransitaireDecisionRecordDecision];
+
+
+export const TransitaireDecisionRecordDecision = {
+  approved: 'approved',
+  rejected: 'rejected',
+  suspended: 'suspended',
+  reinstated: 'reinstated',
+  revoked: 'revoked',
+} as const;
+
+export interface TransitaireDecisionRecord {
+  id: string;
+  decision: TransitaireDecisionRecordDecision;
+  reason?: string | null;
+  decidedByName?: string | null;
+  applicationId?: string | null;
+  createdAt: string;
+}
+
+export interface AdminTransitaireApplicationDetail {
+  application: TransitaireApplication;
+  user: TransitaireApplicant;
+  decisions: TransitaireDecisionRecord[];
+}
+
+export type TransitaireDecisionInputDecision = typeof TransitaireDecisionInputDecision[keyof typeof TransitaireDecisionInputDecision];
+
+
+export const TransitaireDecisionInputDecision = {
+  approve: 'approve',
+  reject: 'reject',
+} as const;
+
+export interface TransitaireDecisionInput {
+  decision: TransitaireDecisionInputDecision;
+  /** @maxLength 1000 */
+  reason?: string;
+}
+
+export type TransitaireStatusChangeInputAction = typeof TransitaireStatusChangeInputAction[keyof typeof TransitaireStatusChangeInputAction];
+
+
+export const TransitaireStatusChangeInputAction = {
+  suspend: 'suspend',
+  reinstate: 'reinstate',
+  revoke: 'revoke',
+} as const;
+
+export interface TransitaireStatusChangeInput {
+  action: TransitaireStatusChangeInputAction;
+  /** @maxLength 1000 */
+  reason?: string;
+}
+
+export interface AdminTransitaireUser {
+  id: string;
+  fullName: string;
+  email: string;
+  transitaireStatus: TransitaireStatus;
+  transitaireStatusChangedAt?: string | null;
+}
+
+export type AuditLogEntryDetails = { [key: string]: unknown } | null;
+
+export interface AuditLogEntry {
+  id: string;
+  actorUserId?: string | null;
+  actorName?: string | null;
+  actorRole: string;
+  action: string;
+  targetType?: string | null;
+  targetId?: string | null;
+  details?: AuditLogEntryDetails;
+  createdAt: string;
 }
 
 export interface AdminDashboard {
@@ -317,5 +524,25 @@ dateFrom?: string;
 dateTo?: string;
 limit?: number;
 offset?: number;
+};
+
+export type ListAdminTransitaireApplicationsParams = {
+status?: ListAdminTransitaireApplicationsStatus;
+};
+
+export type ListAdminTransitaireApplicationsStatus = typeof ListAdminTransitaireApplicationsStatus[keyof typeof ListAdminTransitaireApplicationsStatus];
+
+
+export const ListAdminTransitaireApplicationsStatus = {
+  submitted: 'submitted',
+  approved: 'approved',
+  rejected: 'rejected',
+  all: 'all',
+} as const;
+
+export type ListAuditLogsParams = {
+targetType?: string;
+targetId?: string;
+limit?: number;
 };
 

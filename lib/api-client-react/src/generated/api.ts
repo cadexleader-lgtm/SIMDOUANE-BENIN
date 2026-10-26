@@ -22,20 +22,34 @@ import type {
 import type {
   AdminDashboard,
   AdminSimulationListResponse,
+  AdminTransitaireApplication,
+  AdminTransitaireApplicationDetail,
+  AdminTransitaireUser,
   AdminUserListResponse,
   AssignSubscriptionInput,
+  AuditLogEntry,
   CreatePlanInput,
   CreateSimulationInput,
+  CreateTransitaireApplicationInput,
   CreateUpgradeRequestInput,
+  DownloadLink,
   GetAdminSimulationsParams,
   GetAdminUsersParams,
   GetSimulationsParams,
   HealthStatus,
+  ListAdminTransitaireApplicationsParams,
+  ListAuditLogsParams,
   ProcessUpgradeRequestInput,
   Simulation,
   SimulationListResponse,
   SimulationStats,
+  StoredDocument,
   SubscriptionPlan,
+  TransitaireAccess,
+  TransitaireApplication,
+  TransitaireDecisionInput,
+  TransitaireSpace,
+  TransitaireStatusChangeInput,
   UpdatePlanInput,
   UpdateProfileInput,
   UpdateUserStatusInput,
@@ -1635,4 +1649,912 @@ export const useUpdateSubscriptionPlan = <TError = ErrorType<void>,
       > => {
       return useMutation(getUpdateSubscriptionPlanMutationOptions(options));
     }
+
+export const getGetTransitaireAccessUrl = () => {
+
+
+
+
+  return `/api/transitaire-access`
+}
+
+/**
+ * @summary Current user's transitaire status and applications
+ */
+export const getTransitaireAccess = async ( options?: RequestInit): Promise<TransitaireAccess> => {
+
+  return customFetch<TransitaireAccess>(getGetTransitaireAccessUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTransitaireAccessQueryKey = () => {
+    return [
+    `/api/transitaire-access`
+    ] as const;
+    }
+
+
+export const getGetTransitaireAccessQueryOptions = <TData = Awaited<ReturnType<typeof getTransitaireAccess>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransitaireAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTransitaireAccessQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTransitaireAccess>>> = ({ signal }) => getTransitaireAccess({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTransitaireAccess>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTransitaireAccessQueryResult = NonNullable<Awaited<ReturnType<typeof getTransitaireAccess>>>
+export type GetTransitaireAccessQueryError = ErrorType<void>
+
+
+/**
+ * @summary Current user's transitaire status and applications
+ */
+
+export function useGetTransitaireAccess<TData = Awaited<ReturnType<typeof getTransitaireAccess>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransitaireAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTransitaireAccessQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateTransitaireApplicationUrl = () => {
+
+
+
+
+  return `/api/transitaire-access/applications`
+}
+
+/**
+ * @summary Request transitaire access (declared agrément number)
+ */
+export const createTransitaireApplication = async (createTransitaireApplicationInput: CreateTransitaireApplicationInput, options?: RequestInit): Promise<TransitaireApplication> => {
+
+  return customFetch<TransitaireApplication>(getCreateTransitaireApplicationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createTransitaireApplicationInput,)
+  }
+);}
+
+
+
+
+export const getCreateTransitaireApplicationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTransitaireApplication>>, TError,{data: BodyType<CreateTransitaireApplicationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTransitaireApplication>>, TError,{data: BodyType<CreateTransitaireApplicationInput>}, TContext> => {
+
+const mutationKey = ['createTransitaireApplication'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTransitaireApplication>>, {data: BodyType<CreateTransitaireApplicationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTransitaireApplication(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTransitaireApplicationMutationResult = NonNullable<Awaited<ReturnType<typeof createTransitaireApplication>>>
+    export type CreateTransitaireApplicationMutationBody = BodyType<CreateTransitaireApplicationInput>
+    export type CreateTransitaireApplicationMutationError = ErrorType<void>
+
+    /**
+ * @summary Request transitaire access (declared agrément number)
+ */
+export const useCreateTransitaireApplication = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTransitaireApplication>>, TError,{data: BodyType<CreateTransitaireApplicationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTransitaireApplication>>,
+        TError,
+        {data: BodyType<CreateTransitaireApplicationInput>},
+        TContext
+      > => {
+      return useMutation(getCreateTransitaireApplicationMutationOptions(options));
+    }
+
+export const getUploadTransitaireDocumentUrl = (id: string,) => {
+
+
+
+
+  return `/api/transitaire-access/applications/${id}/documents`
+}
+
+/**
+ * The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes.
+ * @summary Attach a supporting document (PDF, JPEG or PNG, raw bytes)
+ */
+export const uploadTransitaireDocument = async (id: string,
+    uploadTransitaireDocumentBody: Blob, options?: RequestInit): Promise<StoredDocument> => {
+
+  return customFetch<StoredDocument>(getUploadTransitaireDocumentUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream', ...options?.headers },
+    body: JSON.stringify(
+      uploadTransitaireDocumentBody,)
+  }
+);}
+
+
+
+
+export const getUploadTransitaireDocumentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadTransitaireDocument>>, TError,{id: string;data: BodyType<Blob>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadTransitaireDocument>>, TError,{id: string;data: BodyType<Blob>}, TContext> => {
+
+const mutationKey = ['uploadTransitaireDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadTransitaireDocument>>, {id: string;data: BodyType<Blob>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadTransitaireDocument(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadTransitaireDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadTransitaireDocument>>>
+    export type UploadTransitaireDocumentMutationBody = BodyType<Blob>
+    export type UploadTransitaireDocumentMutationError = ErrorType<void>
+
+    /**
+ * @summary Attach a supporting document (PDF, JPEG or PNG, raw bytes)
+ */
+export const useUploadTransitaireDocument = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadTransitaireDocument>>, TError,{id: string;data: BodyType<Blob>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadTransitaireDocument>>,
+        TError,
+        {id: string;data: BodyType<Blob>},
+        TContext
+      > => {
+      return useMutation(getUploadTransitaireDocumentMutationOptions(options));
+    }
+
+export const getCreateTransitaireDocumentLinkUrl = (id: string,
+    fileId: string,) => {
+
+
+
+
+  return `/api/transitaire-access/applications/${id}/documents/${fileId}/download-link`
+}
+
+/**
+ * @summary Short-lived download link for one of the user's own documents (logged)
+ */
+export const createTransitaireDocumentLink = async (id: string,
+    fileId: string, options?: RequestInit): Promise<DownloadLink> => {
+
+  return customFetch<DownloadLink>(getCreateTransitaireDocumentLinkUrl(id,fileId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateTransitaireDocumentLinkMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTransitaireDocumentLink>>, TError,{id: string;fileId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTransitaireDocumentLink>>, TError,{id: string;fileId: string}, TContext> => {
+
+const mutationKey = ['createTransitaireDocumentLink'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTransitaireDocumentLink>>, {id: string;fileId: string}> = (props) => {
+          const {id,fileId} = props ?? {};
+
+          return  createTransitaireDocumentLink(id,fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTransitaireDocumentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createTransitaireDocumentLink>>>
+
+    export type CreateTransitaireDocumentLinkMutationError = ErrorType<void>
+
+    /**
+ * @summary Short-lived download link for one of the user's own documents (logged)
+ */
+export const useCreateTransitaireDocumentLink = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTransitaireDocumentLink>>, TError,{id: string;fileId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTransitaireDocumentLink>>,
+        TError,
+        {id: string;fileId: string},
+        TContext
+      > => {
+      return useMutation(getCreateTransitaireDocumentLinkMutationOptions(options));
+    }
+
+export const getGetTransitaireSpaceUrl = () => {
+
+
+
+
+  return `/api/transitaire/space`
+}
+
+/**
+ * @summary Entry point of the transitaire space (active transitaires only)
+ */
+export const getTransitaireSpace = async ( options?: RequestInit): Promise<TransitaireSpace> => {
+
+  return customFetch<TransitaireSpace>(getGetTransitaireSpaceUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTransitaireSpaceQueryKey = () => {
+    return [
+    `/api/transitaire/space`
+    ] as const;
+    }
+
+
+export const getGetTransitaireSpaceQueryOptions = <TData = Awaited<ReturnType<typeof getTransitaireSpace>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransitaireSpace>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTransitaireSpaceQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTransitaireSpace>>> = ({ signal }) => getTransitaireSpace({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTransitaireSpace>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTransitaireSpaceQueryResult = NonNullable<Awaited<ReturnType<typeof getTransitaireSpace>>>
+export type GetTransitaireSpaceQueryError = ErrorType<void>
+
+
+/**
+ * @summary Entry point of the transitaire space (active transitaires only)
+ */
+
+export function useGetTransitaireSpace<TData = Awaited<ReturnType<typeof getTransitaireSpace>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransitaireSpace>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTransitaireSpaceQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListAdminTransitaireApplicationsUrl = (params?: ListAdminTransitaireApplicationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/transitaire-applications?${stringifiedParams}` : `/api/admin/transitaire-applications`
+}
+
+/**
+ * @summary Transitaire access applications
+ */
+export const listAdminTransitaireApplications = async (params?: ListAdminTransitaireApplicationsParams, options?: RequestInit): Promise<AdminTransitaireApplication[]> => {
+
+  return customFetch<AdminTransitaireApplication[]>(getListAdminTransitaireApplicationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminTransitaireApplicationsQueryKey = (params?: ListAdminTransitaireApplicationsParams,) => {
+    return [
+    `/api/admin/transitaire-applications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminTransitaireApplicationsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminTransitaireApplications>>, TError = ErrorType<unknown>>(params?: ListAdminTransitaireApplicationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminTransitaireApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminTransitaireApplicationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminTransitaireApplications>>> = ({ signal }) => listAdminTransitaireApplications(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminTransitaireApplications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminTransitaireApplicationsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminTransitaireApplications>>>
+export type ListAdminTransitaireApplicationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Transitaire access applications
+ */
+
+export function useListAdminTransitaireApplications<TData = Awaited<ReturnType<typeof listAdminTransitaireApplications>>, TError = ErrorType<unknown>>(
+ params?: ListAdminTransitaireApplicationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminTransitaireApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminTransitaireApplicationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetAdminTransitaireApplicationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/transitaire-applications/${id}`
+}
+
+/**
+ * @summary Application detail with documents and decision history
+ */
+export const getAdminTransitaireApplication = async (id: string, options?: RequestInit): Promise<AdminTransitaireApplicationDetail> => {
+
+  return customFetch<AdminTransitaireApplicationDetail>(getGetAdminTransitaireApplicationUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminTransitaireApplicationQueryKey = (id: string,) => {
+    return [
+    `/api/admin/transitaire-applications/${id}`
+    ] as const;
+    }
+
+
+export const getGetAdminTransitaireApplicationQueryOptions = <TData = Awaited<ReturnType<typeof getAdminTransitaireApplication>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminTransitaireApplication>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminTransitaireApplicationQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminTransitaireApplication>>> = ({ signal }) => getAdminTransitaireApplication(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminTransitaireApplication>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminTransitaireApplicationQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminTransitaireApplication>>>
+export type GetAdminTransitaireApplicationQueryError = ErrorType<void>
+
+
+/**
+ * @summary Application detail with documents and decision history
+ */
+
+export function useGetAdminTransitaireApplication<TData = Awaited<ReturnType<typeof getAdminTransitaireApplication>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminTransitaireApplication>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminTransitaireApplicationQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateAdminTransitaireDocumentLinkUrl = (id: string,
+    fileId: string,) => {
+
+
+
+
+  return `/api/admin/transitaire-applications/${id}/documents/${fileId}/download-link`
+}
+
+/**
+ * @summary Short-lived link to a supporting document (every call is logged)
+ */
+export const createAdminTransitaireDocumentLink = async (id: string,
+    fileId: string, options?: RequestInit): Promise<DownloadLink> => {
+
+  return customFetch<DownloadLink>(getCreateAdminTransitaireDocumentLinkUrl(id,fileId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateAdminTransitaireDocumentLinkMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminTransitaireDocumentLink>>, TError,{id: string;fileId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminTransitaireDocumentLink>>, TError,{id: string;fileId: string}, TContext> => {
+
+const mutationKey = ['createAdminTransitaireDocumentLink'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminTransitaireDocumentLink>>, {id: string;fileId: string}> = (props) => {
+          const {id,fileId} = props ?? {};
+
+          return  createAdminTransitaireDocumentLink(id,fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminTransitaireDocumentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminTransitaireDocumentLink>>>
+
+    export type CreateAdminTransitaireDocumentLinkMutationError = ErrorType<void>
+
+    /**
+ * @summary Short-lived link to a supporting document (every call is logged)
+ */
+export const useCreateAdminTransitaireDocumentLink = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminTransitaireDocumentLink>>, TError,{id: string;fileId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminTransitaireDocumentLink>>,
+        TError,
+        {id: string;fileId: string},
+        TContext
+      > => {
+      return useMutation(getCreateAdminTransitaireDocumentLinkMutationOptions(options));
+    }
+
+export const getDecideTransitaireApplicationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/transitaire-applications/${id}/decision`
+}
+
+/**
+ * @summary Approve or reject an application
+ */
+export const decideTransitaireApplication = async (id: string,
+    transitaireDecisionInput: TransitaireDecisionInput, options?: RequestInit): Promise<AdminTransitaireApplicationDetail> => {
+
+  return customFetch<AdminTransitaireApplicationDetail>(getDecideTransitaireApplicationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      transitaireDecisionInput,)
+  }
+);}
+
+
+
+
+export const getDecideTransitaireApplicationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideTransitaireApplication>>, TError,{id: string;data: BodyType<TransitaireDecisionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof decideTransitaireApplication>>, TError,{id: string;data: BodyType<TransitaireDecisionInput>}, TContext> => {
+
+const mutationKey = ['decideTransitaireApplication'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof decideTransitaireApplication>>, {id: string;data: BodyType<TransitaireDecisionInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  decideTransitaireApplication(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DecideTransitaireApplicationMutationResult = NonNullable<Awaited<ReturnType<typeof decideTransitaireApplication>>>
+    export type DecideTransitaireApplicationMutationBody = BodyType<TransitaireDecisionInput>
+    export type DecideTransitaireApplicationMutationError = ErrorType<void>
+
+    /**
+ * @summary Approve or reject an application
+ */
+export const useDecideTransitaireApplication = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideTransitaireApplication>>, TError,{id: string;data: BodyType<TransitaireDecisionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof decideTransitaireApplication>>,
+        TError,
+        {id: string;data: BodyType<TransitaireDecisionInput>},
+        TContext
+      > => {
+      return useMutation(getDecideTransitaireApplicationMutationOptions(options));
+    }
+
+export const getListAdminTransitairesUrl = () => {
+
+
+
+
+  return `/api/admin/transitaires`
+}
+
+/**
+ * @summary Accounts with transitaire rights (active, suspended, revoked)
+ */
+export const listAdminTransitaires = async ( options?: RequestInit): Promise<AdminTransitaireUser[]> => {
+
+  return customFetch<AdminTransitaireUser[]>(getListAdminTransitairesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminTransitairesQueryKey = () => {
+    return [
+    `/api/admin/transitaires`
+    ] as const;
+    }
+
+
+export const getListAdminTransitairesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminTransitaires>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminTransitaires>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminTransitairesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminTransitaires>>> = ({ signal }) => listAdminTransitaires({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminTransitaires>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminTransitairesQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminTransitaires>>>
+export type ListAdminTransitairesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Accounts with transitaire rights (active, suspended, revoked)
+ */
+
+export function useListAdminTransitaires<TData = Awaited<ReturnType<typeof listAdminTransitaires>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminTransitaires>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminTransitairesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getChangeTransitaireStatusUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/users/${id}/transitaire-status`
+}
+
+/**
+ * @summary Suspend, reinstate or revoke transitaire rights
+ */
+export const changeTransitaireStatus = async (id: string,
+    transitaireStatusChangeInput: TransitaireStatusChangeInput, options?: RequestInit): Promise<AdminTransitaireUser> => {
+
+  return customFetch<AdminTransitaireUser>(getChangeTransitaireStatusUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      transitaireStatusChangeInput,)
+  }
+);}
+
+
+
+
+export const getChangeTransitaireStatusMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeTransitaireStatus>>, TError,{id: string;data: BodyType<TransitaireStatusChangeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeTransitaireStatus>>, TError,{id: string;data: BodyType<TransitaireStatusChangeInput>}, TContext> => {
+
+const mutationKey = ['changeTransitaireStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeTransitaireStatus>>, {id: string;data: BodyType<TransitaireStatusChangeInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  changeTransitaireStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeTransitaireStatusMutationResult = NonNullable<Awaited<ReturnType<typeof changeTransitaireStatus>>>
+    export type ChangeTransitaireStatusMutationBody = BodyType<TransitaireStatusChangeInput>
+    export type ChangeTransitaireStatusMutationError = ErrorType<void>
+
+    /**
+ * @summary Suspend, reinstate or revoke transitaire rights
+ */
+export const useChangeTransitaireStatus = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeTransitaireStatus>>, TError,{id: string;data: BodyType<TransitaireStatusChangeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof changeTransitaireStatus>>,
+        TError,
+        {id: string;data: BodyType<TransitaireStatusChangeInput>},
+        TContext
+      > => {
+      return useMutation(getChangeTransitaireStatusMutationOptions(options));
+    }
+
+export const getListAuditLogsUrl = (params?: ListAuditLogsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/audit-logs?${stringifiedParams}` : `/api/admin/audit-logs`
+}
+
+/**
+ * @summary Security journal (most recent first)
+ */
+export const listAuditLogs = async (params?: ListAuditLogsParams, options?: RequestInit): Promise<AuditLogEntry[]> => {
+
+  return customFetch<AuditLogEntry[]>(getListAuditLogsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAuditLogsQueryKey = (params?: ListAuditLogsParams,) => {
+    return [
+    `/api/admin/audit-logs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorType<unknown>>(params?: ListAuditLogsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAuditLogsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditLogs>>> = ({ signal }) => listAuditLogs(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditLogs>>>
+export type ListAuditLogsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Security journal (most recent first)
+ */
+
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorType<unknown>>(
+ params?: ListAuditLogsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAuditLogsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 

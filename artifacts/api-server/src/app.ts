@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import cors from "cors";
@@ -68,6 +68,21 @@ app.use(
 );
 
 app.use("/api", router);
+
+// Body parsing errors (malformed JSON, upload too large) as JSON, not HTML.
+app.use("/api", (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) return next(err);
+  if (err?.type === "entity.too.large") {
+    res.status(413).json({ error: "FILE_TOO_LARGE", message: "Le fichier dépasse la taille autorisée." });
+    return;
+  }
+  if (err?.type === "entity.parse.failed") {
+    res.status(400).json({ error: "INVALID_JSON" });
+    return;
+  }
+  req.log.error(err);
+  res.status(500).json({ error: "Internal error" });
+});
 
 // Optional: serve the built web app (artifacts/simdouane/dist/public) from
 // this same process, so one Node server can host the whole application

@@ -151,7 +151,14 @@ export const GetProfileResponse = zod.object({
   "poste": zod.string().nullish(),
   "onboarded": zod.boolean(),
   "status": zod.enum(['active', 'disabled', 'suspended']),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "accountKind": zod.enum(['particulier', 'entreprise']).optional(),
+  "organization": zod.object({
+  "id": zod.string(),
+  "legalName": zod.string(),
+  "ifu": zod.string().nullish()
+}).nullish(),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked']).optional()
 })
 
 
@@ -159,11 +166,14 @@ export const GetProfileResponse = zod.object({
  * @summary Update user profile
  */
 export const UpdateProfileBody = zod.object({
-  "fullName": zod.string().optional(),
-  "phone": zod.string().optional(),
-  "whatsapp": zod.string().optional(),
-  "poste": zod.string().optional(),
-  "onboarded": zod.boolean().optional()
+  "fullName": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "whatsapp": zod.string().nullish(),
+  "poste": zod.string().nullish(),
+  "onboarded": zod.boolean().optional(),
+  "accountKind": zod.enum(['particulier', 'entreprise']).optional(),
+  "legalName": zod.string().nullish(),
+  "ifu": zod.string().nullish()
 })
 
 export const UpdateProfileResponse = zod.object({
@@ -176,7 +186,14 @@ export const UpdateProfileResponse = zod.object({
   "poste": zod.string().nullish(),
   "onboarded": zod.boolean(),
   "status": zod.enum(['active', 'disabled', 'suspended']),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "accountKind": zod.enum(['particulier', 'entreprise']).optional(),
+  "organization": zod.object({
+  "id": zod.string(),
+  "legalName": zod.string(),
+  "ifu": zod.string().nullish()
+}).nullish(),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked']).optional()
 })
 
 
@@ -407,5 +424,277 @@ export const UpdateSubscriptionPlanResponse = zod.object({
   "features": zod.array(zod.string()),
   "isActive": zod.boolean()
 })
+
+
+/**
+ * @summary Current user's transitaire status and applications
+ */
+export const GetTransitaireAccessResponse = zod.object({
+  "status": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked']),
+  "statusChangedAt": zod.coerce.date().nullish(),
+  "canApply": zod.boolean(),
+  "applications": zod.array(zod.object({
+  "id": zod.string(),
+  "agrementNumber": zod.string(),
+  "message": zod.string().nullish(),
+  "status": zod.enum(['submitted', 'approved', 'rejected']),
+  "createdAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullish(),
+  "decisionReason": zod.string().nullish(),
+  "documents": zod.array(zod.object({
+  "id": zod.string(),
+  "originalName": zod.string(),
+  "contentType": zod.string(),
+  "sizeBytes": zod.number(),
+  "createdAt": zod.coerce.date()
+}))
+}))
+})
+
+
+/**
+ * @summary Request transitaire access (declared agrément number)
+ */
+export const createTransitaireApplicationBodyAgrementNumberMin = 2;
+export const createTransitaireApplicationBodyAgrementNumberMax = 60;
+
+export const createTransitaireApplicationBodyMessageMax = 1000;
+
+
+
+export const CreateTransitaireApplicationBody = zod.object({
+  "agrementNumber": zod.string().min(createTransitaireApplicationBodyAgrementNumberMin).max(createTransitaireApplicationBodyAgrementNumberMax),
+  "message": zod.string().max(createTransitaireApplicationBodyMessageMax).optional()
+})
+
+
+/**
+ * The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes.
+ * @summary Attach a supporting document (PDF, JPEG or PNG, raw bytes)
+ */
+export const UploadTransitaireDocumentParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+/**
+ * @summary Short-lived download link for one of the user's own documents (logged)
+ */
+export const CreateTransitaireDocumentLinkParams = zod.object({
+  "id": zod.coerce.string(),
+  "fileId": zod.coerce.string()
+})
+
+export const CreateTransitaireDocumentLinkResponse = zod.object({
+  "url": zod.string(),
+  "expiresInSeconds": zod.number()
+})
+
+
+/**
+ * @summary Entry point of the transitaire space (active transitaires only)
+ */
+export const GetTransitaireSpaceResponse = zod.object({
+  "status": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked']),
+  "activeSince": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Transitaire access applications
+ */
+export const ListAdminTransitaireApplicationsQueryParams = zod.object({
+  "status": zod.enum(['submitted', 'approved', 'rejected', 'all']).optional()
+})
+
+export const ListAdminTransitaireApplicationsResponseItem = zod.object({
+  "id": zod.string(),
+  "agrementNumber": zod.string(),
+  "status": zod.enum(['submitted', 'approved', 'rejected']),
+  "createdAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullish(),
+  "documentsCount": zod.number(),
+  "user": zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "email": zod.string(),
+  "poste": zod.string().nullish(),
+  "accountKind": zod.enum(['particulier', 'entreprise']),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked'])
+})
+})
+export const ListAdminTransitaireApplicationsResponse = zod.array(ListAdminTransitaireApplicationsResponseItem)
+
+
+/**
+ * @summary Application detail with documents and decision history
+ */
+export const GetAdminTransitaireApplicationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetAdminTransitaireApplicationResponse = zod.object({
+  "application": zod.object({
+  "id": zod.string(),
+  "agrementNumber": zod.string(),
+  "message": zod.string().nullish(),
+  "status": zod.enum(['submitted', 'approved', 'rejected']),
+  "createdAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullish(),
+  "decisionReason": zod.string().nullish(),
+  "documents": zod.array(zod.object({
+  "id": zod.string(),
+  "originalName": zod.string(),
+  "contentType": zod.string(),
+  "sizeBytes": zod.number(),
+  "createdAt": zod.coerce.date()
+}))
+}),
+  "user": zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "email": zod.string(),
+  "poste": zod.string().nullish(),
+  "accountKind": zod.enum(['particulier', 'entreprise']),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked'])
+}),
+  "decisions": zod.array(zod.object({
+  "id": zod.string(),
+  "decision": zod.enum(['approved', 'rejected', 'suspended', 'reinstated', 'revoked']),
+  "reason": zod.string().nullish(),
+  "decidedByName": zod.string().nullish(),
+  "applicationId": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Short-lived link to a supporting document (every call is logged)
+ */
+export const CreateAdminTransitaireDocumentLinkParams = zod.object({
+  "id": zod.coerce.string(),
+  "fileId": zod.coerce.string()
+})
+
+export const CreateAdminTransitaireDocumentLinkResponse = zod.object({
+  "url": zod.string(),
+  "expiresInSeconds": zod.number()
+})
+
+
+/**
+ * @summary Approve or reject an application
+ */
+export const DecideTransitaireApplicationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const decideTransitaireApplicationBodyReasonMax = 1000;
+
+
+
+export const DecideTransitaireApplicationBody = zod.object({
+  "decision": zod.enum(['approve', 'reject']),
+  "reason": zod.string().max(decideTransitaireApplicationBodyReasonMax).optional()
+})
+
+export const DecideTransitaireApplicationResponse = zod.object({
+  "application": zod.object({
+  "id": zod.string(),
+  "agrementNumber": zod.string(),
+  "message": zod.string().nullish(),
+  "status": zod.enum(['submitted', 'approved', 'rejected']),
+  "createdAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullish(),
+  "decisionReason": zod.string().nullish(),
+  "documents": zod.array(zod.object({
+  "id": zod.string(),
+  "originalName": zod.string(),
+  "contentType": zod.string(),
+  "sizeBytes": zod.number(),
+  "createdAt": zod.coerce.date()
+}))
+}),
+  "user": zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "email": zod.string(),
+  "poste": zod.string().nullish(),
+  "accountKind": zod.enum(['particulier', 'entreprise']),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked'])
+}),
+  "decisions": zod.array(zod.object({
+  "id": zod.string(),
+  "decision": zod.enum(['approved', 'rejected', 'suspended', 'reinstated', 'revoked']),
+  "reason": zod.string().nullish(),
+  "decidedByName": zod.string().nullish(),
+  "applicationId": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Accounts with transitaire rights (active, suspended, revoked)
+ */
+export const ListAdminTransitairesResponseItem = zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "email": zod.string(),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked']),
+  "transitaireStatusChangedAt": zod.coerce.date().nullish()
+})
+export const ListAdminTransitairesResponse = zod.array(ListAdminTransitairesResponseItem)
+
+
+/**
+ * @summary Suspend, reinstate or revoke transitaire rights
+ */
+export const ChangeTransitaireStatusParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const changeTransitaireStatusBodyReasonMax = 1000;
+
+
+
+export const ChangeTransitaireStatusBody = zod.object({
+  "action": zod.enum(['suspend', 'reinstate', 'revoke']),
+  "reason": zod.string().max(changeTransitaireStatusBodyReasonMax).optional()
+})
+
+export const ChangeTransitaireStatusResponse = zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "email": zod.string(),
+  "transitaireStatus": zod.enum(['none', 'pending', 'active', 'suspended', 'revoked']),
+  "transitaireStatusChangedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Security journal (most recent first)
+ */
+export const listAuditLogsQueryLimitDefault = 100;
+
+export const ListAuditLogsQueryParams = zod.object({
+  "targetType": zod.coerce.string().optional(),
+  "targetId": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().default(listAuditLogsQueryLimitDefault)
+})
+
+export const ListAuditLogsResponseItem = zod.object({
+  "id": zod.string(),
+  "actorUserId": zod.string().nullish(),
+  "actorName": zod.string().nullish(),
+  "actorRole": zod.string(),
+  "action": zod.string(),
+  "targetType": zod.string().nullish(),
+  "targetId": zod.string().nullish(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListAuditLogsResponse = zod.array(ListAuditLogsResponseItem)
 
 

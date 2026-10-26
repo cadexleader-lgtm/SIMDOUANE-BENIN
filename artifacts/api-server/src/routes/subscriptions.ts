@@ -4,6 +4,7 @@ import { subscriptionsTable, subscriptionPlansTable, simulationsTable } from "@w
 import { eq, and, gte, count, or, isNull, gt } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
+import { sendError } from "../lib/httpErrors";
 
 // GET /api/subscription-plans
 export const plansRouter = Router();
@@ -81,8 +82,7 @@ subscriptionRouter.get("/", requireAuth, async (req, res) => {
       simUsedThisMonth,
     });
   } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal error" });
+    sendError(req, res, err);
   }
 });
 

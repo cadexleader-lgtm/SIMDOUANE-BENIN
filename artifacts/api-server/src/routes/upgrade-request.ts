@@ -4,6 +4,7 @@ import { upgradeRequestsTable, usersTable } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
+import { sendError } from "../lib/httpErrors";
 
 const router = Router();
 
@@ -83,8 +84,7 @@ router.post("/", requireAuth, async (req, res) => {
 
     res.status(201).json({ ok: true, id: request.id });
   } catch (err) {
-    req.log.error(err);
-    res.status(500).json({ error: "Internal error" });
+    sendError(req, res, err);
   }
 });
 

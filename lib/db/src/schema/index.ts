@@ -4,3 +4,7 @@ export * from "./subscriptions";
 export * from "./simulations";
 export * from "./admin_logs";
 export * from "./upgrade_requests";
+export * from "./organizations";
+export * from "./stored_files";
+export * from "./transitaire_access";
+export * from "./audit_logs";

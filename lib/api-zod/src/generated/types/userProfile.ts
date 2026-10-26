@@ -5,6 +5,9 @@
  * SimDouane SaaS API specification
  * OpenAPI spec version: 0.2.0
  */
+import type { Organization } from './organization';
+import type { TransitaireStatus } from './transitaireStatus';
+import type { UserProfileAccountKind } from './userProfileAccountKind';
 import type { UserProfileStatus } from './userProfileStatus';
 
 export interface UserProfile {
@@ -18,4 +21,7 @@ export interface UserProfile {
   onboarded: boolean;
   status: UserProfileStatus;
   createdAt: Date;
+  accountKind?: UserProfileAccountKind;
+  organization?: Organization | null;
+  transitaireStatus?: TransitaireStatus;
 }
