@@ -5,15 +5,19 @@ professionnels à **estimer** certains frais liés à l'importation de véhicule
 au Port de Cotonou. Les résultats sont indicatifs et ne constituent ni une
 liquidation douanière, ni une décision de l'administration.
 
-> Rapport de migration hors Replit (audit, plan, résultats des tests, actions
-> restantes) : [`docs/MIGRATION.md`](docs/MIGRATION.md).
+> Documentation :
+> - [`docs/MIGRATION.md`](docs/MIGRATION.md) — sortie de Replit, transfert des données ;
+> - [`docs/SPECIFICATION-MVP.md`](docs/SPECIFICATION-MVP.md) et [`docs/MVP-PHASE0.md`](docs/MVP-PHASE0.md) — MVP « dossier véhicule » ;
+> - [`docs/PHASE2-RAPPORT.md`](docs/PHASE2-RAPPORT.md) — comptes, rôles, accès transitaire ;
+> - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données.
 
 ## Fonctionnalités
 
 - Simulateur de coûts douaniers et portuaires (`artifacts/simdouane/src/lib/calculator.ts`).
 - Résultats détaillés et export PDF (jsPDF, dans le navigateur).
 - Historique local (`localStorage`) et, avec un compte, historique sauvegardé côté serveur.
-- Comptes, profil et onboarding via Clerk.
+- Comptes, profil et onboarding via Clerk ; type de compte particulier ou entreprise.
+- Accès transitaire sur demande, avec justificatifs privés, activé par l'administrateur.
 - Formules d'abonnement (Gratuit : 3 simulations/mois, limite appliquée par l'API).
 - Demandes d'abonnement Mobile Money traitées à la main par l'administrateur.
 - Tableau de bord d'administration (utilisateurs, abonnements, simulations).
@@ -114,6 +118,7 @@ pnpm dev
 | `pnpm db:migrate` | Applique les migrations SQL (`lib/db/migrations`), sans risque à relancer |
 | `pnpm db:seed` | Crée les formules d'abonnement si la table est vide |
 | `pnpm db:report` | Nombre de lignes + empreinte par table (lecture seule, pour vérifier un transfert) |
+| `pnpm --filter @workspace/scripts run storage-setup` | Crée (ou vérifie) le bucket **privé** Supabase des fichiers |
 | `pnpm test` | Tests (calculateur ; API si `TEST_DATABASE_URL` est défini) |
 | `pnpm run typecheck` | Vérification TypeScript (aussi lancée par GitHub Actions à chaque envoi) |
 | `pnpm --filter @workspace/api-server run build` | Compile l'API → `artifacts/api-server/dist` |
@@ -153,7 +158,9 @@ NODE_ENV=production PORT=8080 WEB_DIST_DIR=artifacts/simdouane/dist/public pnpm 
 Variables à définir dans le gestionnaire de secrets de l'hébergeur (jamais dans
 le dépôt) : `DATABASE_URL`, `DATABASE_SSL_CA_FILE` (facultatif),
 `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`,
-`ADMIN_EMAILS`, `VITE_ADMIN_EMAILS`. Avec une clé Clerk de production
+`ADMIN_EMAILS`, `VITE_ADMIN_EMAILS`, et pour les fichiers `STORAGE_DRIVER=supabase`,
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (serveur uniquement),
+`SUPABASE_STORAGE_BUCKET`. Avec une clé Clerk de production
 (`pk_live_…`), configurez le domaine et ses enregistrements DNS dans Clerk.
 
 ## Variables d'environnement

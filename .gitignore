@@ -69,6 +69,8 @@ Thumbs.db
 *.sql.gz
 *.backup
 /attached_assets/
+# Local private file store (development only)
+.data/
 /.agents/
 /exports/
 

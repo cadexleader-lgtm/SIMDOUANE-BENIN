@@ -54,6 +54,14 @@ objet Replit à migrer.
 | Middleware proxy Clerk (`/api/__clerk`) | Conservé, optionnel ; inutile si le domaine est configuré dans Clerk |
 | Commentaires `@replit` dans `components/ui/*` | Simples commentaires, sans effet |
 
+> **Mise à jour 2026-10-26** : Clerk est conservé (décision validée). Depuis la
+> phase 2, l'API refuse proprement un nouveau compte dont l'email existe déjà
+> (`ACCOUNT_LINK_REQUIRED`, journalisé) au lieu de l'erreur 500 décrite
+> ci-dessous ; le rattachement se fait à la main selon
+> `SECURITE-DONNEES.md` §6. Pour le transfert, `db:report` compare la table
+> `users` sur ses colonnes d'origine (les colonnes ajoutées en phase 2 prennent
+> leur valeur par défaut) ; répétition réussie le 2026-10-26.
+
 ## 4. ⚠️ Point bloquant : les comptes utilisateurs
 
 Les comptes vivent dans l'instance Clerk **créée par Replit** (le code

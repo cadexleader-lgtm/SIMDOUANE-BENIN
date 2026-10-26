@@ -502,7 +502,7 @@ paths:
       operationId: uploadTransitaireDocument
       tags: [transitaire]
       summary: Attach a supporting document (PDF, JPEG or PNG, raw bytes)
-      description: The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes.
+      description: The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes. Do not use the generated client function (it serialises the body as JSON); see artifacts/simdouane/src/lib/private-files.ts.
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
       requestBody:

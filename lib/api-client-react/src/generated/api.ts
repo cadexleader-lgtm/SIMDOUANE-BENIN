@@ -1807,7 +1807,7 @@ export const getUploadTransitaireDocumentUrl = (id: string,) => {
 }
 
 /**
- * The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes.
+ * The file name is sent URI-encoded in the X-File-Name header. The type is detected from the bytes. Do not use the generated client function (it serialises the body as JSON); see artifacts/simdouane/src/lib/private-files.ts.
  * @summary Attach a supporting document (PDF, JPEG or PNG, raw bytes)
  */
 export const uploadTransitaireDocument = async (id: string,
