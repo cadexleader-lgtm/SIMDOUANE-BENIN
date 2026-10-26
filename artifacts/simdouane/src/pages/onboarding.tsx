@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SimDouaneLogo } from "@/components/logo";
 import { cn } from "@/lib/utils";
+import { safeAppPath } from "@/lib/redirects";
 
 const POSTES = [
   "Transitaire",
@@ -44,7 +45,9 @@ export default function Onboarding() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
           setStep("done");
-          setTimeout(() => setLocation("/dashboard"), 1400);
+          // Back to the page the user was heading to (invitation, direct link).
+          const next = safeAppPath(new URLSearchParams(window.location.search).get("next"), basePath, window.location.origin);
+          setTimeout(() => setLocation(next ?? "/dashboard"), 1400);
         },
       }
     );

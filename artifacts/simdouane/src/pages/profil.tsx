@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useClerk } from "@clerk/react";
+import { AccountKindCard } from "@/components/profile/account-kind-card";
+import { TransitaireAccessCard } from "@/components/profile/transitaire-access-card";
 
 const POSTES = [
   "Transitaire", "Importateur de véhicules", "Commissionnaire en douane",
@@ -220,6 +222,9 @@ export default function Profil() {
               </Form>
             </CardContent>
           </Card>
+
+          {profile && <AccountKindCard profile={profile} />}
+          <TransitaireAccessCard />
         </div>
 
         <div className="space-y-6">

@@ -23,6 +23,7 @@ import { shadcn } from '@clerk/themes';
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { isAdminEmail } from "@/lib/admin";
+import { onboardingUrl, safeAppPath, signInPathFor, toAppPath } from "@/lib/redirects";
 
 // An explicitly configured key always wins. Deriving the key from the host is
 // only for Replit-managed Clerk instances (one instance per domain).
@@ -32,9 +33,6 @@ const clerkPubKey =
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
-}
 if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 
 const clerkAppearance = {
@@ -87,7 +85,14 @@ const clerkAppearance = {
 };
 
 /* ─── Auth pages (no layout) ─────────────────────────────────────────────── */
+// Page the visitor was heading to (protected page, future invitation link).
+// After a sign-up they go through onboarding first, then to that page.
+function destinationFromUrl(): string | null {
+  return safeAppPath(new URLSearchParams(window.location.search).get("redirect_url"), basePath, window.location.origin);
+}
+
 function SignInPage() {
+  const destination = destinationFromUrl();
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-[#003D24] px-4 py-8">
       <div className="w-full max-w-md">
@@ -95,13 +100,19 @@ function SignInPage() {
           <img src={`${window.location.origin}${basePath}/logo.svg`} className="h-14 mx-auto mb-3" alt="SimDouane" />
           <p className="text-white/60 text-xs uppercase tracking-widest font-semibold">Simulateur Douanier · Bénin</p>
         </div>
-        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+        <SignIn
+          routing="path"
+          path={`${basePath}/sign-in`}
+          signUpUrl={`${basePath}/sign-up`}
+          signUpForceRedirectUrl={destination ? onboardingUrl(destination, basePath) : undefined}
+        />
       </div>
     </div>
   );
 }
 
 function SignUpPage() {
+  const destination = destinationFromUrl();
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-[#003D24] px-4 py-8">
       <div className="w-full max-w-md">
@@ -109,7 +120,12 @@ function SignUpPage() {
           <img src={`${window.location.origin}${basePath}/logo.svg`} className="h-14 mx-auto mb-3" alt="SimDouane" />
           <p className="text-white/60 text-xs uppercase tracking-widest font-semibold">Simulateur Douanier · Bénin</p>
         </div>
-        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+        <SignUp
+          routing="path"
+          path={`${basePath}/sign-up`}
+          signInUrl={`${basePath}/sign-in`}
+          forceRedirectUrl={destination ? onboardingUrl(destination, basePath) : undefined}
+        />
       </div>
     </div>
   );
@@ -155,10 +171,11 @@ function HomeRedirect() {
 }
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const [location] = useLocation();
   return (
     <>
       <Show when="signed-in"><Component /></Show>
-      <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+      <Show when="signed-out"><Redirect to={signInPathFor(location, window.location.search, basePath)} /></Show>
     </>
   );
 }
@@ -194,8 +211,9 @@ function ClerkProviderWithRoutes() {
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       afterSignOutUrl={`${basePath}/accueil`}
-      routerPush={(to) => setLocation(stripBase(to))}
-      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+      signUpFallbackRedirectUrl={onboardingUrl(null, basePath)}
+      routerPush={(to) => setLocation(toAppPath(to, basePath, window.location.origin))}
+      routerReplace={(to) => setLocation(toAppPath(to, basePath, window.location.origin), { replace: true })}
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
