@@ -177,22 +177,25 @@ une migration complémentaire avant le transfert.
 | Build API | ✅ |
 | Build frontend | ✅ |
 | Lancement production un seul processus : `/`, `/simulateur` → HTML ; `/api/healthz`, `/api/subscription-plans` → 200 ; `/api/simulations` sans session → 401 ; origine étrangère → pas d'en-tête CORS | ✅ |
-| `pnpm run typecheck` | ❌ 8 erreurs **préexistantes** (identiques avant/après, voir §9) — `pnpm build` s'arrête donc au typecheck ; les builds séparés passent |
+| `pnpm run typecheck` | ❌ 8 erreurs **préexistantes** (identiques avant/après, voir §9) — `pnpm build` s'arrête donc au typecheck ; les builds séparés passent. **Corrigées depuis** (étape 1 bis, voir `MVP-PHASE0.md` §9) |
 
 **Non testé** (impossible sans vos accès) : connexion réelle avec un compte
 Clerk, parcours complet dans un navigateur connecté, connexion à un vrai
 projet Supabase (TLS/pooler), transfert des vraies données Replit.
 
-## 9. Problèmes préexistants (non causés par la migration, non corrigés)
+## 9. Problèmes préexistants (non causés par la migration)
 
 1. **Bouton « Demander un upgrade » du tableau de bord cassé** —
    `pages/dashboard.tsx` n'envoie que `planWanted`, l'API exige aussi
    téléphone, opérateur, référence et montant → réponse 400. Le formulaire
-   complet (`upgrade-request-form.tsx`, page Abonnement) fonctionne.
-2. **8 erreurs TypeScript** : `App.tsx` (type `appearance` de Clerk),
-   `layout.tsx` (`ringColor`), `admin.tsx`/`historique.tsx`/`simulateur.tsx`
-   (`queryKey` manquant), `dashboard.tsx` (point 1), `onboarding.tsx`
-   (comparaison toujours fausse avec `"done"`).
+   complet (`upgrade-request-form.tsx`) n'existait que dans la fenêtre de
+   quota du simulateur (et non sur la page Abonnement, comme écrit à tort
+   dans une version précédente de ce document). **Corrigé à l'étape 1 bis.**
+2. **8 erreurs TypeScript** : `App.tsx` (prop Clerk `afterSignUpUrl`,
+   supprimée par Clerk), `layout.tsx` (`ringColor`),
+   `admin.tsx`/`historique.tsx`/`simulateur.tsx` (`queryKey` manquant),
+   `dashboard.tsx` (point 1), `onboarding.tsx` (comparaison toujours fausse
+   avec `"done"`). **Corrigées à l'étape 1 bis.**
 3. **Totaux de simulation non recalculés côté serveur** : l'API enregistre les
    totaux envoyés par le navigateur, sans validation (les schémas `api-zod`
    générés ne sont pas utilisés). Un utilisateur ne peut fausser que ses

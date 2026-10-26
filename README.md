@@ -115,7 +115,7 @@ pnpm dev
 | `pnpm db:seed` | Crée les formules d'abonnement si la table est vide |
 | `pnpm db:report` | Nombre de lignes + empreinte par table (lecture seule, pour vérifier un transfert) |
 | `pnpm test` | Tests (calculateur ; API si `TEST_DATABASE_URL` est défini) |
-| `pnpm run typecheck` | Vérification TypeScript (8 erreurs préexistantes, voir docs/MIGRATION.md) |
+| `pnpm run typecheck` | Vérification TypeScript (aussi lancée par GitHub Actions à chaque envoi) |
 | `pnpm --filter @workspace/api-server run build` | Compile l'API → `artifacts/api-server/dist` |
 | `pnpm --filter @workspace/simdouane run build` | Compile le frontend → `artifacts/simdouane/dist/public` |
 | `pnpm start` | Lance l'API compilée (production) |

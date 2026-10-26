@@ -52,26 +52,34 @@ fichiers. Le navigateur ne parle jamais directement à la base ni au stockage.
   stockage privé fonctionne aussi bien avec Clerk qu'avec Supabase Auth
   (j'avais dit le contraire précédemment ; c'est corrigé ici).
 
-## 4. Décisions à prendre avant de coder
+## 4. Décisions validées (2026-10-26)
 
-1. **Fournisseur de comptes** — recommandation révisée : **garder Clerk, sur
-   votre propre compte**. Raisons : écrans de connexion existants conservés
-   (règle « ne pas casser »), aucun changement de modèle d'accès, stockage privé
-   possible via l'API comme expliqué au §3. Supabase sert alors à la base et
-   aux fichiers. Dans les deux cas, les comptes créés sur l'instance Clerk de
-   Replit doivent être rattachés (par email vérifié) — voir `MIGRATION.md` §4.
-2. **Représentant local** — l'inclure comme troisième partie du dossier
-   (proposition détaillée en conversation) : oui ou non, et les trois réglages
-   (pièce d'identité visible, choix du transitaire, un seul représentant).
-3. **Langue des nouveaux écrans** — recommandation : **français seulement**
-   pour le MVP, anglais ensuite. Le site actuel reste bilingue.
-4. **Vérification des transitaires** — recommandation : un compte « transitaire »
-   est créé à la demande puis **activé par l'administrateur** après contrôle du
-   numéro d'agrément déclaré. Tant qu'il n'est pas activé, il ne peut pas être
-   invité sur un dossier.
-5. **Contenu de la checklist** — faire relire par 2 ou 3 transitaires la liste
-   de départ (spécification). En attendant, chaque pièce est marquée
-   « à confirmer » avec sa source.
+1. **Comptes : Clerk conservé**, sur un compte contrôlé par le porteur du
+   projet ; Supabase pour la base et le stockage privé, sous réserve de
+   confirmer coûts et configuration. Rattachement des comptes Replit :
+   vérifier emails vérifiés, doublons et correspondance comptes ↔ données ;
+   **aucune fusion automatique sur la seule base de l'email**, aucun privilège
+   ajouté sans vérification.
+2. **Représentant local : hors MVP.** Trois rôles : propriétaire, transitaire,
+   administrateur. À réétudier selon les besoins des utilisateurs.
+3. **Langue : nouveaux écrans en français**, textes regroupés pour permettre
+   une traduction ultérieure ; le bilinguisme existant est conservé.
+4. **Transitaires : activation manuelle par l'administrateur.** Enregistrer le
+   numéro d'agrément déclaré, les justificatifs, le résultat, la date et
+   l'administrateur responsable. Un numéro saisi n'est pas une preuve ; la
+   validation SimDouane n'est pas une certification officielle.
+5. **Checklist : validation par 2 ou 3 transitaires.** En attendant, exigences
+   « à confirmer », sources et dates conservées, distinction requise /
+   conditionnelle / applicabilité à confirmer.
+6. **Étape 1 bis** avant la phase 2 : corriger les 8 erreurs TypeScript sans
+   modifier règles métier ni comportement, ajouter GitHub Actions.
+7. **Protection des données et migration** : documenter sécurité,
+   autorisations, conservation, suppression et vérifications juridiques avant
+   tout document réel ; pas de migration des vraies données ni de suppression
+   de l'ancienne base sans sauvegarde vérifiée, restauration testée et
+   correspondance validée ; aucun secret dans le dépôt.
+8. **Méthode** : branche `mvp/dossiers`, pas de fusion automatique dans
+   `main`, simulateur préservé, rapport avant chaque phase.
 
 ## 5. Modèle de données (première version)
 
@@ -80,11 +88,12 @@ migrations.
 
 | Table | Contenu clé |
 | --- | --- |
-| `users` (existante) | + `account_type` (proprietaire / transitaire), `importer_type` (particulier / entreprise), `agrement_number`, `verified_at` |
+| `users` (existante) | + `account_type` (proprietaire / transitaire), `importer_type` (particulier / entreprise) |
+| `transitaire_verifications` | Demande d'activation : numéro d'agrément déclaré, justificatifs, résultat, date, administrateur responsable, motif |
 | `organizations`, `organization_members` | Entreprises importatrices et cabinets de transit ; rôle du membre |
 | `vehicles` | Marque, modèle, année, VIN/châssis, caractéristiques ; propriétaire |
 | `clearance_cases` | Référence `SDB-AAAA-NNNNNN`, parcours (A/B), situation d'arrivée, dates (expédition, arrivée estimée/réelle, sortie), statut interne, responsable et prochaine action, version de checklist appliquée |
-| `case_parties` | Lien dossier ↔ utilisateur : rôle (propriétaire, transitaire, représentant si validé), état de l'invitation (envoyée, acceptée, refusée, expirée, révoquée), dates |
+| `case_parties` | Lien dossier ↔ utilisateur : rôle (propriétaire, transitaire), état de l'invitation (envoyée, acceptée, refusée, expirée, révoquée), dates |
 | `document_requirement_sets`, `document_requirements` | Règles de checklist versionnées : catégorie, condition, source, date de vérification |
 | `case_documents` | Pièce attendue ou déposée : statut, version, chemin de stockage, type, taille, déposant |
 | `case_events` | Historique : type, ancien/nouveau statut, **catégorie de source** (simdouane / professionnel / officiel confirmé), preuve (document), auteur, date |
@@ -144,3 +153,35 @@ poussé sur `mvp/dossiers`, validation de votre part avant la suivante.
 Estimation indicative de la spécification : 22 à 43 jours ouvrés au total ;
 les phases 0 et 1 étant largement faites, le reste représente l'essentiel de
 cette fourchette. À réajuster après la phase 2.
+
+## 9. Rapport de l'étape 1 bis (2026-10-26)
+
+**Erreurs TypeScript : 8 → 0.** Analyse et correction :
+
+| Fichier | Cause | Correction | Effet à l'exécution |
+| --- | --- | --- | --- |
+| `App.tsx` | Prop `afterSignUpUrl` retirée de Clerk ; vérifié dans le code de clerk-js 6.40.1 (version chargée par le navigateur) : elle n'est plus lue, seul le réglage du tableau de bord Clerk compte | Prop supprimée | Aucun (elle était ignorée) |
+| `layout.tsx` | `ringColor` n'est pas une propriété CSS | Supprimée | Aucun (le navigateur l'ignorait) |
+| `admin.tsx` (×2), `historique.tsx`, `simulateur.tsx` | `queryKey` exigé par les types de React Query | Passage explicite de la clé que le hook générait déjà par défaut | Aucun (même clé de cache) |
+| `onboarding.tsx` | Troisième condition inatteignable (`step === "done"` déjà testé avant) | Condition retirée | Aucun |
+| `dashboard.tsx` | Le bouton « Demander un upgrade » envoyait une demande incomplète → refus 400 de l'API, rien ne se passait à l'écran | Le bouton ouvre le formulaire Mobile Money existant (le même que dans le simulateur) | **Changement volontaire** : le bouton fonctionne. Règles de l'API inchangées. Commit séparé, annulable seul |
+
+À valider par le porteur du projet :
+- **Redirection après inscription.** La redirection vers `/onboarding` après
+  l'inscription ne dépend que du réglage « after sign-up URL » du tableau de
+  bord Clerk. À configurer dans votre nouvelle application Clerk, ou à
+  rétablir dans le code avec `signUpFallbackRedirectUrl` (changement de
+  comportement, donc soumis à votre accord).
+
+**Tests exécutés** (PostgreSQL 16 local) : `pnpm run typecheck` ✅ ;
+`pnpm test` ✅ 15/15 (10 calculateur, 5 API) ; `pnpm run build` (typecheck +
+builds) ✅, pour la première fois.
+
+**Non vérifié** : affichage des écrans modifiés dans un navigateur connecté
+(il faut des clés Clerk) ; premier passage de GitHub Actions (visible après
+l'envoi).
+
+**GitHub Actions** (`.github/workflows/ci.yml`) : à chaque envoi et chaque
+demande de fusion : installation, typecheck, migrations sur base vide, tests
+(base PostgreSQL jetable dans le conteneur de CI), compilation API et
+frontend. Aucun secret requis.
