@@ -3,6 +3,12 @@
 Branche : `migration/hors-replit` (non fusionnée). La branche `main` est
 intacte : elle contient toujours l'archive `simdouane-benin.zip` d'origine.
 
+> **Mise à jour du 2026-10-30** : les comptes ne passent plus par Clerk mais par
+> **Supabase Auth** ([`PLAN-AUTH-SUPABASE.md`](PLAN-AUTH-SUPABASE.md)). Les passages
+> de ce document qui parlent de Clerk décrivent l'état de l'époque ; les règles
+> (aucune fusion automatique de comptes, administrateur à l'email confirmé)
+> restent les mêmes.
+
 ## 1. Point de départ
 
 Le dépôt GitHub ne contenait qu'un `README.md` et `simdouane-benin.zip`

@@ -1,176 +1,163 @@
-# Recette de la phase 3 avec le vrai Clerk et Supabase `simdouane-dev`
+# Recette de la phase 3 avec Supabase `simdouane-dev` (comptes Supabase Auth)
 
 Procédure à suivre **sur votre ordinateur**. Vous configurez vous-même les
 secrets dans un fichier `.env` local : ne les envoyez à personne, ni dans une
 conversation, ni sur GitHub. Comptes et données **fictifs uniquement**.
 
-Durée : environ 45 minutes la première fois.
+> Depuis le 2026-10-30, les comptes sont gérés par **Supabase Auth**, et non
+> plus par Clerk (voir [`PLAN-AUTH-SUPABASE.md`](PLAN-AUTH-SUPABASE.md)). Les
+> étapes R0a à R0c déjà réussies restent valables. Il faut seulement
+> récupérer le nouveau code (§0), faire les réglages Supabase Auth (§2) et
+> compléter le `.env` (§3), puis reprendre à **R0d**.
 
-Chaque étape porte un numéro (R1, R2…). À la fin, notez pour chacune ✅ ou ❌
-(avec le message exact et une capture d'écran en cas de ❌) : c'est ce
-compte rendu, **sans aucun secret**, qu'il faut me transmettre.
+Chaque étape porte un numéro (R1, R2…). Notez pour chacune ✅ ou ❌ (avec le
+message exact en cas de ❌) : c'est ce compte rendu, **sans aucun secret**,
+qu'il faut me transmettre. Ne m'envoyez pas de capture du `.env`.
 
 ---
 
 ## 0. Ce qu'il faut sur l'ordinateur
 
-- Node.js 22 (`node -v` → `v22.…`), pnpm 10 (`corepack enable` puis
-  `corepack prepare pnpm@10.26.1 --activate`), Git.
-- Le dépôt sur la branche `mvp/dossiers` :
+- Node.js 22 (`node -v` → `v22.…`), pnpm 10 (`pnpm -v` → `10.…`), Git.
+- Le projet sur la branche `mvp/dossiers`, **à jour** (une ligne à la fois) :
   ```sh
-  git clone https://github.com/cadexleader-lgtm/SIMDOUANE-BENIN.git   # si ce n'est pas déjà fait
-  cd SIMDOUANE-BENIN
-  git fetch origin
-  git checkout mvp/dossiers
+  cd ~/simdouane-recette
+  ```
+  ```sh
   git pull origin mvp/dossiers
+  ```
+  ```sh
   pnpm install
   ```
+  `pnpm install` est nécessaire parce que les bibliothèques ont changé :
+  Clerk est retiré et la bibliothèque Supabase est ajoutée.
 - Deux fenêtres de navigateur **séparées** : une fenêtre normale (compte A) et
-  une fenêtre de **navigation privée** ou un autre navigateur (compte B).
-  Deux onglets d'une même fenêtre partagent la même session : cela ne suffit pas.
+  une fenêtre de **navigation privée** (Ctrl+Maj+N) pour le compte B. Deux
+  onglets d'une même fenêtre partagent la même session : cela ne suffit pas.
 
-## 1. Clerk : application de développement
+## 1. Supabase `simdouane-dev` : base, certificat, clés (déjà fait pour R0a à R0c)
 
-1. Sur [dashboard.clerk.com](https://dashboard.clerk.com), créez une
-   application, par exemple « SimDouane dev ». Option de connexion :
-   **Email** (laissez le mot de passe activé). C'est une instance de
-   **développement** (clés `pk_test_…` / `sk_test_…`) : `localhost` y est
-   autorisé sans autre réglage.
-2. Vérifiez dans les réglages *Email* que l'inscription par email et la
-   vérification de l'email à l'inscription sont activées (réglage par défaut).
-3. Page **API keys** : gardez sous la main la *Publishable key* (`pk_test_…`)
-   et la *Secret key* (`sk_test_…`).
+- **Mot de passe de la base** et **adresse Session pooler** (bouton
+  *Connect*) → `DATABASE_URL`.
+- **Certificat** (*Database Settings → SSL Configuration → Download
+  certificate*), enregistré hors du dépôt → `DATABASE_SSL_CA_FILE`.
+- **Clé `service_role`** (*Project Settings → API Keys*, onglet « Legacy »),
+  secrète, serveur uniquement → `SUPABASE_SERVICE_ROLE_KEY`.
+- **Nouveau : la clé publique.** Sur la même page *API Keys*, onglet
+  « Publishable and secret keys » : la **Publishable key** (`sb_publishable_…`).
+  Elle n'est pas secrète, mais elle ne sert qu'à la connexion → `VITE_SUPABASE_PUBLISHABLE_KEY`.
 
-**Comptes de test sans vraie boîte mail** : en développement, Clerk accepte
-les adresses contenant `+clerk_test` sans envoyer d'email ; le code de
-vérification est toujours **424242**. La recette utilise :
+## 2. Réglages Supabase Auth (tableau de bord, projet `simdouane-dev`)
 
-| Compte | Adresse |
+1. *Authentication → URL Configuration* :
+   - **Site URL** : `http://localhost:5173` ;
+   - **Redirect URLs** → *Add URL* : `http://localhost:5173/**`.
+2. *Authentication → Sign In / Providers → Email* : laissez **Email** activé
+   et **Confirm email** activé. Si le réglage existe, mettez la longueur
+   minimale du mot de passe à **8**.
+3. **Comptes de test**, sans email : *Authentication → Users → Add user →
+   Create new user*, en cochant **Auto Confirm User** pour chacun :
+
+| Compte | Adresse | Mot de passe (fictif, à votre choix) |
+| --- | --- | --- |
+| A (propriétaire) | `proprietaire-a@example.com` | au moins 8 caractères |
+| B (autre propriétaire) | `proprietaire-b@example.com` | au moins 8 caractères |
+| Admin (facultatif, R15-R16) | `admin-recette@example.com` | au moins 8 caractères |
+
+> Le service d'emails intégré de Supabase n'envoie qu'aux adresses des
+> membres de votre équipe Supabase. Les comptes ci-dessus sont donc créés
+> **dans le tableau de bord**, sans email. L'inscription depuis
+> l'application se teste en option (R18) avec votre propre adresse.
+
+## 3. Le fichier `.env` (à la racine du projet, jamais committé)
+
+Votre `.env` contient déjà 6 lignes : base, certificat et stockage. Ajoutez
+ces **4 lignes**, une par ligne, avec `nano .env` :
+
+| Tapez | Puis, juste derrière |
 | --- | --- |
-| A (propriétaire) | `proprietaire-a+clerk_test@example.com` |
-| B (autre propriétaire) | `proprietaire-b+clerk_test@example.com` |
-| Admin (facultatif, R15-R16) | `admin-recette+clerk_test@example.com` |
+| `VITE_SUPABASE_URL=` | `https://wmbcjkhakyeofznwggol.supabase.co` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY=` | collez la **Publishable key** (`sb_publishable_…`) |
+| `ADMIN_EMAILS=` | `admin-recette@example.com` |
+| `VITE_ADMIN_EMAILS=` | `admin-recette@example.com` |
 
-> Si vous supprimez un compte dans Clerk puis le recréez avec **la même
-> adresse**, SimDouane refusera la connexion (« Un compte SimDouane existe
-> déjà avec cette adresse… ») : c'est voulu, aucun compte n'est rattaché
-> automatiquement. Utilisez alors une nouvelle adresse (`proprietaire-a2+clerk_test@example.com`).
-
-## 2. Supabase `simdouane-dev` : connexion à la base
-
-Dans le tableau de bord Supabase, projet **simdouane-dev** :
-
-1. **Mot de passe de la base** : *Project Settings → Database → Reset database
-   password* si vous ne l'avez pas noté. Préférez un mot de passe fait de
-   lettres et de chiffres : les caractères `@ : / ? # %` devraient sinon être
-   encodés dans l'adresse de connexion.
-2. **Adresse de connexion** : bouton **Connect** (en haut) → *Connection
-   string* → **Session pooler** (port 5432). Elle a la forme
-   `postgresql://postgres.wmbcjkhakyeofznwggol:[YOUR-PASSWORD]@aws-…-eu-west-3.pooler.supabase.com:5432/postgres`.
-   N'utilisez pas *Direct connection* (`db.wmbcjkhakyeofznwggol.supabase.co`) :
-   elle ne fonctionne qu'en IPv6 sur l'offre gratuite.
-3. **Certificat** : *Project Settings → Database → SSL Configuration →
-   Download certificate*. Enregistrez-le **hors du dépôt**, par exemple
-   `C:\secrets\simdouane-dev-ca.crt` ou `~/secrets/simdouane-dev-ca.crt`.
-4. **Stockage** (prépare la phase 4, qui n'utilisera que le stockage privé
-   Supabase) : *Project Settings → API Keys* → clé **`service_role`**
-   (secrète, serveur uniquement).
-
-## 3. Le fichier `.env` (à la racine du dépôt, jamais committé)
-
+Contrôles, sans afficher aucun secret :
 ```sh
-cp .env.example .env        # Windows : copy .env.example .env
+wc -l .env
 ```
-
-Remplissez **uniquement** ces lignes (laissez les autres telles quelles) :
-
-```ini
-DATABASE_URL=postgresql://postgres.wmbcjkhakyeofznwggol:VOTRE_MOT_DE_PASSE@aws-…-eu-west-3.pooler.supabase.com:5432/postgres
-DATABASE_SSL_CA_FILE=/chemin/complet/vers/simdouane-dev-ca.crt
-
-CLERK_SECRET_KEY=sk_test_…
-CLERK_PUBLISHABLE_KEY=pk_test_…
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_…          # la même que la ligne au-dessus
-VITE_CLERK_PROXY_URL=
-
-ADMIN_EMAILS=admin-recette+clerk_test@example.com
-VITE_ADMIN_EMAILS=admin-recette+clerk_test@example.com
-
-STORAGE_DRIVER=supabase
-SUPABASE_URL=https://wmbcjkhakyeofznwggol.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=…                   # clé service_role
-SUPABASE_STORAGE_BUCKET=simdouane-private
-```
-
-Contrôles avant d'aller plus loin :
-- `git status` ne doit **pas** lister `.env` (le fichier est ignoré par Git).
-- Pas de `sslmode=` dans `DATABASE_URL` (le certificat s'en charge).
-- `ADMIN_EMAILS` doit être renseigné : vide, il retomberait sur l'adresse de
-  l'administrateur historique.
-
-## 4. Vérifier la connexion, puis lancer l'application
-
+On doit voir `10 .env`.
 ```sh
-pnpm db:migrate
-pnpm db:seed
-pnpm --filter @workspace/scripts run storage-setup
-pnpm dev
+grep -vc "^[A-Z_]*=" .env
 ```
+On doit voir `0` (aucune ligne coupée).
+```sh
+grep -c "^VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_" .env
+```
+On doit voir `1`.
+```sh
+git status --short
+```
+Cette commande ne doit **rien** afficher.
+
+Rappels : `ADMIN_EMAILS` doit être renseigné (vide, il retomberait sur
+l'adresse de l'administrateur historique), et la clé `service_role` ne doit
+**jamais** avoir le préfixe `VITE_`.
+
+## 4. Vérifier, puis lancer l'application
 
 | N° | Commande | Résultat attendu |
 | --- | --- | --- |
-| R0a | `pnpm db:migrate` | `Migrations applied from …/lib/db/migrations`, sans erreur. Les 7 migrations sont déjà appliquées sur `simdouane-dev` : rien de nouveau ne s'applique. |
-| R0b | `pnpm db:seed` | `Subscription plans seeded successfully` (ou `Plans already seeded: 3` si déjà fait) |
-| R0c | `storage-setup` | `Bucket "simdouane-private" exists and is private.` |
-| R0d | `pnpm dev` | L'API démarre (port 8080) puis le site : ouvrez **http://localhost:5173** |
+| R0a | `pnpm db:migrate` | `Migrations applied from …/lib/db/migrations`, sans erreur. Les 8 migrations, dont la nouvelle 0007, sont déjà appliquées sur `simdouane-dev` : rien de nouveau ne s'applique |
+| R0b | `pnpm db:seed` | `Plans already seeded: 3` (déjà fait) |
+| R0c | `pnpm --filter @workspace/scripts run storage-setup` | `Bucket "simdouane-private" exists and is private.` |
+| R0d | `pnpm dev` | L'API démarre (`Server listening`, port 8080), puis le site (`Local: http://localhost:5173/`). Ouvrez **http://localhost:5173** dans Chrome (sinon **http://penguin.linux.test:5173**) : la page d'accueil de SimDouane s'affiche |
 
-Ces commandes lisent le fichier `.env` (correctif du 2026-10-26 : seul
-`pnpm dev` le lisait auparavant). Après toute modification du `.env`, arrêtez
-`pnpm dev` (Ctrl+C) et relancez-le.
+Laissez le Terminal de `pnpm dev` ouvert pendant toute la recette. Après une
+modification du `.env`, arrêtez (Ctrl+C) puis relancez `pnpm dev`.
 
 ### Si une étape échoue
 
 | Message | Cause probable |
 | --- | --- |
-| `DATABASE_URL must be set` | `.env` absent, mal nommé (`.env.txt` sous Windows) ou commande lancée hors de la racine du dépôt |
-| `self-signed certificate in certificate chain` ou `unable to get local issuer certificate` | `DATABASE_SSL_CA_FILE` vide ou mauvais fichier, ou `sslmode=` présent dans l'adresse |
-| `ENOENT … .crt` | Chemin du certificat incorrect |
-| `password authentication failed` | Mot de passe incorrect, ou caractère spécial non encodé |
-| `Tenant or user not found` | L'utilisateur doit être `postgres.wmbcjkhakyeofznwggol` (format du pooler) |
-| `ENOTFOUND db.wmbcjkhakyeofznwggol…` ou délai dépassé | Adresse *Direct connection* au lieu de *Session pooler* |
-| `Invalid API key` / `signature verification failed` (storage-setup) | Mauvaise clé `service_role` |
-| Page blanche, console : `Missing VITE_CLERK_PUBLISHABLE_KEY` | Variable manquante ; relancer `pnpm dev` |
-| Après connexion : « Service d'authentification indisponible, réessayez. » | `CLERK_SECRET_KEY` absente ou d'une autre application Clerk que la clé publique |
-| « Impossible de charger vos dossiers pour le moment. » | L'API ne joint pas la base : regardez le terminal de `pnpm dev` |
+| Page blanche, console du navigateur : `Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY` | Une des deux lignes manque ou est mal écrite dans `.env` ; relancer `pnpm dev` |
+| Après connexion : « Service d'authentification indisponible, réessayez. » | `SUPABASE_URL` ou `SUPABASE_SERVICE_ROLE_KEY` absente ou incorrecte côté serveur |
+| « Adresse e-mail ou mot de passe incorrect. » avec le bon mot de passe | Compte non créé dans *simdouane-dev*, mot de passe différent, ou autre projet Supabase dans `VITE_SUPABASE_URL` |
+| « Votre adresse e-mail n'est pas encore confirmée… » | « Auto Confirm User » non coché : supprimez le compte de test et recréez-le |
+| « Impossible de charger vos dossiers pour le moment. » | L'API ne joint pas la base : regardez le Terminal de `pnpm dev` |
+| « Un compte SimDouane existe déjà avec cette adresse… » | Un compte de test a été supprimé puis recréé avec la même adresse : c'est voulu (aucun rattachement automatique). Utilisez une autre adresse (`proprietaire-a2@example.com`) |
+| Erreurs de base de données ou de certificat | Voir R0a (déjà réussie) : `DATABASE_URL`, `DATABASE_SSL_CA_FILE` |
 
 ## 5. Recette avec deux comptes
 
-Dans le tableau, « fiche » = la page d'un dossier (`/dossiers/<identifiant>`).
+« Fiche » = la page d'un dossier (`/dossiers/<identifiant>`).
 
 ### Compte A — fenêtre normale
 
 | N° | Action | Résultat attendu |
 | --- | --- | --- |
-| R1 | http://localhost:5173/sign-up → `proprietaire-a+clerk_test@example.com`, un mot de passe, code **424242**. Page « Quel est votre poste ? » : n'importe quel choix, WhatsApp vide, **Terminer** | Tableau de bord affiché |
-| R2 | Menu **Mes dossiers** | Titre « Mes dossiers véhicules », « Vous n'avez encore aucun dossier. », rappel « SimDouane vous aide à préparer votre dossier. Il n'est pas déposé auprès des Douanes, du GUCE ou de Bénin Control. » |
-| R3 | **Nouveau dossier** → « Pas encore arrivé au Bénin » → laissez **Marque** vide → **Créer le dossier** | « La marque est obligatoire. » sous le champ Marque. Revenez à Mes dossiers : toujours aucun dossier |
-| R4 | **Nouveau dossier** → « Pas encore arrivé au Bénin » → Marque `Toyota` → **Créer le dossier** | Fiche avec le badge **Brouillon**, la référence **SDB-2026-000001**, historique « Dossier créé ». **Copiez l'adresse de la page** (barre d'adresse) : c'est « l'adresse du dossier 1 » |
-| R5 | **Vérifier le dossier** | Badge **Informations à compléter** ; encadré « À compléter avant la préparation administrative » : Modèle, Année, Pays de provenance, Date d'arrivée estimée |
-| R6 | Année `1800` → **Enregistrer** | « Année entre 1900 et 2027. » sous le champ Année ; rien d'enregistré |
-| R7 | Modèle `Corolla`, Année `2018`, Pays de provenance `Belgique`, Date d'arrivée estimée = une date dans quelques semaines → **Enregistrer** | Badge **Prêt pour la préparation administrative** ; « Recommandé : Numéro de châssis (VIN), Référence de transport… » ; historique : « Informations modifiées (…) » puis « Statut : Prêt pour la préparation administrative » |
-| R8 | **Nouveau dossier** → « Déjà arrivé au port de Cotonou » → Marque `Peugeot`, Date d'arrivée au port = **demain** → **Créer le dossier** | « La date d'arrivée réelle ne peut pas être dans le futur. » ; mettez une date passée → **Créer le dossier** → Brouillon, **SDB-2026-000002** |
-| R9 | Menu du compte → **Déconnexion**, puis reconnexion avec le compte A (http://localhost:5173/sign-in ; si un code est demandé : 424242) → Mes dossiers | Les 2 dossiers sont là, avec le même statut (Prêt / Brouillon) |
+| R1 | Ouvrez http://localhost:5173/dossiers | Redirection vers **Connexion**. Cliquez sur **Se connecter** sans rien remplir : « Adresse e-mail invalide. » sous le champ. Entrez l'adresse de A avec un mauvais mot de passe : « Adresse e-mail ou mot de passe incorrect. ». Puis le bon mot de passe : retour automatique sur **Mes dossiers** |
+| R2 | (vous êtes sur Mes dossiers) | Titre « Mes dossiers véhicules », « Vous n'avez encore aucun dossier. », rappel « SimDouane vous aide à préparer votre dossier. Il n'est pas déposé auprès des Douanes, du GUCE ou de Bénin Control. » |
+| R3 | **Nouveau dossier** → « Pas encore arrivé au Bénin » → laissez **Marque** vide → **Créer le dossier** | « La marque est obligatoire. » sous Marque ; rien n'est créé |
+| R4 | Marque `Toyota` → **Créer le dossier** | Fiche avec **Brouillon**, la référence **SDB-2026-000001**, historique « Dossier créé ». **Copiez l'adresse de la page** : c'est « l'adresse du dossier 1 » |
+| R5 | **Vérifier le dossier** | **Informations à compléter** ; liste : Modèle, Année, Pays de provenance, Date d'arrivée estimée |
+| R6 | Année `1800` → **Enregistrer** | « Année entre 1900 et 2027. » ; rien d'enregistré |
+| R7 | Modèle `Corolla`, Année `2018`, Pays `Belgique`, Date d'arrivée estimée dans quelques semaines → **Enregistrer** | **Prêt pour la préparation administrative** ; « Recommandé : … » ; historique mis à jour |
+| R8 | **Nouveau dossier** → « Déjà arrivé au port de Cotonou » → Marque `Peugeot`, Date d'arrivée au port = **demain** → **Créer le dossier** | « La date d'arrivée réelle ne peut pas être dans le futur. » ; mettez une date passée → **SDB-2026-000002**, Brouillon |
+| R9 | Menu du compte (votre nom, en haut à droite) → **Déconnexion** | Retour à l'accueil. Reconnectez A : les 2 dossiers sont là, avec le même statut |
 
 ### Compte B — fenêtre de navigation privée
 
 | N° | Action | Résultat attendu |
 | --- | --- | --- |
-| R10 | Inscription `proprietaire-b+clerk_test@example.com`, code 424242, Terminer → **Mes dossiers** | « Vous n'avez encore aucun dossier. » (B ne voit pas les dossiers de A) |
-| R11 | Collez l'**adresse du dossier 1** dans la barre d'adresse | « Dossier introuvable. » |
-| R12 | Test **côté serveur** (ne dépend pas de l'interface) : touche F12 → onglet **Console**. Chrome peut demander de taper `allow pasting` avant de coller. Collez le bloc ci-dessous après avoir remplacé `IDENTIFIANT` par la fin de l'adresse du dossier 1 (après `/dossiers/`), puis Entrée | Les 5 lignes affichent **404**, la dernière `[]` |
+| R10 | http://localhost:5173/sign-in → adresse et mot de passe de B → **Mes dossiers** | Tableau de bord, puis « Vous n'avez encore aucun dossier. » |
+| R11 | Collez l'**adresse du dossier 1** | « Dossier introuvable. » |
+| R12 | **Test côté serveur** : F12 → onglet **Console**. Chrome peut demander de taper `allow pasting`. Collez le bloc ci-dessous en remplaçant `IDENTIFIANT` par la fin de l'adresse du dossier 1, puis Entrée | Les 5 lignes affichent **404**, puis `Liste de B : []` et `Sans jeton : 401` |
 
 ```js
 const id = "IDENTIFIANT";
+const k = Object.keys(localStorage).find((x) => x.startsWith("sb-") && x.endsWith("-auth-token"));
+const tok = JSON.parse(localStorage.getItem(k)).access_token;
+const h = { "Content-Type": "application/json", authorization: `Bearer ${tok}` };
 for (const [nom, url, method, body] of [
   ["Lire", `/api/cases/${id}`, "GET"],
   ["Modifier", `/api/cases/${id}`, "PATCH", { notes: "tentative du compte B" }],
@@ -178,30 +165,36 @@ for (const [nom, url, method, body] of [
   ["Historique", `/api/cases/${id}/events`, "GET"],
   ["Archiver", `/api/cases/${id}`, "DELETE"],
 ]) {
-  const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(url, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
   console.log(nom, r.status);
 }
-console.log("Liste de B :", await (await fetch("/api/cases")).json());
+console.log("Liste de B :", await (await fetch("/api/cases", { headers: h })).json());
+console.log("Sans jeton :", (await fetch(`/api/cases/${id}`)).status);
 ```
+
+Ce bloc utilise la session de B (son jeton) pour appeler l'API directement,
+sans passer par l'interface : c'est le serveur qui refuse.
 
 ### Retour au compte A
 
 | N° | Action | Résultat attendu |
 | --- | --- | --- |
-| R13 | Rechargez la fiche du dossier 1 | Inchangée : statut Prêt, pas de note « tentative du compte B », aucune nouvelle ligne d'historique |
-| R14 | Ouvrez le dossier 2 (Peugeot) → **Archiver** → confirmez « Archiver ce dossier ? » | Retour à Mes dossiers avec le seul dossier Toyota. L'ancienne adresse du dossier 2 affiche « Dossier introuvable. » |
+| R13 | Ouvrez l'adresse du dossier 1 | Inchangé : statut Prêt, pas de note « tentative du compte B », aucune ligne d'historique venant de B |
+| R14 | Ouvrez le dossier 2 (Peugeot) → **Archiver** → confirmez | Retour à Mes dossiers avec le seul dossier Toyota ; l'adresse du dossier 2 affiche « Dossier introuvable. » |
 
-### Facultatif — administrateur et compte désactivé
+### Facultatif
 
 | N° | Action | Résultat attendu |
 | --- | --- | --- |
-| R15 | Déconnectez B, inscrivez `admin-recette+clerk_test@example.com` (code 424242) dans la fenêtre privée. Le menu doit afficher **Administration**. Collez l'adresse du dossier 1, puis relancez le bloc de R12 | « Dossier introuvable. » et **404** partout : l'administrateur n'a aucun accès aux dossiers |
-| R16 | Dans **Administration**, liste des utilisateurs : passez le compte B en **désactivé**. Reconnectez B, ouvrez **Mes dossiers** | « Ce compte est désactivé. Contactez l'administrateur. » Remettez ensuite B en **actif** |
+| R15 | Dans la fenêtre privée, déconnectez B puis connectez **admin-recette** | Lien **Administration** dans le menu. L'adresse du dossier 1 → « Dossier introuvable. » ; le bloc de R12 → **404** partout |
+| R16 | **Administration** → utilisateurs → compte B **désactivé** ; reconnectez B → **Mes dossiers** | « Ce compte est désactivé. Contactez l'administrateur. » ; remettez B en **actif** |
+| R17 | Compte A → **Mon profil** → « Mot de passe » : nouveau mot de passe deux fois → **Changer le mot de passe** | « Mot de passe modifié. » ; après déconnexion, l'ancien mot de passe est refusé et le nouveau accepté |
+| R18 | Fenêtre privée → **Créer un compte** avec **votre propre adresse** (celle de votre compte Supabase) | « Vérifiez votre boîte e-mail ». Ouvrez le lien reçu **sur ce Chromebook** : « Adresse confirmée », puis **Continuer** mène à la page « Quel est votre poste ? » |
+| R19 | **Mot de passe oublié ?** avec votre propre adresse | « E-mail envoyé » ; le lien reçu ouvre « Nouveau mot de passe » ; après enregistrement, vous êtes connecté |
 
 ## 6. Contrôles en base (lecture seule)
 
-Supabase → **SQL Editor** → collez et exécutez (requêtes `SELECT` uniquement,
-rien n'est modifié) :
+Supabase → **SQL Editor**, requêtes `SELECT` uniquement :
 
 ```sql
 -- Q1. Dossiers et propriétaires
@@ -224,33 +217,46 @@ where e.actor_user_id is distinct from c.owner_user_id;
 
 -- Q4. Journal de sécurité
 select action, target_type, created_at from audit_logs order by created_at;
+
+-- Q5. Comptes SimDouane reliés à Supabase Auth
+select email, auth_user_id is not null as relie_supabase_auth, email_verified from users order by email;
 ```
 
-Attendu : Q1 → `SDB-2026-000001` (compte A, `ready`, non archivé) et
-`SDB-2026-000002` (compte A, archivé) ; Q2 → uniquement des actions du
-compte A ; **Q3 → 0** ; Q4 → `case.created` ×2 et `case.archived` ×1 (le
-changement de statut de R16 est inscrit dans l'ancien journal
-d'administration `admin_logs`, pas ici).
+Attendu : Q1 → `SDB-2026-000001` (A, `ready`, non archivé) et
+`SDB-2026-000002` (A, archivé) ; Q2 → uniquement des actions de A ;
+**Q3 → 0** ; Q4 → `case.created` ×2 et `case.archived` ×1 ; Q5 → chaque compte
+connecté au moins une fois, relié (`true`) et confirmé (`true`).
 
 Je peux aussi faire ces contrôles moi-même sur `simdouane-dev` avec mes outils
 Supabase, sans vos secrets : dites-moi simplement quand la recette est faite.
 
 ## 7. Après la recette
 
-- Les données créées sont fictives : elles peuvent rester dans `simdouane-dev`
-  (utiles pour la phase 4). Rien n'est à supprimer.
-- Arrêtez l'application par Ctrl+C dans le terminal de `pnpm dev`.
-- Transmettez la liste R0a → R16 (✅ / ❌ + message exact). **Jamais** le
+- Les données créées sont fictives : elles peuvent rester dans `simdouane-dev`.
+- Arrêtez l'application par Ctrl+C dans le Terminal de `pnpm dev`.
+- Transmettez la liste R0a → R19 (✅ / ❌ + message exact). **Jamais** le
   contenu du `.env`, une clé ou un mot de passe.
 
-## Ce qui a déjà été vérifié de mon côté (2026-10-26)
+## Ce qui a déjà été vérifié de mon côté (2026-10-30)
 
-Sans les secrets ni l'accès réseau à Clerk et Supabase (refusés dans
-l'environnement où je travaille) :
+Mon environnement ne peut pas joindre Supabase par le réseau. J'ai donc fait
+une **répétition complète hors ligne** : la vraie interface et la vraie API,
+une base PostgreSQL locale migrée de zéro, et à la place de Supabase Auth un
+serveur local qui émet de vrais jetons signés (ES256) et publie ses clés.
+Toute la recette ci-dessus a été jouée automatiquement dans un navigateur,
+avec trois comptes fictifs :
 
 | Contrôle | Résultat |
 | --- | --- |
-| Base réelle `simdouane-dev` (PostgreSQL 17), test en transaction **annulée** avec des comptes fictifs : création dossier + historique ; modification et suppression de l'historique ; même véhicule dans 2 dossiers ; propriétaire inexistant ; lecture par les rôles publics `anon`/`authenticated` ; séquence des références | ✅ créations acceptées, tout le reste **refusé** ; base vérifiée vide ensuite, compteur des références remis à 1 |
-| Répétition des commandes du §4 sur une base locale, avec un `.env` | ✅ migrations (relance sans effet), formules créées, `storage-setup` lit bien le `.env` |
-| `pnpm dev` avec des clés Clerk factices | ✅ API et site démarrent ; `/api/cases` → **401** sans session, avec un jeton forgé et avec un cookie forgé |
-| Pages « Mes dossiers » et fiche en cas d'erreur de l'API (aperçu navigateur, API simulée) | ✅ message clair au lieu d'une page vide (compte désactivé, API injoignable, service indisponible, échec de la vérification) |
+| R1 à R14 (connexion, erreurs, création, vérification, statuts, date future refusée, archivage, déconnexion) | ✅ |
+| Compte B : liste vide, « Dossier introuvable. », appels directs à l'API → 404 ×5, liste `[]`, sans jeton → 401 | ✅ |
+| Dossier de A inchangé après les tentatives de B ; en base, 0 action d'un autre compte | ✅ |
+| Administrateur : lien Administration, page ouverte, dossier de A introuvable | ✅ |
+| Inscription (erreurs sous les champs, « Vérifiez votre boîte e-mail »), compte non confirmé refusé, mot de passe oublié, lien expiré | ✅ |
+| Changement de mot de passe depuis le profil (même mot de passe refusé ; ancien refusé ; nouveau accepté) | ✅ |
+| Téléphone (390 px) : pas de débordement horizontal ; aucune erreur JavaScript | ✅ |
+| Jeton altéré d'un seul caractère → 401 | ✅ |
+
+**Non vérifié** : le vrai service Supabase Auth (réglages du §2, envoi réel
+des emails, liens de confirmation et de réinitialisation). C'est l'objet de
+votre recette.

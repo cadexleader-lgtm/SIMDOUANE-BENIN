@@ -2,6 +2,12 @@
 
 Branche `mvp/dossiers` (non fusionnée). Décisions appliquées : celles du
 2026-10-26 (voir `MVP-PHASE0.md` §4 et la conversation de validation).
+
+> **Mise à jour du 2026-10-30** : les comptes ne passent plus par Clerk mais par
+> **Supabase Auth** ([`PLAN-AUTH-SUPABASE.md`](PLAN-AUTH-SUPABASE.md)). Les passages
+> de ce document qui parlent de Clerk décrivent l'état de l'époque ; les règles
+> (aucune fusion automatique de comptes, administrateur à l'email confirmé)
+> restent les mêmes.
 Sécurité et protection des données : [`SECURITE-DONNEES.md`](SECURITE-DONNEES.md).
 
 ## 1. Ce qui a été fait

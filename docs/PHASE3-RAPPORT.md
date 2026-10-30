@@ -189,7 +189,17 @@ obligatoires et ignorés, les messages d'erreur et la cohérence des dates.
 
 Procédure de recette réelle : [`RECETTE-PHASE3.md`](RECETTE-PHASE3.md).
 
-## 9. Coûts
+## 9. Passage de Clerk à Supabase Auth (2026-10-30)
+
+La recette réelle a montré que la vérification anti-robot de Clerk
+n'aboutissait pas sur la connexion du porteur du projet. Les comptes passent
+donc par **Supabase Auth** ([`PLAN-AUTH-SUPABASE.md`](PLAN-AUTH-SUPABASE.md),
+migration additive 0007). Les fonctions et les règles de la phase 3 sont
+inchangées. Les tests de ce rapport, qui simulaient Clerk, simulent maintenant
+le nouveau fournisseur d'identité, avec les mêmes vérifications. La recette est
+à reprendre à R0d ([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)).
+
+## 10. Coûts
 
 **Aucun.** Supabase : offre gratuite (le projet se met en pause après une
 semaine sans activité). Clerk : non utilisé dans cet environnement. GitHub

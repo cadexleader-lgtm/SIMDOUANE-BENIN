@@ -10,7 +10,8 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/SPECIFICATION-MVP.md`](docs/SPECIFICATION-MVP.md) et [`docs/MVP-PHASE0.md`](docs/MVP-PHASE0.md) — MVP « dossier véhicule » ;
 > - [`docs/PHASE2-RAPPORT.md`](docs/PHASE2-RAPPORT.md) — comptes, rôles, accès transitaire ;
 > - [`docs/PHASE3-RAPPORT.md`](docs/PHASE3-RAPPORT.md) — dossiers véhicules ;
-> - [`docs/RECETTE-PHASE3.md`](docs/RECETTE-PHASE3.md) — recette avec le vrai Clerk et Supabase, deux comptes de test ;
+> - [`docs/PLAN-AUTH-SUPABASE.md`](docs/PLAN-AUTH-SUPABASE.md) — passage de Clerk à Supabase Auth (2026-10-30) ;
+> - [`docs/RECETTE-PHASE3.md`](docs/RECETTE-PHASE3.md) — recette avec Supabase `simdouane-dev`, deux comptes de test ;
 > - [`docs/PHASE4-CONCEPTION.md`](docs/PHASE4-CONCEPTION.md) — checklist provisoire et sources, conception des documents (avant développement) ;
 > - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
 > - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
@@ -20,7 +21,7 @@ liquidation douanière, ni une décision de l'administration.
 - Simulateur de coûts douaniers et portuaires (`artifacts/simdouane/src/lib/calculator.ts`).
 - Résultats détaillés et export PDF (jsPDF, dans le navigateur).
 - Historique local (`localStorage`) et, avec un compte, historique sauvegardé côté serveur.
-- Comptes, profil et onboarding via Clerk ; type de compte particulier ou entreprise.
+- Comptes (Supabase Auth : inscription avec confirmation de l'email, connexion, mot de passe oublié), profil et onboarding ; type de compte particulier ou entreprise.
 - Accès transitaire sur demande, avec justificatifs privés, activé par l'administrateur.
 - Dossiers véhicules (« Mes dossiers ») : véhicule pas encore arrivé ou déjà arrivé
   au port de Cotonou, statut brouillon / à compléter / prêt pour la préparation
@@ -36,7 +37,8 @@ liquidation douanière, ni une décision de l'administration.
 ```
 navigateur ──► frontend React (Vite, fichiers statiques)
           └──► /api/* ──► API Express (Node) ──► PostgreSQL (Drizzle ORM)
-                                  └──► Clerk (vérification des sessions)
+                                  └──► Supabase Auth (vérification des jetons de session)
+          └──► Supabase Auth (connexion uniquement, clé publique)
 ```
 
 | Dossier | Rôle |
@@ -50,14 +52,15 @@ navigateur ──► frontend React (Vite, fichiers statiques)
 | `scripts` | Seed des formules, rapport de vérification de base |
 
 Le navigateur n'accède **jamais** directement à la base : tout passe par l'API,
-qui vérifie la session Clerk et filtre chaque requête par utilisateur.
+qui vérifie le jeton de session (en-tête `Authorization`) et filtre chaque
+requête par utilisateur. La clé publique Supabase du navigateur ne sert qu'à la
+connexion : les tables et les fichiers lui sont fermés.
 
 ## Prérequis
 
 - Node.js 22 ou 24
 - pnpm 10 (`corepack enable && corepack prepare pnpm@10.26.1 --activate`)
 - PostgreSQL 14+ (local) ou un projet Supabase
-- Un compte [Clerk](https://clerk.com) (offre gratuite suffisante pour démarrer)
 
 ## Installation sur un ordinateur
 
@@ -99,15 +102,21 @@ les tables et retire les droits des rôles `anon`/`authenticated` : l'API REST
 publique de Supabase ne peut donc rien lire ni écrire. N'ajoutez pas de policy
 qui ouvrirait ces tables sans revoir le modèle de sécurité.
 
-### 2. Authentification (Clerk)
+### 2. Comptes (Supabase Auth)
 
-1. Créez une application sur [dashboard.clerk.com](https://dashboard.clerk.com).
-2. *API Keys* : copiez la clé publique (`pk_…`) dans `CLERK_PUBLISHABLE_KEY` **et**
-   `VITE_CLERK_PUBLISHABLE_KEY`, la clé secrète (`sk_…`) dans `CLERK_SECRET_KEY`.
-3. Ajoutez `http://localhost:5173` aux URL autorisées en développement.
+1. Projet Supabase → *Project Settings → API Keys* : l'adresse du projet dans
+   `SUPABASE_URL` **et** `VITE_SUPABASE_URL` ; la clé publique
+   (`sb_publishable_…`) dans `VITE_SUPABASE_PUBLISHABLE_KEY` ; la clé
+   `service_role` (secrète) dans `SUPABASE_SERVICE_ROLE_KEY`.
+2. *Authentication → URL Configuration* : Site URL `http://localhost:5173`,
+   Redirect URLs `http://localhost:5173/**` (en production : votre domaine).
+3. *Authentication → Sign In / Providers → Email* : « Confirm email » activé.
+4. Avant d'ouvrir l'inscription au public : un service d'envoi d'emails
+   (*Authentication → Emails → SMTP*), le service intégré de Supabase
+   n'envoyant qu'aux membres de l'équipe du projet.
 
-La clé secrète ne doit jamais être préfixée par `VITE_` (tout ce qui commence
-par `VITE_` est intégré au code envoyé au navigateur).
+La clé `service_role` ne doit jamais être préfixée par `VITE_` (tout ce qui
+commence par `VITE_` est intégré au code envoyé au navigateur).
 
 ### 3. Lancer en développement
 
@@ -169,11 +178,11 @@ NODE_ENV=production PORT=8080 WEB_DIST_DIR=artifacts/simdouane/dist/public pnpm 
 
 Variables à définir dans le gestionnaire de secrets de l'hébergeur (jamais dans
 le dépôt) : `DATABASE_URL`, `DATABASE_SSL_CA_FILE` (facultatif),
-`CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`,
-`ADMIN_EMAILS`, `VITE_ADMIN_EMAILS`, et pour les fichiers `STORAGE_DRIVER=supabase`,
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (serveur uniquement),
-`SUPABASE_STORAGE_BUCKET`. Avec une clé Clerk de production
-(`pk_live_…`), configurez le domaine et ses enregistrements DNS dans Clerk.
+`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `ADMIN_EMAILS`,
+`VITE_ADMIN_EMAILS`, et pour les fichiers `STORAGE_DRIVER=supabase`,
+`SUPABASE_STORAGE_BUCKET`. Dans Supabase Auth : Site URL et Redirect URLs du
+domaine de production, service d'envoi d'emails configuré.
 
 ## Variables d'environnement
 

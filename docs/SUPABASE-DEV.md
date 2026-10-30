@@ -14,13 +14,19 @@ uniquement.** Ce fichier ne contient aucun secret.
 
 ## Ce qui a été appliqué
 
-1. Migrations `0000` à `0006` du dépôt (`lib/db/migrations`), contenu identique
-   aux fichiers (`0005`/`0006` : dossiers véhicules, phase 3).
+1. Migrations `0000` à `0007` du dépôt (`lib/db/migrations`), contenu identique
+   aux fichiers (`0005`/`0006` : dossiers véhicules, phase 3 ; `0007` : passage à
+   Supabase Auth, le 2026-10-30, testée d'abord en transaction annulée).
 2. Registre Drizzle `drizzle.__drizzle_migrations` rempli avec les empreintes
    SHA-256 des fichiers : `pnpm db:migrate` reconnaît ces migrations et
    n'appliquera que les suivantes.
 3. Bucket de stockage **privé** `simdouane-private` : 10 Mo, PDF/JPEG/PNG,
    aucune règle d'accès (seule la clé `service_role` du serveur y accède).
+4. **Comptes : Supabase Auth** (depuis le 2026-10-30). Réglages à faire dans le
+   tableau de bord (Site URL, Redirect URLs, confirmation de l'email, comptes de
+   test) : [`RECETTE-PHASE3.md`](RECETTE-PHASE3.md) §2. Le service d'emails
+   intégré n'envoie qu'aux membres de l'équipe du projet : un service d'envoi
+   (SMTP) sera nécessaire avant d'ouvrir l'inscription au public.
 
 ## Contrôles effectués
 

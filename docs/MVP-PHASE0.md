@@ -9,10 +9,10 @@ fusionné dans `main`. Spécification : [`SPECIFICATION-MVP.md`](SPECIFICATION-M
 | --- | --- |
 | 0 — Audit et sauvegarde | ✅ Audit complet ([`MIGRATION.md`](MIGRATION.md)) + ce document |
 | 1 — Indépendance technique | ✅ en grande partie : l'application s'installe, se compile, se teste et démarre hors de Replit ; migrations SQL versionnées ; transfert de données répété avec succès sur données fictives |
-| 1 — reste | ⏳ transfert des vraies données Replit (action du propriétaire) ; Clerk conservé (décision 1) ; projet Supabase de développement créé ([`SUPABASE-DEV.md`](SUPABASE-DEV.md)) |
+| 1 — reste | ⏳ transfert des vraies données Replit (action du propriétaire) ; comptes passés de Clerk à Supabase Auth le 2026-10-30 (décision 1 révisée, [`PLAN-AUTH-SUPABASE.md`](PLAN-AUTH-SUPABASE.md)) ; projet Supabase de développement créé ([`SUPABASE-DEV.md`](SUPABASE-DEV.md)) |
 | 1 bis — TypeScript et intégration continue | ✅ |
 | 2 — Comptes, rôles, accès transitaire | ✅ ([`PHASE2-RAPPORT.md`](PHASE2-RAPPORT.md)) |
-| 3 — Dossiers véhicules | ✅ en attente de votre validation ([`PHASE3-RAPPORT.md`](PHASE3-RAPPORT.md)) |
+| 3 — Dossiers véhicules | ✅ en attente de la recette réelle ([`PHASE3-RAPPORT.md`](PHASE3-RAPPORT.md), [`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) |
 | 4 — Checklist et documents | ⏸ conception prête, décisions D1-D7 confirmées ([`PHASE4-CONCEPTION.md`](PHASE4-CONCEPTION.md)) ; développement **non autorisé** avant la fin de la recette réelle de la phase 3 ([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) et votre accord |
 
 ## 2. Ce que l'existant apporte au MVP (constats vérifiés dans le code)
@@ -58,7 +58,10 @@ fichiers. Le navigateur ne parle jamais directement à la base ni au stockage.
 
 ## 4. Décisions validées (2026-10-26)
 
-1. **Comptes : Clerk conservé**, sur un compte contrôlé par le porteur du
+1. **Comptes : Clerk conservé** — **révisée le 2026-10-30 : remplacé par
+   Supabase Auth** (la vérification anti-robot de Clerk n'aboutissait pas sur
+   une connexion lente ; voir [`PLAN-AUTH-SUPABASE.md`](PLAN-AUTH-SUPABASE.md)).
+   Texte d'origine : Clerk sur un compte contrôlé par le porteur du
    projet ; Supabase pour la base et le stockage privé, sous réserve de
    confirmer coûts et configuration. Rattachement des comptes Replit :
    vérifier emails vérifiés, doublons et correspondance comptes ↔ données ;

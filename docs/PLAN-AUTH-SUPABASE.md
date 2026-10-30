@@ -6,6 +6,10 @@ changement revient sur la décision n°1 du 2026-10-26 (« Clerk conservé »).
 **Rien n'est développé avant votre accord sur ce plan.** Branche
 `mvp/dossiers` uniquement, `main` intact, phase 4 non commencée.
 
+> **Réalisé le 2026-10-30**, après accord du porteur du projet (« ok va sy »,
+> décisions DA1 à DA4 comme recommandé). Ce qui a été fait, testé et ce qui
+> diffère du plan : §12. Le reste du document est le plan tel qu'approuvé.
+
 Raison principale : la vérification anti-robot imposée par Clerk n'aboutit
 pas sur une connexion lente. Le porteur du projet l'a constaté le 2026-10-30,
 et c'est un risque réel pour les futurs utilisateurs au Bénin.
@@ -174,3 +178,32 @@ Aucun en développement. Supabase Auth est inclus dans l'offre gratuite
 (50 000 utilisateurs actifs par mois, 100 000 en offre Pro). Retirer Clerk
 supprime un abonnement potentiel. Avant la production : service d'envoi
 d'emails (offre gratuite au départ) et nom de domaine (environ 10 à 15 $ par an).
+
+## 12. Réalisation (2026-10-30)
+
+| Étape | Résultat |
+| --- | --- |
+| Migration 0007 | Testée sur une base contenant des données fictives (données identiques avant et après), puis sur `simdouane-dev` en transaction annulée, puis appliquée avec le registre Drizzle (8 migrations) ; conseiller sécurité Supabase : aucun avertissement |
+| Serveur | `src/lib/auth/identity.ts` ; règles des phases 2 et 3 inchangées |
+| Interface | `src/lib/auth.tsx`, 5 pages (`src/pages/auth/`), profil (changement du mot de passe) |
+| Tests | API 71 (dont 11 de vérification réelle des jetons ES256 hors ligne et 8 d'attaques par l'API) ; interface 21 ; 5 règles de sécurité cassées volontairement, toutes détectées |
+| Répétition de bout en bout hors ligne | Vraie interface, vraie API, base locale, serveur local imitant Supabase Auth (vrais jetons signés) : toute la recette avec trois comptes, sur ordinateur et téléphone ([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md), dernière section) |
+
+Écarts par rapport au plan, tous dans le sens de la prudence ou de la simplicité :
+- l'administrateur est revérifié auprès de Supabase Auth **à chaque requête
+  d'administration** (compte existant, même email, confirmé), et pas seulement
+  à la première ;
+- un jeton dont le sujet n'est pas un identifiant Supabase valide (UUID) est
+  refusé ;
+- `upgrade_requests.processed_by` enregistre désormais l'identifiant SimDouane
+  de l'administrateur ;
+- déconnexion : sur cet appareil seulement ;
+- le profil permet de changer le mot de passe ; le changement d'adresse email
+  n'est pas proposé pour l'instant ;
+- les comptes créés dans le tableau de bord Supabase n'ont pas l'étape
+  « Quel est votre poste ? » à la première connexion. Elle suit l'inscription
+  faite depuis l'application, comme avant.
+
+Non vérifié : le vrai service Supabase Auth (réglages, envoi des emails, liens),
+inaccessible depuis mon environnement. C'est l'objet de la recette du porteur
+du projet.

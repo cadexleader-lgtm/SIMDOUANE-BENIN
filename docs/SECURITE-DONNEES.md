@@ -5,13 +5,13 @@
 > être vérifiées par un juriste **avant d'accepter le moindre document réel**
 > (voir §8). Jusque-là : données et documents **fictifs** uniquement.
 
-État au 2026-10-26 (fin de la phase 3), branche `mvp/dossiers`.
+État au 2026-10-30 (fin de la phase 3, comptes passés de Clerk à Supabase Auth), branche `mvp/dossiers`.
 
 ## 1. Données traitées
 
 | Donnée | Où | Qui la fournit |
 | --- | --- | --- |
-| Compte : nom, email, statut de vérification de l'email | `users` (+ Clerk) | Utilisateur via Clerk |
+| Compte : nom, email, confirmation de l'email ; mot de passe (chiffré, jamais lu par SimDouane) | `users` + Supabase Auth (`auth.users`, même projet) | Utilisateur |
 | Profil : téléphone, WhatsApp, poste déclaré | `users` | Utilisateur |
 | Type de compte ; entreprise : raison sociale, IFU | `users.account_kind`, `organizations` | Utilisateur |
 | Demande d'accès transitaire : numéro d'agrément déclaré, message | `transitaire_applications` | Utilisateur |
@@ -24,8 +24,9 @@
 | Demandes d'abonnement : téléphone Mobile Money, référence de transaction, montant | `upgrade_requests` | Utilisateur |
 | Historique local des simulations | `localStorage` du navigateur (jamais envoyé) | Utilisateur |
 
-Sous-traitants techniques : **Clerk** (comptes), **Supabase** (base de données
-et fichiers, en production), l'**hébergeur** de l'API. Leurs pays
+Sous-traitants techniques : **Supabase** (comptes, base de données et
+fichiers ; projet en région Paris) et l'**hébergeur** de l'API. Clerk n'est
+plus utilisé depuis le 2026-10-30. Leurs pays
 d'hébergement entrent dans les questions du §8.
 
 ## 2. Rôles et permissions
@@ -49,7 +50,9 @@ Règles d'attribution :
 - **Transitaire actif** = `users.transitaire_status = 'active'`, posé **uniquement**
   par une approbation de l'administrateur, qui exige au moins un justificatif.
   Le « poste » déclaré dans le profil n'accorde jamais de droit (testé).
-- **Administrateur** = email présent dans `ADMIN_EMAILS` **et** vérifié par Clerk.
+- **Administrateur** = email présent dans `ADMIN_EMAILS` **et** confirmé dans
+  Supabase Auth. C'est revérifié **à chaque requête d'administration** :
+  compte existant, même adresse, adresse confirmée.
 - La validation SimDouane d'un transitaire n'est **pas** une certification
   officielle de son agrément ; c'est affiché à l'utilisateur et à l'administrateur.
 
@@ -64,11 +67,30 @@ Tests : `artifacts/api-server/test/*.test.ts`.
 
 ## 3. Mesures de sécurité en place
 
-**Comptes**
-- Aucun rattachement automatique : si un nouveau compte Clerk présente l'email
-  d'un compte existant, la connexion est refusée (`ACCOUNT_LINK_REQUIRED`) et
-  le cas est journalisé (`account.email_conflict`). Rattachement : §6.
-- Si Clerk ne répond pas, aucun compte n'est créé (plus d'adresse inventée).
+**Comptes et sessions (Supabase Auth)**
+- Le navigateur ne détient que la **clé publique** du projet : elle sert à se
+  connecter, et ne donne accès ni aux tables ni aux fichiers (droits retirés
+  aux rôles publics, vérifié).
+- Chaque appel à l'API porte le **jeton de session** dans l'en-tête
+  `Authorization`. Aucun cookie n'est lu, donc pas de requête forgée depuis un
+  autre site (CSRF). L'API vérifie la signature et l'expiration du jeton
+  (clés publiques du projet) et n'accepte que les sessions d'utilisateur : ni
+  les clés du projet, ni les comptes anonymes. Jeton valable 1 h, renouvelé
+  automatiquement.
+- Le jeton est conservé dans le stockage local du navigateur, lisible par le
+  code de la page comme l'était la session Clerk. Avant la production :
+  politique de sécurité du contenu (CSP) pour limiter le risque d'injection de
+  script.
+- Connexion impossible tant que l'adresse n'est pas confirmée. Les messages
+  d'inscription et de mot de passe oublié ne révèlent pas si un compte existe.
+- Aucun rattachement automatique : si un nouveau compte présente l'email d'un
+  compte existant (par exemple de l'époque Replit), la connexion est refusée
+  (`ACCOUNT_LINK_REQUIRED`) et le cas est journalisé (`account.email_conflict`).
+  Rattachement : §6.
+- Si Supabase Auth ne répond pas, l'API répond 503 et aucun compte n'est créé.
+- Tests : vérification réelle des jetons (signature falsifiée, jeton modifié,
+  expiré, non signé, mauvais rôle), attaques par l'API (jeton forgé, en-tête
+  mal formé, cookie seul, ancien en-tête de test) ; contrôle par mutation.
 
 **Base de données**
 - Accès uniquement par l'API (rôle serveur). Sur Supabase, RLS est activé
@@ -129,16 +151,16 @@ Jamais automatique. Pour chaque conflit (`account.email_conflict`) :
 1. Rapport en lecture seule :
    ```sql
    SELECT l.created_at, u.id AS ancien_compte, u.email,
-          l.details->>'newClerkId' AS nouveau_compte_clerk,
-          l.details->>'emailVerified' AS email_verifie_par_clerk,
+          l.details->>'newAuthUserId' AS nouveau_compte_supabase,
+          l.details->>'emailVerified' AS email_confirme,
           (SELECT count(*) FROM simulations s WHERE s.user_id = u.id) AS simulations,
           (SELECT count(*) FROM subscriptions s WHERE s.user_id = u.id) AS abonnements
      FROM audit_logs l JOIN users u ON u.id = l.target_id
     WHERE l.action = 'account.email_conflict'
     ORDER BY l.created_at;
    ```
-2. Ne traiter que si `email_verifie_par_clerk = true` ; sinon, demander à la
-   personne de vérifier son adresse dans Clerk.
+2. Ne traiter que si `email_confirme = true` ; sinon, demander à la personne
+   de confirmer son adresse (lien reçu par email).
 3. Vérifier avec la personne (par un autre canal que l'email) qu'elle est bien
    titulaire de l'ancien compte. Écarter tout doublon (plusieurs anciens comptes
    pour une même personne) en les examinant un par un.
@@ -146,13 +168,14 @@ Jamais automatique. Pour chaque conflit (`account.email_conflict`) :
    ligne**, dans une transaction, avec une ligne de journal :
    ```sql
    BEGIN;
-   UPDATE users SET clerk_id = '<nouveau_compte_clerk>', email_verified = false, updated_at = now()
-    WHERE id = '<ancien_compte>' AND clerk_id = '<ancien_clerk_id>';
+   UPDATE users SET auth_user_id = '<nouveau_compte_supabase>', email_verified = false, updated_at = now()
+    WHERE id = '<ancien_compte>' AND auth_user_id IS NULL;
    INSERT INTO audit_logs (id, actor_role, action, target_type, target_id, details)
    VALUES (gen_random_uuid()::text, 'admin', 'account.linked_manually', 'user', '<ancien_compte>',
-           jsonb_build_object('newClerkId', '<nouveau_compte_clerk>', 'validatedBy', '<nom>'));
+           jsonb_build_object('newAuthUserId', '<nouveau_compte_supabase>', 'validatedBy', '<nom>'));
    COMMIT;
    ```
+   L'ancien identifiant Clerk (`clerk_id`) est conservé pour l'historique.
    `email_verified = false` force une nouvelle vérification avant tout droit
    d'administrateur. Le statut transitaire n'est pas modifié par le rattachement.
 
@@ -173,8 +196,8 @@ Je ne peux pas garantir l'exactitude de ces points ; ce sont les questions à po
    protection des données à caractère personnel) : quelles formalités
    (déclaration, autorisation) avant de traiter des pièces d'identité,
    d'agrément ou des IFU ?
-2. **Transfert hors du Bénin** : Clerk et Supabase hébergent hors du pays
-   (Supabase : région choisie à la création, ex. Europe). Conditions et
+2. **Transfert hors du Bénin** : Supabase héberge hors du pays (région
+   choisie à la création : Paris pour `simdouane-dev`). Conditions et
    garanties exigées ?
 3. **Information des personnes** : mentions à afficher (finalité, durée,
    destinataires, droits), consentement nécessaire ou non.
@@ -182,7 +205,7 @@ Je ne peux pas garantir l'exactitude de ces points ; ce sont les questions à po
    délais.
 5. **Durées de conservation** (§5).
 6. **Violation de données** : à qui et dans quel délai la notifier.
-7. **Contrats** avec les sous-traitants (Clerk, Supabase, hébergeur).
+7. **Contrats** avec les sous-traitants (Supabase, service d'envoi d'emails, hébergeur).
 8. **Responsable de traitement** : qui (vous, une société) ; faut-il un
    correspondant à la protection des données ?
 
@@ -193,5 +216,6 @@ Je ne peux pas garantir l'exactitude de ces points ; ce sont les questions à po
 - [ ] Mentions d'information publiées dans l'application.
 - [ ] Projet Supabase de production, bucket privé vérifié, offre avec sauvegardes.
 - [ ] Sauvegarde **et restauration** testées (base + fichiers).
-- [ ] Clés Clerk de production, domaine configuré, `ADMIN_EMAILS` à jour.
+- [ ] Supabase Auth de production : domaine (Site URL, Redirect URLs), service
+      d'envoi d'emails (SMTP) avec domaine vérifié, `ADMIN_EMAILS` à jour, CSP.
 - [ ] Tests automatiques au vert sur la version déployée.
