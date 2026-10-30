@@ -12,6 +12,7 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/PHASE3-RAPPORT.md`](docs/PHASE3-RAPPORT.md) — dossiers véhicules ;
 > - [`docs/PLAN-AUTH-SUPABASE.md`](docs/PLAN-AUTH-SUPABASE.md) — passage de Clerk à Supabase Auth (2026-10-30) ;
 > - [`docs/RECETTE-PHASE3.md`](docs/RECETTE-PHASE3.md) — recette avec Supabase `simdouane-dev`, deux comptes de test ;
+> - [`docs/MISE-EN-LIGNE-CLOUDFLARE.md`](docs/MISE-EN-LIGNE-CLOUDFLARE.md) — version de test en ligne sur Cloudflare (Workers + Hyperdrive) ;
 > - [`docs/PHASE4-CONCEPTION.md`](docs/PHASE4-CONCEPTION.md) — checklist provisoire et sources, conception des documents (avant développement) ;
 > - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
 > - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
@@ -163,6 +164,12 @@ TEST_DATABASE_URL=postgresql://…/simdouane_test pnpm test
 ```
 
 ## Mise en production (hors Replit)
+
+**Cloudflare (choisi)** : site et API sur un seul Worker, base via Hyperdrive,
+mise en ligne automatique à chaque envoi sur GitHub. Procédure :
+[`docs/MISE-EN-LIGNE-CLOUDFLARE.md`](docs/MISE-EN-LIGNE-CLOUDFLARE.md).
+
+Autre possibilité, un serveur Node.js classique :
 
 GitHub ne fait qu'héberger le code : il faut un hébergeur qui exécute Node.js
 (Render, Railway, Fly.io, un VPS…). Le plus simple est **un seul processus**

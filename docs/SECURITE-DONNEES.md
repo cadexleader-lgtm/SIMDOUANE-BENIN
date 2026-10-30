@@ -25,7 +25,9 @@
 | Historique local des simulations | `localStorage` du navigateur (jamais envoyé) | Utilisateur |
 
 Sous-traitants techniques : **Supabase** (comptes, base de données et
-fichiers ; projet en région Paris) et l'**hébergeur** de l'API. Clerk n'est
+fichiers ; projet en région Paris) et **Cloudflare** (hébergement du site et
+de l'API, connexion à la base via Hyperdrive ;
+[`MISE-EN-LIGNE-CLOUDFLARE.md`](MISE-EN-LIGNE-CLOUDFLARE.md)). Clerk n'est
 plus utilisé depuis le 2026-10-30. Leurs pays
 d'hébergement entrent dans les questions du §8.
 
@@ -216,6 +218,8 @@ Je ne peux pas garantir l'exactitude de ces points ; ce sont les questions à po
 - [ ] Mentions d'information publiées dans l'application.
 - [ ] Projet Supabase de production, bucket privé vérifié, offre avec sauvegardes.
 - [ ] Sauvegarde **et restauration** testées (base + fichiers).
+- [ ] Hyperdrive en `verify-full` avec le certificat de Supabase (aujourd'hui :
+      chiffré, certificat non vérifié).
 - [ ] Supabase Auth de production : domaine (Site URL, Redirect URLs), service
       d'envoi d'emails (SMTP) avec domaine vérifié, `ADMIN_EMAILS` à jour, CSP.
 - [ ] Tests automatiques au vert sur la version déployée.
