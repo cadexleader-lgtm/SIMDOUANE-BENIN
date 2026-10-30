@@ -42,25 +42,27 @@ gratuite : 3 Mo).
 
 1. **Workers & Pages** → **Create** → **Import a repository** → GitHub :
    autorisez l'accès au dépôt `SIMDOUANE-BENIN`.
-2. Nom du projet : **`simdouane`** (doit être identique au `name` de
-   `wrangler.jsonc`).
+2. Nom du projet : **`simdouane-benin`** (doit être identique au `name` de
+   `wrangler.jsonc`, sinon le déploiement est refusé).
 3. **Build command** : `pnpm run build:cloudflare`.
 4. **Deploy command** : `npx wrangler deploy`.
-5. Branche de production : **`mvp/dossiers`**. Si la page ne la propose pas,
-   allez ensuite dans *Settings → Build → Branch control*. Si un premier
-   build échoue sur `main`, c'est normal : `main` ne contient pas encore ces
-   fichiers. Changez la branche, puis relancez.
+5. **Settings → Build → Branch control** : branche de production
+   **`mvp/dossiers`** (`main` ne contient pas ces fichiers).
+6. **Settings → Build → Build variables and secrets** : ajoutez
+   `NODE_VERSION` = `22` et `PNPM_VERSION` = `10.26.1` (valeurs publiques,
+   type texte). Sans elles, Cloudflare peut prendre pnpm 9, qui échoue à
+   l'installation (voir « En cas d'échec » plus bas).
 
 ### Étape 3 — Le seul secret
 
-Dans le Worker **simdouane** → **Settings → Variables and Secrets** → **Add**
+Dans le Worker **simdouane-benin** → **Settings → Variables and Secrets** → **Add**
 → type **Secret** → nom `SUPABASE_SERVICE_ROLE_KEY`, valeur : la clé
 `service_role` de Supabase. Elle n'est jamais dans le dépôt, ni dans
 `wrangler.jsonc`, ni dans le navigateur.
 
 ### Étape 4 — Ouvrir le site
 
-L'adresse est du type `https://simdouane.<votre-sous-domaine>.workers.dev`
+L'adresse est du type `https://simdouane-benin.<votre-sous-domaine>.workers.dev`
 (affichée dans le Worker). Connectez-vous avec un compte de test.
 
 **À faire dès la première connexion** : avec le compte administrateur,
@@ -74,6 +76,14 @@ public.
 **Redirect URLs** : la même adresse suivie de `/**`. Ce réglage n'est
 nécessaire que pour les liens envoyés par email (confirmation d'inscription,
 mot de passe oublié).
+
+## En cas d'échec du build
+
+| Message dans le journal | Cause | Correction |
+| --- | --- | --- |
+| `Detected … pnpm@9.x` puis `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH … "overrides"` | Cloudflare a pris pnpm 9 ; ce dépôt exige pnpm 10 (réglages dans `pnpm-workspace.yaml`). Reproduit en local le 2026-10-30 : même erreur avec pnpm 9.10.0, installation et build réussis avec pnpm 10.26.1 / Node 22. | Variables `PNPM_VERSION` = `10.26.1` et `NODE_VERSION` = `22` (étape 2.6), branche `mvp/dossiers` (étape 2.5), puis relancer. |
+| Le nom du Worker ne correspond pas | Le projet Cloudflare et `name` dans `wrangler.jsonc` diffèrent. | Même nom des deux côtés (`simdouane-benin`). |
+| Le dossier `artifacts/simdouane/dist/public` n'existe pas | La commande de build est vide ou différente. | Build command : `pnpm run build:cloudflare`. |
 
 ## Sécurité de cette version de test
 

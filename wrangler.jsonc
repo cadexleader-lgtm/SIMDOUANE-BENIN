@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "simdouane",
+  "name": "simdouane-benin",
   "main": "artifacts/api-server/src/worker.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": [
