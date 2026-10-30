@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/lib/auth";
 import { useGetSimulationStats, useGetUserSubscription, useGetSimulations } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [requestSent, setRequestSent] = useState(false);
   const [showUpgradeForm, setShowUpgradeForm] = useState(false);
-  const { user } = useUser();
+  const { user } = useAuth();
   
   const { data: stats, isLoading: statsLoading } = useGetSimulationStats();
   const { data: subscription, isLoading: subLoading } = useGetUserSubscription();

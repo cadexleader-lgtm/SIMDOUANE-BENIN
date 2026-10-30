@@ -2,6 +2,8 @@
 // The generated `uploadTransitaireDocument` serialises the body as JSON and
 // cannot send a file: use `uploadTransitaireDocumentFile` instead.
 
+import { getAccessToken } from "@/lib/auth";
+
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
@@ -12,12 +14,17 @@ export class UploadError extends Error {
 }
 
 export async function uploadTransitaireDocumentFile(applicationId: string, file: File) {
-  // Same base as the generated client (orval baseUrl "/api").
+  // Same base as the generated client (orval baseUrl "/api"); same session
+  // token in the Authorization header.
+  const token = await getAccessToken();
   const res = await fetch(`/api/transitaire-access/applications/${encodeURIComponent(applicationId)}/documents`, {
     method: "POST",
-    headers: { "content-type": "application/octet-stream", "x-file-name": encodeURIComponent(file.name) },
+    headers: {
+      "content-type": "application/octet-stream",
+      "x-file-name": encodeURIComponent(file.name),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
     body: file,
-    credentials: "same-origin",
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new UploadError(data?.message ?? "Envoi impossible.", res.status);

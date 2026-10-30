@@ -3,7 +3,7 @@ import { useGetProfile, useUpdateProfile } from "@workspace/api-client-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User, Phone, Mail, Shield, Check, Loader2, CreditCard, KeyRound, ExternalLink, Briefcase, MessageCircle } from "lucide-react";
+import { User, Phone, Mail, Check, Loader2, CreditCard, Briefcase, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import { useClerk } from "@clerk/react";
+import { ChangePasswordCard } from "@/components/auth/change-password-card";
 import { AccountKindCard } from "@/components/profile/account-kind-card";
 import { TransitaireAccessCard } from "@/components/profile/transitaire-access-card";
 
@@ -33,7 +33,6 @@ type ProfileValues = z.infer<typeof profileSchema>;
 
 export default function Profil() {
   const [, setLocation] = useLocation();
-  const { openUserProfile } = useClerk();
   const { data: profile, isLoading } = useGetProfile();
   const updateProfile = useUpdateProfile();
   const updateMutationRef = useRef(updateProfile.mutate);
@@ -228,29 +227,7 @@ export default function Profil() {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-slate-200 shadow-sm bg-slate-50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-slate-500" />
-                Sécurité du compte
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                Modifiez votre email, mot de passe ou méthodes de connexion (Google, etc.) via le portail sécurisé.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs font-semibold gap-2"
-                onClick={() => openUserProfile()}
-              >
-                <KeyRound className="h-3.5 w-3.5" />
-                Gérer mon compte
-                <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-              </Button>
-            </CardContent>
-          </Card>
+          <ChangePasswordCard />
 
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-3 border-b border-slate-100">

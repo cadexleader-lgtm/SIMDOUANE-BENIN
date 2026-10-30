@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLang } from "@/context/language-context";
 import { T } from "@/lib/translations";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/lib/auth";
 import { useGetSimulations, useDeleteSimulation, getGetSimulationsQueryKey, useGetUserSubscription, getGetUserSubscriptionQueryKey } from "@workspace/api-client-react";
 import { queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 export default function Historique() {
   const [, setLocation] = useLocation();
   const { lang } = useLang();
-  const { user } = useUser();
+  const { user } = useAuth();
   const t = T[lang].history;
   const dateLocale = lang === "fr" ? fr : enUS;
   const dateFormat = lang === "fr" ? "d MMM yyyy 'à' HH:mm" : "MMM d, yyyy 'at' HH:mm";

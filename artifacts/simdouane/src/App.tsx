@@ -19,138 +19,18 @@ import Dossiers from "@/pages/dossiers";
 import DossierNouveau from "@/pages/dossier-nouveau";
 import DossierDetail from "@/pages/dossier-detail";
 
-import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
-import { shadcn } from '@clerk/themes';
-import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { isAdminEmail } from "@/lib/admin";
-import { onboardingUrl, safeAppPath, signInPathFor, toAppPath } from "@/lib/redirects";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { signInPathFor } from "@/lib/redirects";
+import SignInPage from "@/pages/auth/sign-in";
+import SignUpPage from "@/pages/auth/sign-up";
+import ForgotPasswordPage from "@/pages/auth/forgot-password";
+import ResetPasswordPage from "@/pages/auth/reset-password";
+import ConfirmationPage from "@/pages/auth/confirmation";
 
-// An explicitly configured key always wins. Deriving the key from the host is
-// only for Replit-managed Clerk instances (one instance per domain).
-const clerkPubKey =
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  publishableKeyFromHost(window.location.hostname, undefined);
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
-
-const clerkAppearance = {
-  theme: shadcn,
-  cssLayerName: "clerk",
-  options: {
-    logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
-  },
-  variables: {
-    colorPrimary: "#003D24",
-    colorForeground: "#0f172a",
-    colorMutedForeground: "#64748b",
-    colorDanger: "#dc2626",
-    colorBackground: "#ffffff",
-    colorInput: "#f8fafc",
-    colorInputForeground: "#0f172a",
-    colorNeutral: "#e2e8f0",
-    fontFamily: "Inter, sans-serif",
-    borderRadius: "0.75rem",
-  },
-  elements: {
-    rootBox: "w-full flex justify-center",
-    cardBox: "bg-white rounded-2xl shadow-2xl w-[440px] max-w-full overflow-hidden border border-slate-200",
-    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-slate-900 font-bold text-xl",
-    headerSubtitle: "text-slate-500 text-sm",
-    socialButtonsBlockButtonText: "text-slate-700 font-medium",
-    formFieldLabel: "text-slate-700 text-sm font-medium",
-    footerActionLink: "text-[#003D24] font-semibold hover:underline",
-    footerActionText: "text-slate-500",
-    dividerText: "text-slate-400 text-xs",
-    identityPreviewEditButton: "text-[#003D24]",
-    formFieldSuccessText: "text-green-600",
-    alertText: "text-slate-700",
-    logoBox: "flex justify-center",
-    logoImage: "h-12 w-auto",
-    socialButtonsBlockButton: "border-slate-200 hover:bg-slate-50",
-    formButtonPrimary: "bg-[#003D24] hover:bg-[#004d2e] text-white font-semibold",
-    formFieldInput: "border-slate-200 bg-slate-50 text-slate-900 rounded-xl",
-    footerAction: "bg-slate-50 border-t border-slate-200",
-    dividerLine: "bg-slate-200",
-    alert: "bg-red-50 border-red-200",
-    otpCodeFieldInput: "border-slate-200 text-slate-900",
-    formFieldRow: "",
-    main: "",
-  },
-};
-
-/* ─── Auth pages (no layout) ─────────────────────────────────────────────── */
-// Page the visitor was heading to (protected page, future invitation link).
-// After a sign-up they go through onboarding first, then to that page.
-function destinationFromUrl(): string | null {
-  return safeAppPath(new URLSearchParams(window.location.search).get("redirect_url"), basePath, window.location.origin);
-}
-
-function SignInPage() {
-  const destination = destinationFromUrl();
-  return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-[#003D24] px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src={`${window.location.origin}${basePath}/logo.svg`} className="h-14 mx-auto mb-3" alt="SimDouane" />
-          <p className="text-white/60 text-xs uppercase tracking-widest font-semibold">Simulateur Douanier · Bénin</p>
-        </div>
-        <SignIn
-          routing="path"
-          path={`${basePath}/sign-in`}
-          signUpUrl={`${basePath}/sign-up`}
-          signUpForceRedirectUrl={destination ? onboardingUrl(destination, basePath) : undefined}
-        />
-      </div>
-    </div>
-  );
-}
-
-function SignUpPage() {
-  const destination = destinationFromUrl();
-  return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-[#003D24] px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src={`${window.location.origin}${basePath}/logo.svg`} className="h-14 mx-auto mb-3" alt="SimDouane" />
-          <p className="text-white/60 text-xs uppercase tracking-widest font-semibold">Simulateur Douanier · Bénin</p>
-        </div>
-        <SignUp
-          routing="path"
-          path={`${basePath}/sign-up`}
-          signInUrl={`${basePath}/sign-in`}
-          forceRedirectUrl={destination ? onboardingUrl(destination, basePath) : undefined}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* ─── Clerk cache invalidation ───────────────────────────────────────────── */
-function ClerkQueryClientCacheInvalidator() {
-  const { addListener } = useClerk();
-  const qc = useQueryClient();
-  const prevUserIdRef = useRef<string | null | undefined>(undefined);
-  useEffect(() => {
-    const unsubscribe = addListener(({ user }) => {
-      const userId = user?.id ?? null;
-      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
-        qc.clear();
-      }
-      prevUserIdRef.current = userId;
-    });
-    return unsubscribe;
-  }, [addListener, qc]);
-  return null;
-}
 
 /* ─── Route helpers ──────────────────────────────────────────────────────── */
 function NotFound() {
@@ -165,29 +45,23 @@ function NotFound() {
 }
 
 function HomeRedirect() {
-  return (
-    <>
-      <Show when="signed-in"><Redirect to="/dashboard" /></Show>
-      <Show when="signed-out"><Redirect to="/accueil" /></Show>
-    </>
-  );
+  const { isLoaded, user } = useAuth();
+  if (!isLoaded) return null;
+  return <Redirect to={user ? "/dashboard" : "/accueil"} />;
 }
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const [location] = useLocation();
-  return (
-    <>
-      <Show when="signed-in"><Component /></Show>
-      <Show when="signed-out"><Redirect to={signInPathFor(location, window.location.search, basePath)} /></Show>
-    </>
-  );
+  const { isLoaded, user } = useAuth();
+  if (!isLoaded) return null;
+  if (!user) return <Redirect to={signInPathFor(location, window.location.search, basePath)} />;
+  return <Component />;
 }
 
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useAuth();
   if (!isLoaded) return null;
-  const isAdmin = user?.emailAddresses.some(e => isAdminEmail(e.emailAddress));
-  if (!isAdmin) {
+  if (!isAdminEmail(user?.email)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <h1 className="text-2xl font-bold text-red-600">Accès refusé</h1>
@@ -199,33 +73,25 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
 }
 
 /* ─── App router — split auth vs. layout ────────────────────────────────── */
-function ClerkProviderWithRoutes() {
+const AUTH_PAGES = /^\/(sign-in|sign-up|mot-de-passe-oublie|nouveau-mot-de-passe|auth\/confirmation)(\/|$)/;
+
+function AppRoutes() {
   const [location] = useLocation();
-  const [, setLocation] = useLocation();
-  const isAuthPage    = /^\/(sign-in|sign-up)(\/|$)/.test(location);
+  const isAuthPage    = AUTH_PAGES.test(location);
   const isOnboarding  = /^\/onboarding(\/|$)/.test(location);
   const isStandalone  = /^\/(accueil)(\/|$)/.test(location) || location === "/";
 
   return (
-    <ClerkProvider
-      publishableKey={clerkPubKey}
-      proxyUrl={clerkProxyUrl}
-      appearance={clerkAppearance}
-      signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
-      afterSignOutUrl={`${basePath}/accueil`}
-      signUpFallbackRedirectUrl={onboardingUrl(null, basePath)}
-      routerPush={(to) => setLocation(toAppPath(to, basePath, window.location.origin))}
-      routerReplace={(to) => setLocation(toAppPath(to, basePath, window.location.origin), { replace: true })}
-    >
+    <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <ClerkQueryClientCacheInvalidator />
-
         {/* Auth pages — full-screen, no sidebar */}
         {isAuthPage && (
           <Switch>
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/sign-in" component={SignInPage} />
+            <Route path="/sign-up" component={SignUpPage} />
+            <Route path="/mot-de-passe-oublie" component={ForgotPasswordPage} />
+            <Route path="/nouveau-mot-de-passe" component={ResetPasswordPage} />
+            <Route path="/auth/confirmation" component={ConfirmationPage} />
           </Switch>
         )}
 
@@ -266,7 +132,7 @@ function ClerkProviderWithRoutes() {
           </Layout>
         )}
       </QueryClientProvider>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }
 
@@ -274,7 +140,7 @@ function App() {
   return (
     <LanguageProvider>
       <WouterRouter base={basePath}>
-        <ClerkProviderWithRoutes />
+        <AppRoutes />
         <InstallPrompt />
       </WouterRouter>
     </LanguageProvider>

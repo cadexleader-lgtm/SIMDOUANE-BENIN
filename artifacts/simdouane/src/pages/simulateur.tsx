@@ -22,7 +22,7 @@ import { formatFCFA } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/context/language-context";
 import { T } from "@/lib/translations";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/lib/auth";
 import { useCreateSimulation, useGetUserSubscription, getGetUserSubscriptionQueryKey } from "@workspace/api-client-react";
 import { UpgradeRequestForm } from "@/components/upgrade-request-form";
 import { getRegulatoryNotice, Powertrain, VehicleCondition } from "@/lib/regulatory-config-2026";
@@ -177,7 +177,7 @@ export default function Simulateur() {
   const [quotaModal, setQuotaModal] = useState(false);
   const { lang } = useLang();
   const t = T[lang].sim;
-  const { user } = useUser();
+  const { user } = useAuth();
   const createSimulation = useCreateSimulation();
   const createMutationRef = useRef(createSimulation.mutate);
   createMutationRef.current = createSimulation.mutate;

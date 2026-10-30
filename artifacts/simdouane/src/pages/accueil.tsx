@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/lib/auth";
 import { useState, useEffect, useRef } from "react";
 import {
   Calculator, Shield, Clock, Cloud, TrendingUp, CheckCircle,
@@ -341,7 +341,7 @@ function HeroSection() {
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
 export default function Accueil() {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-white font-sans">

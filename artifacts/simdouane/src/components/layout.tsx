@@ -13,7 +13,7 @@ import { SimDouaneLogo } from "@/components/logo";
 import { useLang, Lang } from "@/context/language-context";
 import { T } from "@/lib/translations";
 import { isAdminEmail } from "@/lib/admin";
-import { useUser, useClerk } from "@clerk/react";
+import { useAuth } from "@/lib/auth";
 
 const SIDEBAR_BG = "#003D24";
 const CONTENT_BG = "#F0F2F5";
@@ -99,8 +99,9 @@ function ContactModal({ open, onClose }: { open: boolean; onClose: () => void })
 
 /* ─── User dropdown (desktop top bar) ───────────────────────────────────── */
 function UserMenu() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, signOut: endSession } = useAuth();
+  const [, setLocation] = useLocation();
+  const signOut = () => void endSession().then(() => setLocation("/accueil"));
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -136,7 +137,7 @@ function UserMenu() {
         )}
         <div className="text-left hidden lg:block">
           <p className="text-sm font-semibold text-slate-800 leading-tight">{user.fullName || user.firstName || "Mon compte"}</p>
-          <p className="text-[10px] text-slate-400 leading-tight">{user.primaryEmailAddress?.emailAddress}</p>
+          <p className="text-[10px] text-slate-400 leading-tight">{user.email}</p>
         </div>
         <ChevronRight className={cn("h-3.5 w-3.5 text-slate-400 transition-transform", open && "rotate-90")} />
       </button>
@@ -145,7 +146,7 @@ function UserMenu() {
         <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl border border-slate-200 shadow-xl z-50 py-1.5 overflow-hidden">
           <div className="px-3 py-2 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-800 truncate">{user.fullName || "Mon compte"}</p>
-            <p className="text-[10px] text-slate-400 truncate">{user.primaryEmailAddress?.emailAddress}</p>
+            <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
           </div>
           <div className="py-1">
             <Link
@@ -221,10 +222,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { lang } = useLang();
   const t = T[lang];
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, signOut: endSession } = useAuth();
+  const [, setLocation] = useLocation();
+  const signOut = () => void endSession().then(() => setLocation("/accueil"));
 
-  const isAdmin = user?.emailAddresses?.some(e => isAdminEmail(e.emailAddress));
+  const isAdmin = isAdminEmail(user?.email);
 
   const toolsNav = [
     { path: "/simulateur", icon: Calculator,   label: t.nav.simulation },
@@ -339,7 +341,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     {user.fullName || user.firstName || "Utilisateur"}
                   </p>
                   <p className="text-white/40 text-[10px] truncate leading-tight">
-                    {user.primaryEmailAddress?.emailAddress}
+                    {user.email}
                   </p>
                 </div>
               </div>
@@ -564,7 +566,7 @@ export function Layout({ children }: { children: ReactNode }) {
               )}
               <div>
                 <p className="font-bold text-slate-900 text-sm">{user?.fullName || user?.firstName || "Mon compte"}</p>
-                <p className="text-slate-400 text-xs truncate max-w-[220px]">{user?.primaryEmailAddress?.emailAddress}</p>
+                <p className="text-slate-400 text-xs truncate max-w-[220px]">{user?.email}</p>
               </div>
             </div>
 

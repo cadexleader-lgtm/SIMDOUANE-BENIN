@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { onboardingUrl, safeAppPath, signInPathFor, toAppPath } from "./redirects";
+import { onboardingUrl, safeAppPath, signInPathFor } from "./redirects";
 
 const ORIGIN = "https://simdouane.example";
 
@@ -26,10 +26,13 @@ describe("safeAppPath", () => {
     }
   });
 
-  it("refuse les pages de connexion, d'inscription et d'onboarding (boucles)", () => {
+  it("refuse les pages de connexion, d'inscription, de mot de passe et d'onboarding (boucles)", () => {
     expect(safeAppPath("/sign-in", "", ORIGIN)).toBeNull();
     expect(safeAppPath("/sign-up/verify", "", ORIGIN)).toBeNull();
     expect(safeAppPath("/onboarding?next=/x", "", ORIGIN)).toBeNull();
+    expect(safeAppPath("/mot-de-passe-oublie", "", ORIGIN)).toBeNull();
+    expect(safeAppPath("/nouveau-mot-de-passe", "", ORIGIN)).toBeNull();
+    expect(safeAppPath("/auth/confirmation?next=/x", "", ORIGIN)).toBeNull();
   });
 });
 
@@ -51,13 +54,5 @@ describe("parcours d'inscription", () => {
     expect(path).toBe("/sign-in?redirect_url=%2Fhistorique%3Fpage%3D2");
     const back = new URL(path, ORIGIN).searchParams.get("redirect_url");
     expect(safeAppPath(back, "", ORIGIN)).toBe("/historique?page=2");
-  });
-});
-
-describe("toAppPath (navigation demandée par Clerk)", () => {
-  it("convertit une adresse complète du même site et retire le préfixe", () => {
-    expect(toAppPath(`${ORIGIN}/app/onboarding?next=%2Fx`, "/app", ORIGIN)).toBe("/onboarding?next=%2Fx");
-    expect(toAppPath("/app/dashboard", "/app", ORIGIN)).toBe("/dashboard");
-    expect(toAppPath("/dashboard", "", ORIGIN)).toBe("/dashboard");
   });
 });

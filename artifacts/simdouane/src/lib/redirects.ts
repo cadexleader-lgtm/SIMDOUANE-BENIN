@@ -6,7 +6,14 @@
  */
 
 // Pages that must never be used as a destination (they would loop).
-const EXCLUDED = [/^\/sign-in(\/|$)/, /^\/sign-up(\/|$)/, /^\/onboarding(\/|$)/];
+const EXCLUDED = [
+  /^\/sign-in(\/|$)/,
+  /^\/sign-up(\/|$)/,
+  /^\/onboarding(\/|$)/,
+  /^\/mot-de-passe-oublie(\/|$)/,
+  /^\/nouveau-mot-de-passe(\/|$)/,
+  /^\/auth\/confirmation(\/|$)/,
+];
 
 function stripBase(path: string, basePath: string): string {
   return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
@@ -42,15 +49,4 @@ export function onboardingUrl(destination: string | null, basePath: string): str
 export function signInPathFor(appPath: string, search: string, basePath: string): string {
   const destination = `${basePath}${appPath}${search}`;
   return `/sign-in?redirect_url=${encodeURIComponent(destination)}`;
-}
-
-/** Clerk navigation target (path or same-origin URL) → wouter path. */
-export function toAppPath(to: string, basePath: string, origin: string): string {
-  try {
-    const url = new URL(to, origin);
-    if (url.origin === new URL(origin).origin) return stripBase(url.pathname, basePath) + url.search + url.hash;
-  } catch {
-    /* fall through */
-  }
-  return stripBase(to, basePath);
 }
