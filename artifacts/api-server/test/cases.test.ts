@@ -1,12 +1,15 @@
 /**
  * Phase 3 — vehicle files: creation, reading, update, completeness check,
  * archiving, isolation between users and validation errors.
- * Real PostgreSQL (TEST_DATABASE_URL, emptied between tests), Clerk stubbed.
+ * Real PostgreSQL (TEST_DATABASE_URL, emptied between tests), identity provider stubbed (test/authMock.ts).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { startTestApp, TEST_DB } from "./harness";
 
-vi.mock("@clerk/express", async () => (await import("./clerkMock")).default);
+vi.mock("../src/lib/auth/identity", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/lib/auth/identity")>()),
+  ...(await import("./authMock")),
+}));
 
 const minimal = { arrivalSituation: "not_arrived", vehicle: { make: "Toyota" } };
 const full = {
@@ -66,12 +69,12 @@ describe.skipIf(!TEST_DB)("phase 3 — dossiers véhicules", () => {
 
     it("le client ne peut fixer ni le statut, ni le propriétaire, ni la référence", async () => {
       await call("bob", "GET", "/profile");
-      const [{ id: bobId }] = await query(`SELECT id FROM users WHERE clerk_id = 'bob'`);
+      const [{ id: bobId }] = await query(`SELECT id FROM users WHERE auth_user_id = 'bob'`);
       const c = await create("alice", { ...minimal, status: "ready", ownerUserId: bobId, reference: "SDB-0000-000000" });
       expect(c.status).toBe("draft");
       expect(c.reference).not.toBe("SDB-0000-000000");
-      const [{ clerk_id }] = await query(`SELECT u.clerk_id FROM clearance_cases c JOIN users u ON u.id = c.owner_user_id`);
-      expect(clerk_id).toBe("alice");
+      const [{ auth_user_id }] = await query(`SELECT u.auth_user_id FROM clearance_cases c JOIN users u ON u.id = c.owner_user_id`);
+      expect(auth_user_id).toBe("alice");
     });
 
     it("erreurs de validation : message par champ, rien n'est créé", async () => {
@@ -132,7 +135,7 @@ describe.skipIf(!TEST_DB)("phase 3 — dossiers véhicules", () => {
 
     it("un compte désactivé par l'administrateur n'accède plus aux dossiers", async () => {
       await create("alice");
-      await query(`UPDATE users SET status = 'disabled' WHERE clerk_id = 'alice'`);
+      await query(`UPDATE users SET status = 'disabled' WHERE auth_user_id = 'alice'`);
       const res = await call("alice", "GET", "/cases");
       expect(res.status).toBe(403);
       expect((await res.json()).error).toBe("ACCOUNT_DISABLED");

@@ -1,14 +1,17 @@
 /**
  * Phase 2 — accounts, transitaire access, private supporting documents and
  * the security journal. Real PostgreSQL (TEST_DATABASE_URL, emptied between
- * tests), real Express app, local private file store, Clerk stubbed.
+ * tests), real Express app, local private file store, identity provider stubbed (test/authMock.ts).
  * Only fictitious documents are used.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { clerkUsers } from "./clerkMock";
+import { authAccounts } from "./authMock";
 import { FAKE_PDF, PDF, PNG, startTestApp, TEST_DB } from "./harness";
 
-vi.mock("@clerk/express", async () => (await import("./clerkMock")).default);
+vi.mock("../src/lib/auth/identity", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/lib/auth/identity")>()),
+  ...(await import("./authMock")),
+}));
 
 describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatifs", () => {
   let app: Awaited<ReturnType<typeof startTestApp>>;
@@ -44,16 +47,16 @@ describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatif
   });
 
   describe("comptes existants : jamais de fusion automatique", () => {
-    it("refuse un nouveau compte Clerk dont l'email appartient déjà à un compte, sans rien modifier", async () => {
+    it("refuse un nouveau compte (Supabase Auth) dont l'email appartient déjà à un compte, sans rien modifier", async () => {
       await query(
         `INSERT INTO users (id, clerk_id, email, full_name) VALUES ('old-user', 'user_replit_old', 'ancien@example.test', 'Ancien')`,
       );
       await query(`INSERT INTO simulations (id, user_id, marque, modele, annee, cylindree, carburant, valeur_cif, regime, total_douane, total_port, total_general)
                    VALUES ('sim-old', 'old-user', 'Toyota', 'Hilux', 2015, 'gt2500', 'Diesel', 1, 'Droit commun', 1, 1, 1)`);
-      // Same address, different case, on the new Clerk instance.
-      clerkUsers.set("user_new_clerk", { email: "ANCIEN@example.test", verified: true });
+      // Same address, different case, on a new Supabase Auth account.
+      authAccounts.set("user_new_auth", { email: "ANCIEN@example.test", confirmed: true });
 
-      const res = await call("user_new_clerk", "GET", "/profile");
+      const res = await call("user_new_auth", "GET", "/profile");
       expect(res.status).toBe(409);
       expect((await res.json()).error).toBe("ACCOUNT_LINK_REQUIRED");
 
@@ -61,12 +64,12 @@ describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatif
       expect(await query(`SELECT user_id FROM simulations`)).toEqual([{ user_id: "old-user" }]);
       const logs = await query(`SELECT action, target_id, details FROM audit_logs`);
       expect(logs).toEqual([
-        { action: "account.email_conflict", target_id: "old-user", details: { newClerkId: "user_new_clerk", emailVerified: true } },
+        { action: "account.email_conflict", target_id: "old-user", details: { newAuthUserId: "user_new_auth", emailVerified: true } },
       ]);
     });
 
-    it("ne crée pas de compte avec une adresse inventée si Clerk ne répond pas", async () => {
-      clerkUsers.set("bob", { fail: true });
+    it("ne crée pas de compte avec une adresse inventée si le service d'authentification ne répond pas", async () => {
+      authAccounts.set("bob", { fail: true });
       const res = await call("bob", "GET", "/profile");
       expect(res.status).toBe(503);
       expect(await query(`SELECT count(*)::int AS n FROM users`)).toEqual([{ n: 0 }]);
@@ -172,7 +175,7 @@ describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatif
       await signIn("admin");
       const { applicationId } = await applyWithDocument();
       await approve(applicationId);
-      const [{ id: aliceId }] = await query(`SELECT id FROM users WHERE clerk_id = 'alice'`);
+      const [{ id: aliceId }] = await query(`SELECT id FROM users WHERE auth_user_id = 'alice'`);
       const change = (action: string, reason?: string) =>
         call("admin", "POST", `/admin/users/${aliceId}/transitaire-status`, { action, reason });
 
@@ -212,7 +215,7 @@ describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatif
   describe("administration : contrôle serveur", () => {
     it("toutes les routes d'administration transitaire refusent un non-administrateur", async () => {
       const { applicationId, fileId } = await applyWithDocument();
-      const [{ id: aliceId }] = await query(`SELECT id FROM users WHERE clerk_id = 'alice'`);
+      const [{ id: aliceId }] = await query(`SELECT id FROM users WHERE auth_user_id = 'alice'`);
       const attempts: [string, string, unknown?][] = [
         ["GET", "/admin/transitaire-applications"],
         ["GET", `/admin/transitaire-applications/${applicationId}`],
@@ -229,16 +232,16 @@ describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatif
       expect(await query(`SELECT transitaire_status FROM users WHERE id = $1`, [aliceId])).toEqual([{ transitaire_status: "pending" }]);
     });
 
-    it("l'adresse d'administration doit être vérifiée par Clerk", async () => {
-      clerkUsers.set("admin", { verified: false });
+    it("l'adresse d'administration doit être confirmée dans Supabase Auth", async () => {
+      authAccounts.set("admin", { confirmed: false });
       await signIn("admin");
       const denied = await call("admin", "GET", "/admin/transitaire-applications");
       expect(denied.status).toBe(403);
       expect((await denied.json()).error).toBe("ADMIN_EMAIL_NOT_VERIFIED");
 
-      clerkUsers.set("admin", { verified: true });
+      authAccounts.set("admin", { confirmed: true });
       expect((await call("admin", "GET", "/admin/transitaire-applications")).status).toBe(200);
-      expect(await query(`SELECT email_verified FROM users WHERE clerk_id = 'admin'`)).toEqual([{ email_verified: true }]);
+      expect(await query(`SELECT email_verified FROM users WHERE auth_user_id = 'admin'`)).toEqual([{ email_verified: true }]);
     });
   });
 
@@ -315,7 +318,7 @@ describe.skipIf(!TEST_DB)("phase 2 — comptes, accès transitaire, justificatif
         expect((await fetch(`${app.baseUrl}${(await res.json()).url}`)).status).toBe(200);
       }
       const logs = await query(
-        `SELECT l.actor_role, u.clerk_id AS actor, l.target_id, l.details->>'applicationId' AS application_id
+        `SELECT l.actor_role, u.auth_user_id AS actor, l.target_id, l.details->>'applicationId' AS application_id
            FROM audit_logs l JOIN users u ON u.id = l.actor_user_id
           WHERE l.action = 'file.download_link_issued' ORDER BY l.created_at`,
       );

@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { UpdateProfileBody } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
 import { HttpError, sendError } from "../lib/httpErrors";
 import { findOwnedOrganization, mapOrganization, upsertOwnedOrganization } from "../lib/organizations";
@@ -13,8 +13,8 @@ const router = Router();
 // GET /api/profile
 router.get("/", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
     res.json(mapUser(user, await findOwnedOrganization(user.id)));
   } catch (err) {
     sendError(req, res, err);
@@ -26,8 +26,8 @@ router.get("/", requireAuth, async (req, res) => {
 // admin) are never read from this payload, and `poste` stays declarative.
 router.put("/", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
     const parsed = UpdateProfileBody.safeParse(req.body ?? {});
     if (!parsed.success) throw new HttpError(400, "INVALID_INPUT", "Données de profil invalides.");
     const { fullName, phone, whatsapp, poste, onboarded, accountKind } = parsed.data;

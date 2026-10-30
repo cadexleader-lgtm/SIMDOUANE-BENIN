@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
-import { clerkUsers } from "./clerkMock";
+import { authHeader, resetAuthMock } from "./authMock";
 
 export const TEST_DB = process.env.TEST_DATABASE_URL;
 
@@ -38,12 +38,17 @@ export async function startTestApp() {
   const server: Server = app.listen(0);
   const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
+  // `user` signs the request with a valid session token for that account.
   const call = (user: string | null, method: string, apiPath: string, body?: unknown) =>
     fetch(`${baseUrl}/api${apiPath}`, {
       method,
-      headers: { "content-type": "application/json", ...(user ? { "x-test-user": user } : {}) },
+      headers: { "content-type": "application/json", ...(user ? authHeader(user) : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
+
+  // Request with arbitrary headers (forged or malformed credentials).
+  const raw = (method: string, apiPath: string, headers: Record<string, string>) =>
+    fetch(`${baseUrl}/api${apiPath}`, { method, headers });
 
   const upload = (user: string | null, apiPath: string, data: Uint8Array, fileName = "justificatif.pdf") =>
     fetch(`${baseUrl}/api${apiPath}`, {
@@ -51,7 +56,7 @@ export async function startTestApp() {
       headers: {
         "content-type": "application/octet-stream",
         "x-file-name": encodeURIComponent(fileName),
-        ...(user ? { "x-test-user": user } : {}),
+        ...(user ? authHeader(user) : {}),
       },
       body: data,
     });
@@ -60,9 +65,10 @@ export async function startTestApp() {
     baseUrl,
     pool,
     call,
+    raw,
     upload,
     async reset() {
-      clerkUsers.clear();
+      resetAuthMock();
       await pool.query(`TRUNCATE ${ALL_TABLES} CASCADE`);
     },
     async close() {

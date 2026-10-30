@@ -3,13 +3,6 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
-import {
-  CLERK_PROXY_PATH,
-  clerkProxyMiddleware,
-  getClerkProxyHost,
-} from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -35,9 +28,6 @@ app.use(
   }),
 );
 
-// Clerk proxy must be mounted BEFORE body parsers (streams raw bytes)
-app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-
 // The web app calls the API on the same origin, so CORS is only needed for
 // other origins explicitly listed in CORS_ORIGINS (comma-separated).
 // In development every origin stays allowed, as before.
@@ -55,17 +45,6 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Resolve Clerk publishable key from request host (supports multi-domain)
-app.use(
-  clerkMiddleware((req) => ({
-    // An explicitly configured key always wins. Deriving the key from the
-    // host is only for Replit-managed Clerk instances (one per domain).
-    publishableKey:
-      process.env.CLERK_PUBLISHABLE_KEY ||
-      publishableKeyFromHost(getClerkProxyHost(req) ?? "", undefined),
-  })),
-);
 
 app.use("/api", router);
 

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { simulationsTable, usersTable, subscriptionsTable, subscriptionPlansTable } from "@workspace/db";
 import { eq, and, desc, gte, lte, ilike, or, sql, count, SQL, or as drizzleOr, isNull, gt } from "drizzle-orm";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
 import { sendError } from "../lib/httpErrors";
 
@@ -11,8 +11,8 @@ const router = Router();
 // GET /api/simulations
 router.get("/", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
 
     const { search, dateFrom, dateTo, limit = "50", offset = "0" } = req.query as Record<string, string>;
 
@@ -49,8 +49,8 @@ router.get("/", requireAuth, async (req, res) => {
 // POST /api/simulations
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
 
     // Check monthly simulation limit
     const now = new Date();
@@ -122,8 +122,8 @@ router.post("/", requireAuth, async (req, res) => {
 // GET /api/simulations/stats
 router.get("/stats", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -156,8 +156,8 @@ router.get("/stats", requireAuth, async (req, res) => {
 // DELETE /api/simulations/:id
 router.delete("/:id", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
 
     const simId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const deleted = await db

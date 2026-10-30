@@ -50,6 +50,13 @@
       "when": 1793002825990,
       "tag": "0006_protect_clearance_cases",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793359956621,
+      "tag": "0007_supabase_auth",
+      "breakpoints": true
     }
   ]
 }

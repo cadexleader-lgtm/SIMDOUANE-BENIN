@@ -21,9 +21,14 @@ export const transitaireStatusEnum = pgEnum("transitaire_status", [
 
 export const usersTable = pgTable("users", {
   id:        text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  clerkId:   text("clerk_id").notNull().unique(),
+  // Supabase Auth user id (auth.users.id) of the account. Null for accounts
+  // created before the switch from Clerk, until they are linked manually.
+  authUserId: text("auth_user_id").unique(),
+  // Clerk user id of accounts created before the switch (Replit era). Kept
+  // for history and manual linking; null for new accounts.
+  clerkId:   text("clerk_id").unique(),
   email:     text("email").notNull().unique(),
-  // Whether Clerk reported `email` as verified. Required for admin rights.
+  // Whether the identity provider reported `email` as confirmed. Required for admin rights.
   emailVerified: boolean("email_verified").notNull().default(false),
   fullName:  text("full_name").notNull(),
   phone:     text("phone"),

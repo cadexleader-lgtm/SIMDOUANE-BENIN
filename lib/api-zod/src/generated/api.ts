@@ -143,7 +143,7 @@ export const GetUserSubscriptionResponse = zod.object({
  */
 export const GetProfileResponse = zod.object({
   "id": zod.string(),
-  "clerkId": zod.string(),
+  "clerkId": zod.string().nullable().describe('Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)'),
   "email": zod.string(),
   "fullName": zod.string(),
   "phone": zod.string().nullish(),
@@ -178,7 +178,7 @@ export const UpdateProfileBody = zod.object({
 
 export const UpdateProfileResponse = zod.object({
   "id": zod.string(),
-  "clerkId": zod.string(),
+  "clerkId": zod.string().nullable().describe('Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)'),
   "email": zod.string(),
   "fullName": zod.string(),
   "phone": zod.string().nullish(),
@@ -225,7 +225,7 @@ export const GetAdminUsersQueryParams = zod.object({
 export const GetAdminUsersResponse = zod.object({
   "users": zod.array(zod.object({
   "id": zod.string(),
-  "clerkId": zod.string(),
+  "clerkId": zod.string().nullable().describe('Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)'),
   "email": zod.string(),
   "fullName": zod.string(),
   "phone": zod.string().nullish(),

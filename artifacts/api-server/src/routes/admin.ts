@@ -2,8 +2,7 @@ import { Router, type Request } from "express";
 import { db } from "@workspace/db";
 import { usersTable, subscriptionsTable, subscriptionPlansTable, simulationsTable, adminLogsTable, upgradeRequestsTable } from "@workspace/db";
 import { eq, and, desc, ilike, or, count, gte, SQL } from "drizzle-orm";
-import { requireAdmin } from "../middlewares/requireAuth";
-import { getAuth } from "@clerk/express";
+import { requireAdmin, type AuthedRequest } from "../middlewares/requireAuth";
 
 function param(req: Request, name: string): string {
   const v = req.params[name];
@@ -98,13 +97,13 @@ router.get("/users", requireAdmin, async (req, res) => {
 router.put("/users/:id/status", requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
-    const auth = getAuth(req);
+    const adminUserId = (req as AuthedRequest).currentUser.id;
     const userId = param(req, "id");
 
     await db.update(usersTable).set({ status, updatedAt: new Date() }).where(eq(usersTable.id, userId));
 
     await db.insert(adminLogsTable).values({
-      adminClerkId: auth.userId!,
+      adminUserId,
       action: "update_user_status",
       targetId: userId,
       targetType: "user",
@@ -192,7 +191,7 @@ router.get("/subscription-plans", requireAdmin, async (_req, res) => {
 // POST /api/admin/users/:id/assign-subscription
 router.post("/users/:id/assign-subscription", requireAdmin, async (req, res) => {
   try {
-    const auth = getAuth(req);
+    const adminUserId = (req as AuthedRequest).currentUser.id;
     const userId = param(req, "id");
     const { planId, durationMonths, requestId } = req.body as {
       planId: string;
@@ -249,14 +248,14 @@ router.post("/users/:id/assign-subscription", requireAdmin, async (req, res) => 
           .set({
             status: "activated",
             processedAt: new Date(),
-            processedBy: auth.userId ?? null,
+            processedBy: adminUserId,
             processedNote: "Paiement vérifié et plan activé manuellement.",
           })
           .where(eq(upgradeRequestsTable.id, requestId));
       }
 
       await tx.insert(adminLogsTable).values({
-        adminClerkId: auth.userId!,
+        adminUserId,
         action: requestId ? "activate_subscription_from_request" : "assign_subscription",
         targetId: userId,
         targetType: "user",
@@ -276,7 +275,7 @@ router.post("/users/:id/assign-subscription", requireAdmin, async (req, res) => 
 // DELETE /api/admin/users/:id/subscription (revoke)
 router.delete("/users/:id/subscription", requireAdmin, async (req, res) => {
   try {
-    const auth = getAuth(req);
+    const adminUserId = (req as AuthedRequest).currentUser.id;
     const userId = param(req, "id");
 
     await db
@@ -285,7 +284,7 @@ router.delete("/users/:id/subscription", requireAdmin, async (req, res) => {
       .where(and(eq(subscriptionsTable.userId, userId), eq(subscriptionsTable.status, "active")));
 
     await db.insert(adminLogsTable).values({
-      adminClerkId: auth.userId!,
+      adminUserId,
       action: "revoke_subscription",
       targetId: userId,
       targetType: "user",
@@ -391,7 +390,7 @@ router.get("/upgrade-requests", requireAdmin, async (_req, res) => {
 // PUT /api/admin/upgrade-requests/:id/process
 router.put("/upgrade-requests/:id/process", requireAdmin, async (req, res) => {
   try {
-    const auth = getAuth(req);
+    const adminUserId = (req as AuthedRequest).currentUser.id;
     const reqId = param(req, "id");
     const { status, note } = req.body as {
       status: "payment_under_review" | "approved" | "rejected" | "cancelled" | "processed" | "dismissed";
@@ -403,13 +402,13 @@ router.put("/upgrade-requests/:id/process", requireAdmin, async (req, res) => {
       .set({
         status,
         processedAt: ["rejected", "cancelled", "processed", "dismissed"].includes(status) ? new Date() : null,
-        processedBy: auth.userId ?? null,
+        processedBy: adminUserId,
         ...(status === "rejected" ? { rejectionReason: note ?? null } : { processedNote: note ?? null }),
       })
       .where(eq(upgradeRequestsTable.id, reqId));
 
     await db.insert(adminLogsTable).values({
-      adminClerkId: auth.userId!,
+      adminUserId,
       action: `upgrade_request_${status}`,
       targetId: reqId,
       targetType: "upgrade_request",

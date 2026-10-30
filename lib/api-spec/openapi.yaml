@@ -922,7 +922,7 @@ components:
       required: [id, clerkId, email, fullName, status, createdAt, onboarded]
       properties:
         id:        { type: string }
-        clerkId:   { type: string }
+        clerkId:   { type: string, nullable: true, description: "Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)" }
         email:     { type: string }
         fullName:  { type: string }
         phone:     { type: string, nullable: true }
@@ -1117,7 +1117,7 @@ components:
       required: [id, clerkId, email, fullName, status, planName, createdAt]
       properties:
         id:        { type: string }
-        clerkId:   { type: string }
+        clerkId:   { type: string, nullable: true, description: "Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)" }
         email:     { type: string }
         fullName:  { type: string }
         phone:     { type: string, nullable: true }

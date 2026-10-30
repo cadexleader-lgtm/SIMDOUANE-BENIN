@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { subscriptionsTable, subscriptionPlansTable, simulationsTable } from "@workspace/db";
 import { eq, and, gte, count, or, isNull, gt } from "drizzle-orm";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
 import { sendError } from "../lib/httpErrors";
 
@@ -24,8 +24,8 @@ plansRouter.get("/", async (_req, res) => {
 export const subscriptionRouter = Router();
 subscriptionRouter.get("/", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

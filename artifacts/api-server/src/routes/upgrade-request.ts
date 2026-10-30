@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { upgradeRequestsTable, usersTable } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
 import { sendError } from "../lib/httpErrors";
 
@@ -11,8 +11,8 @@ const router = Router();
 // POST /api/upgrade-request  — user sends a request
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const clerkUserId = (req as any).clerkUserId as string;
-    const user = await getOrCreateUser(clerkUserId, req);
+    const authUserId = (req as AuthedRequest).authUserId;
+    const user = await getOrCreateUser(authUserId, req);
 
     const {
       planWanted,

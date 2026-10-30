@@ -1,9 +1,9 @@
-import { getAuth } from "@clerk/express";
 import type { Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 import { usersTable, type User } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { fetchClerkUser, getOrCreateUser, hasVerifiedEmail } from "../lib/userUtils";
+import { getOrCreateUser } from "../lib/userUtils";
+import { bearerToken, fetchAuthAccount, verifyAccessToken } from "../lib/auth/identity";
 import { sendError } from "../lib/httpErrors";
 
 // Server-side admin allowlist (the real barrier; the UI only hides links).
@@ -13,29 +13,41 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "hazoumeclarence@gmail.com")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
-export type AuthedRequest = Request & { clerkUserId: string; currentUser: User };
+export type AuthedRequest = Request & { authUserId: string; currentUser: User };
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const auth = getAuth(req);
-  const userId = auth?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
+const unauthorized = (res: Response) => res.status(401).json({ error: "Unauthorized" });
+
+/** Verified Supabase Auth user id of the caller, or null (no or invalid token). */
+async function callerAuthUserId(req: Request): Promise<string | null> {
+  const token = bearerToken(req);
+  return token ? verifyAccessToken(token) : null;
+}
+
+/** Signed in with a valid access token; sets req.authUserId. */
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authUserId = await callerAuthUserId(req);
+    if (!authUserId) {
+      unauthorized(res);
+      return;
+    }
+    (req as AuthedRequest).authUserId = authUserId;
+    next();
+  } catch (err) {
+    sendError(req, res, err);
   }
-  (req as any).clerkUserId = userId;
-  next();
 }
 
 /** requireAuth + loads (or creates) the application user as req.currentUser; account must be active. */
 export async function requireUser(req: Request, res: Response, next: NextFunction) {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
   try {
-    (req as AuthedRequest).clerkUserId = auth.userId;
-    const user = await getOrCreateUser(auth.userId);
+    const authUserId = await callerAuthUserId(req);
+    if (!authUserId) {
+      unauthorized(res);
+      return;
+    }
+    (req as AuthedRequest).authUserId = authUserId;
+    const user = await getOrCreateUser(authUserId);
     // Accounts disabled or suspended by an administrator cannot use the
     // features built on requireUser (files, transitaire access, vehicle files).
     if (user.status !== "active") {
@@ -65,34 +77,33 @@ export async function requireActiveTransitaire(req: Request, res: Response, next
 }
 
 /**
- * Admin check: email from our DB must be in ADMIN_EMAILS AND verified by
- * Clerk. A row not yet marked verified (e.g. data migrated from Replit) is
- * re-checked against Clerk once, then marked verified.
+ * Admin check, on every admin request: the email of our account must be in
+ * ADMIN_EMAILS, and the Supabase Auth account must still exist, carry that
+ * same email and have it confirmed.
  */
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   try {
-    const [row] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth.userId)).limit(1);
+    const authUserId = await callerAuthUserId(req);
+    if (!authUserId) {
+      unauthorized(res);
+      return;
+    }
+    const [row] = await db.select().from(usersTable).where(eq(usersTable.authUserId, authUserId)).limit(1);
     const email = row?.email ?? "";
     if (!row || !ADMIN_EMAILS.includes(email.toLowerCase())) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
+    const account = await fetchAuthAccount(authUserId);
+    if (!account || account.email?.toLowerCase() !== email.toLowerCase() || !account.emailConfirmed) {
+      res.status(403).json({ error: "ADMIN_EMAIL_NOT_VERIFIED" });
+      return;
+    }
     if (!row.emailVerified) {
-      const clerkUser = await fetchClerkUser(auth.userId);
-      if (!hasVerifiedEmail(clerkUser, email)) {
-        res.status(403).json({ error: "ADMIN_EMAIL_NOT_VERIFIED" });
-        return;
-      }
       await db.update(usersTable).set({ emailVerified: true, updatedAt: new Date() }).where(eq(usersTable.id, row.id));
     }
 
-    (req as any).clerkUserId = auth.userId;
+    (req as AuthedRequest).authUserId = authUserId;
     (req as AuthedRequest).currentUser = row;
     next();
   } catch (err) {

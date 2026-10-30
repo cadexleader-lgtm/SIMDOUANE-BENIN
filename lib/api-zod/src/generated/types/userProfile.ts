@@ -12,7 +12,8 @@ import type { UserProfileStatus } from './userProfileStatus';
 
 export interface UserProfile {
   id: string;
-  clerkId: string;
+  /** Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes) */
+  clerkId: string | null;
   email: string;
   fullName: string;
   phone?: string | null;

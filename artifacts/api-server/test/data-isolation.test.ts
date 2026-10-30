@@ -1,8 +1,9 @@
 /**
  * Integration test against a real PostgreSQL database (schema from the
- * versioned migrations). Clerk is replaced by a stub (test/clerkMock.ts): the
- * caller identity is taken from the `x-test-user` header, so the test checks
- * OUR authorization code (ownership filters, admin gate), not Clerk itself.
+ * versioned migrations). The identity provider (Supabase Auth) is replaced by
+ * a stub (test/authMock.ts): `Bearer ok.<user>` is a valid session for <user>,
+ * so the test checks OUR authorization code (ownership filters, admin gate).
+ * The real token verification is tested in identity.test.ts.
  *
  *   TEST_DATABASE_URL=postgresql://... pnpm --filter @workspace/api-server test
  *
@@ -12,7 +13,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { startTestApp, TEST_DB } from "./harness";
 
-vi.mock("@clerk/express", async () => (await import("./clerkMock")).default);
+vi.mock("../src/lib/auth/identity", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/lib/auth/identity")>()),
+  ...(await import("./authMock")),
+}));
 
 const simulation = {
   marque: "Toyota",

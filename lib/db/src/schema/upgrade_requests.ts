@@ -33,6 +33,8 @@ export const upgradeRequestsTable = pgTable("upgrade_requests", {
   status:      upgradeRequestStatusEnum("status").notNull().default("submitted"),
   createdAt:   timestamp("created_at").notNull().defaultNow(),
   processedAt: timestamp("processed_at"),
+  // SimDouane user id of the administrator (Clerk user id for requests
+  // processed before the switch to Supabase Auth, 2026-10-30).
   processedBy: text("processed_by"),
   processedNote: text("processed_note"),
   rejectionReason: text("rejection_reason"),
