@@ -80,3 +80,8 @@ coverage/
 .turbo/
 *.log
 *.tsbuildinfo
+
+# Cloudflare (local secrets and build state)
+.dev.vars
+.dev.vars.*
+.wrangler/

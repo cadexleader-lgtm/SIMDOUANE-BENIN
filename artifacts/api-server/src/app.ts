@@ -4,6 +4,7 @@ import path from "node:path";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
+import { requestDatabase } from "./middlewares/requestDatabase";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -46,6 +47,8 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Cloudflare Workers only: a database connection per request (no-op on Node).
+app.use("/api", requestDatabase);
 app.use("/api", router);
 
 // Body parsing errors (malformed JSON, upload too large) as JSON, not HTML.

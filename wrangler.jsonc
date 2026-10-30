@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "simdouane",
+  "main": "artifacts/api-server/src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "alias": {
+    "pino-http": "./artifacts/api-server/src/cloudflare/pino-http.ts"
+  },
+  "assets": {
+    "directory": "artifacts/simdouane/dist/public",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "LOG_LEVEL": "info",
+    "STORAGE_DRIVER": "supabase",
+    "SUPABASE_URL": "https://wmbcjkhakyeofznwggol.supabase.co",
+    "SUPABASE_STORAGE_BUCKET": "simdouane-private",
+    "PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_M2XuBb6p9rExUZx1z3r7RQ_rhoLimcx",
+    "ADMIN_EMAILS": "admin-recette@example.com"
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
