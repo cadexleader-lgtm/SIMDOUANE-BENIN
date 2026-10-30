@@ -60,6 +60,11 @@ Dans le Worker **simdouane-benin** → **Settings → Variables and Secrets** �
 `service_role` de Supabase. Elle n'est jamais dans le dépôt, ni dans
 `wrangler.jsonc`, ni dans le navigateur.
 
+Attention : c'est la section **Variables and Secrets** du Worker (utilisée
+quand le site tourne), **pas** *Build → Build variables and secrets*
+(utilisée seulement pendant la construction : l'API ne la verrait pas, et
+le build n'a pas besoin de cette clé).
+
 ### Étape 4 — Ouvrir le site
 
 L'adresse est du type `https://simdouane-benin.<votre-sous-domaine>.workers.dev`
@@ -82,6 +87,7 @@ mot de passe oublié).
 | Message dans le journal | Cause | Correction |
 | --- | --- | --- |
 | `Detected … pnpm@9.x` puis `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH … "overrides"` | Cloudflare a pris pnpm 9 ; ce dépôt exige pnpm 10 (réglages dans `pnpm-workspace.yaml`). Reproduit en local le 2026-10-30 : même erreur avec pnpm 9.10.0, installation et build réussis avec pnpm 10.26.1 / Node 22. | Variables `PNPM_VERSION` = `10.26.1` et `NODE_VERSION` = `22` (étape 2.6), branche `mvp/dossiers` (étape 2.5), puis relancer. |
+| `Missing script: build:cloudflare` (souvent avec `Ignored build scripts: @clerk/shared`) | Cloudflare a construit `main`, qui n'a ni ce script ni la configuration Cloudflare. « Retry » reconstruit toujours le même commit. | Branche de production `mvp/dossiers` (étape 2.5), puis un nouvel envoi sur `mvp/dossiers` déclenche un build neuf. |
 | Le nom du Worker ne correspond pas | Le projet Cloudflare et `name` dans `wrangler.jsonc` diffèrent. | Même nom des deux côtés (`simdouane-benin`). |
 | Le dossier `artifacts/simdouane/dist/public` n'existe pas | La commande de build est vide ou différente. | Build command : `pnpm run build:cloudflare`. |
 
