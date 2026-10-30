@@ -24,11 +24,16 @@ gratuite : 3 Mo).
 
 ### Étape 1 — Hyperdrive (connexion à la base Supabase)
 
+✅ Fait le 2026-10-30 : configuration `simdouane-dev`, ID
+`cd60e7be166e4555a958814718582c72`, inscrit dans `wrangler.jsonc`.
+
 1. Tableau de bord Cloudflare → **Storage & Databases** → **Hyperdrive** →
    **Create configuration**.
 2. Nom : `simdouane-dev`. Connexion : l'adresse **Session pooler** de
    Supabase (port 5432), avec le mot de passe de la base. C'est la même que
-   `DATABASE_URL` dans votre `.env`. Laissez les autres options par défaut.
+   `DATABASE_URL` dans votre `.env`. **Décochez « Enable caching »** : sinon,
+   un dossier tout juste créé ou modifié peut rester invisible pendant
+   environ une minute. Laissez les autres options par défaut.
 3. Copiez l'**identifiant** (ID) affiché et transmettez-le-moi. Ce n'est pas
    un secret. Je le mets dans `wrangler.jsonc` à la place de
    `00000000000000000000000000000000`.
