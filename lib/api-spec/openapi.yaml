@@ -123,6 +123,21 @@ paths:
         "404":
           description: Not found
 
+  # ── Exchange rates (public) ────────────────────────────────────────────────
+  /exchange-rates:
+    get:
+      operationId: getExchangeRates
+      tags: [simulations]
+      summary: Indicative FCFA rates for the simulator (not the rate applied by customs)
+      security: []
+      responses:
+        "200":
+          description: Rates, with their source method and date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExchangeRates"
+
   # ── Subscription plans ─────────────────────────────────────────────────────
   /subscription-plans:
     get:
@@ -797,6 +812,46 @@ components:
         status:
           type: string
       required: [status]
+
+    # ── Exchange rates ────────────────────────────────────────────────────────
+    XofRate:
+      type: object
+      properties:
+        currency:
+          type: string
+          enum: [EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF]
+        xofPerUnit:
+          type: number
+          description: FCFA for one unit of the currency
+        method:
+          type: string
+          enum: [fixed_parity, ecb_cross]
+          description: fixed_parity = 1 EUR = 655.957 FCFA; ecb_cross = ECB euro reference rate converted through the fixed parity
+        rateDate:
+          type: [string, "null"]
+          description: Publication date of the source rate (YYYY-MM-DD), null for the fixed parity
+      required: [currency, xofPerUnit, method, rateDate]
+
+    ExchangeRates:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, stale, degraded]
+          description: ok = fresh source; stale = source unavailable, last known rates; degraded = only the fixed EUR parity
+        rates:
+          type: array
+          items:
+            $ref: "#/components/schemas/XofRate"
+        unavailable:
+          type: array
+          items:
+            type: string
+            enum: [EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF]
+        fetchedAt:
+          type: [string, "null"]
+          description: When the source was last read successfully (ISO 8601), null if never
+      required: [status, rates, unavailable, fetchedAt]
 
     # ── Simulation schemas ────────────────────────────────────────────────────
     CreateSimulationInput:

@@ -1,5 +1,6 @@
 import { FormInput, SimulationResult } from "./calculator";
 import { Powertrain, VehicleCondition } from "./regulatory-config-2026";
+import type { CurrencyConversion } from "./currency";
 
 export interface HistoryEntry {
   id: string;
@@ -12,6 +13,8 @@ export interface HistoryEntry {
   regulatoryYear?: number;
   calculatorVersion?: string;
   regulatoryConfigVersion?: string;
+  /** Amount entered in another currency and the rate used at that time (absent when entered in FCFA). */
+  conversion?: CurrencyConversion;
 }
 
 export function getHistory(): HistoryEntry[] {

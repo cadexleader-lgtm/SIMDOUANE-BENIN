@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Info, AlertTriangle, ArrowLeft, CheckCircle2, Download } from "lucide-react";
 import { getCurrentSimulation, HistoryEntry } from "@/lib/history";
 import { formatFCFA } from "@/lib/utils";
+import { formatRate, formatRateDate } from "@/lib/currency";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,6 +112,19 @@ export default function Resultats() {
               <div className="text-right shrink-0">
                 <p className="text-xs text-muted-foreground mb-0.5">{t.cif}</p>
                 <p className="text-xl font-bold">{formatFCFA(input.valeurCIF)}</p>
+                {simulation.conversion && (
+                  <p className="text-[11px] text-muted-foreground mt-1 max-w-[260px] ml-auto" data-testid="cif-conversion">
+                    {t.enteredAs(new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US").format(simulation.conversion.amount), simulation.conversion.currency)}
+                    {" · "}
+                    {`1 ${simulation.conversion.currency} = ${formatRate(simulation.conversion.xofPerUnit, lang)} FCFA`}
+                    {" ("}
+                    {simulation.conversion.method === "fixed_parity"
+                      ? t.rateFixedShort
+                      : t.rateEcbShort(formatRateDate(simulation.conversion.rateDate ?? ""))}
+                    {simulation.conversion.status === "stale" ? `, ${t.rateStaleShort}` : ""}
+                    {")"}
+                  </p>
+                )}
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 text-sm">

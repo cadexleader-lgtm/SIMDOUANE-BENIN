@@ -9,6 +9,82 @@ export interface HealthStatus {
   status: string;
 }
 
+export type XofRateCurrency = typeof XofRateCurrency[keyof typeof XofRateCurrency];
+
+
+export const XofRateCurrency = {
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+  GBP: 'GBP',
+  JPY: 'JPY',
+  CNY: 'CNY',
+  KRW: 'KRW',
+  CHF: 'CHF',
+} as const;
+
+/**
+ * fixed_parity = 1 EUR = 655.957 FCFA; ecb_cross = ECB euro reference rate converted through the fixed parity
+ */
+export type XofRateMethod = typeof XofRateMethod[keyof typeof XofRateMethod];
+
+
+export const XofRateMethod = {
+  fixed_parity: 'fixed_parity',
+  ecb_cross: 'ecb_cross',
+} as const;
+
+export interface XofRate {
+  currency: XofRateCurrency;
+  /** FCFA for one unit of the currency */
+  xofPerUnit: number;
+  /** fixed_parity = 1 EUR = 655.957 FCFA; ecb_cross = ECB euro reference rate converted through the fixed parity */
+  method: XofRateMethod;
+  /**
+     * Publication date of the source rate (YYYY-MM-DD), null for the fixed parity
+     * @nullable
+     */
+  rateDate: string | null;
+}
+
+/**
+ * ok = fresh source; stale = source unavailable, last known rates; degraded = only the fixed EUR parity
+ */
+export type ExchangeRatesStatus = typeof ExchangeRatesStatus[keyof typeof ExchangeRatesStatus];
+
+
+export const ExchangeRatesStatus = {
+  ok: 'ok',
+  stale: 'stale',
+  degraded: 'degraded',
+} as const;
+
+export type ExchangeRatesUnavailableItem = typeof ExchangeRatesUnavailableItem[keyof typeof ExchangeRatesUnavailableItem];
+
+
+export const ExchangeRatesUnavailableItem = {
+  EUR: 'EUR',
+  USD: 'USD',
+  CAD: 'CAD',
+  GBP: 'GBP',
+  JPY: 'JPY',
+  CNY: 'CNY',
+  KRW: 'KRW',
+  CHF: 'CHF',
+} as const;
+
+export interface ExchangeRates {
+  /** ok = fresh source; stale = source unavailable, last known rates; degraded = only the fixed EUR parity */
+  status: ExchangeRatesStatus;
+  rates: XofRate[];
+  unavailable: ExchangeRatesUnavailableItem[];
+  /**
+     * When the source was last read successfully (ISO 8601), null if never
+     * @nullable
+     */
+  fetchedAt: string | null;
+}
+
 export interface CreateSimulationInput {
   marque: string;
   modele: string;

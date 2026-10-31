@@ -26,6 +26,9 @@ import { useAuth } from "@/lib/auth";
 import { useCreateSimulation, useGetUserSubscription, getGetUserSubscriptionQueryKey } from "@workspace/api-client-react";
 import { UpgradeRequestForm } from "@/components/upgrade-request-form";
 import { getRegulatoryNotice, Powertrain, VehicleCondition } from "@/lib/regulatory-config-2026";
+import { CURRENCY_CODES, convert, type CurrencyCode } from "@/lib/currency";
+import { useExchangeRates } from "@/lib/use-exchange-rates";
+import { ConversionNote, CurrencySelect } from "@/components/currency-field";
 
 const CYL_KEYS: CylindreeKey[] = ["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"];
 
@@ -38,19 +41,21 @@ const formSchema = z.object({
   condition: z.enum(["Occasion", "Neuf"]),
   cylindree: z.enum(["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"]),
   carburant: z.string().min(1),
-  valeurCIF: z.coerce.number().min(1),
+  // Amount in the chosen currency; the engine receives its FCFA conversion.
+  montant: z.coerce.number().min(1),
+  devise: z.enum(CURRENCY_CODES),
   joursAuPort: z.coerce.number().min(0),
   regime: z.string().min(1),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-function LivePreview({ values }: { values: Partial<FormValues> }) {
+function LivePreview({ values, valeurCIF }: { values: Partial<FormValues>; valeurCIF: number | null }) {
   const { lang } = useLang();
   const t = T[lang].sim;
 
   const result = useMemo(() => {
-    if (!values.valeurCIF || values.valeurCIF <= 0 || !values.cylindree || !values.annee || !values.regime) return null;
+    if (!valeurCIF || valeurCIF <= 0 || !values.cylindree || !values.annee || !values.regime) return null;
     try {
       return calculate({
         marque: values.marque || "",
@@ -58,12 +63,12 @@ function LivePreview({ values }: { values: Partial<FormValues> }) {
         annee: Number(values.annee),
         cylindree: values.cylindree as CylindreeKey,
         carburant: values.carburant || "Essence",
-        valeurCIF: Number(values.valeurCIF),
+        valeurCIF,
         joursAuPort: Number(values.joursAuPort ?? 0),
         regime: values.regime as RegimeKey,
       } as FormInput);
     } catch { return null; }
-  }, [values.valeurCIF, values.cylindree, values.annee, values.regime, values.joursAuPort, values.marque, values.modele, values.carburant]);
+  }, [valeurCIF, values.cylindree, values.annee, values.regime, values.joursAuPort, values.marque, values.modele, values.carburant]);
 
   const dash = "—";
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(Math.round(n));
@@ -200,13 +205,20 @@ export default function Simulateur() {
       condition: "Occasion",
       cylindree: undefined as unknown as CylindreeKey,
       carburant: "",
-      valeurCIF: undefined as unknown as number,
+      montant: undefined as unknown as number,
+      devise: "XOF",
       joursAuPort: 0,
       regime: "Droit commun",
     },
   });
 
   const watchedValues = useWatch({ control: form.control });
+  const rates = useExchangeRates();
+  const watchedDevise = (watchedValues.devise ?? "XOF") as CurrencyCode;
+  const watchedXof = useMemo(
+    () => convert(Number(watchedValues.montant), watchedDevise, rates)?.valeurXof ?? null,
+    [watchedValues.montant, watchedDevise, rates],
+  );
 
   async function onSubmit(values: FormValues) {
     // Block if quota reached for logged-in users
@@ -215,11 +227,19 @@ export default function Simulateur() {
       return;
     }
 
+    // Never calculate on a guessed rate: a currency without a known rate is refused.
+    const converted = convert(Number(values.montant), values.devise, rates);
+    if (!converted) {
+      form.setError("montant", { message: t.rateUnavailable(values.devise) });
+      return;
+    }
+
     setIsCalculating(true);
     await new Promise((r) => setTimeout(r, 1000));
-    const { condition, ...calculatorValues } = values;
+    const { condition, montant: _montant, devise: _devise, ...calculatorValues } = values;
     const input: FormInput = {
       ...calculatorValues,
+      valeurCIF: converted.valeurXof,
       cylindree: values.cylindree as CylindreeKey,
       regime: values.regime as RegimeKey,
     };
@@ -235,7 +255,7 @@ export default function Simulateur() {
       calculatorVersion: "historical",
       regulatoryConfigVersion: "2026.1-announced",
     } as const;
-    const entry = addHistory({ input, result, ...metadata });
+    const entry = addHistory({ input, result, ...metadata, ...(converted.conversion ? { conversion: converted.conversion } : {}) });
     setCurrentSimulation(entry);
     
     if (user) {
@@ -420,7 +440,7 @@ export default function Simulateur() {
                     <CardTitle className="text-sm font-semibold">{t.valuePort}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-2">
-                    <FormField control={form.control} name="valeurCIF" render={({ field }) => (
+                    <FormField control={form.control} name="montant" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1.5">
                           {t.cif}
@@ -433,12 +453,18 @@ export default function Simulateur() {
                             </TooltipContent>
                           </Tooltip>
                         </FormLabel>
-                        <FormControl>
-                          <Input type="number" min={1} placeholder={t.cifPlaceholder} {...field} data-testid="input-cif" />
-                        </FormControl>
+                        <div className="flex gap-2">
+                          <FormField control={form.control} name="devise" render={({ field: deviseField }) => (
+                            <CurrencySelect value={deviseField.value} onChange={deviseField.onChange} rates={rates} lang={lang} />
+                          )} />
+                          <FormControl>
+                            <Input type="number" min={0} step="any" placeholder={t.cifPlaceholder} {...field} className="flex-1" data-testid="input-cif" />
+                          </FormControl>
+                        </div>
                         <FormDescription>
                           {lang === "fr" ? "Prix d'achat + transport + assurance" : "Purchase price + transport + insurance"}
                         </FormDescription>
+                        <ConversionNote amount={Number(field.value)} currency={watchedDevise} rates={rates} lang={lang} />
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -556,7 +582,7 @@ export default function Simulateur() {
           <div className="hidden lg:block w-80 xl:w-96 shrink-0">
             <Card className="sticky top-6">
               <CardContent className="pt-5 pb-5">
-                <LivePreview values={watchedValues} />
+                <LivePreview values={watchedValues} valeurCIF={watchedXof} />
               </CardContent>
             </Card>
           </div>

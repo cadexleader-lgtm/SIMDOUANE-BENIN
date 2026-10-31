@@ -104,6 +104,22 @@ export const DeleteSimulationParams = zod.object({
 
 
 /**
+ * @summary Indicative FCFA rates for the simulator (not the rate applied by customs)
+ */
+export const GetExchangeRatesResponse = zod.object({
+  "status": zod.enum(['ok', 'stale', 'degraded']).describe('ok = fresh source; stale = source unavailable, last known rates; degraded = only the fixed EUR parity'),
+  "rates": zod.array(zod.object({
+  "currency": zod.enum(['EUR', 'USD', 'CAD', 'GBP', 'JPY', 'CNY', 'KRW', 'CHF']),
+  "xofPerUnit": zod.number().describe('FCFA for one unit of the currency'),
+  "method": zod.enum(['fixed_parity', 'ecb_cross']).describe('fixed_parity = 1 EUR = 655.957 FCFA; ecb_cross = ECB euro reference rate converted through the fixed parity'),
+  "rateDate": zod.string().nullable().describe('Publication date of the source rate (YYYY-MM-DD), null for the fixed parity')
+})),
+  "unavailable": zod.array(zod.enum(['EUR', 'USD', 'CAD', 'GBP', 'JPY', 'CNY', 'KRW', 'CHF'])),
+  "fetchedAt": zod.string().nullable().describe('When the source was last read successfully (ISO 8601), null if never')
+})
+
+
+/**
  * @summary Get all active subscription plans
  */
 export const GetSubscriptionPlansResponseItem = zod.object({

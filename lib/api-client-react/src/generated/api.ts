@@ -37,6 +37,7 @@ import type {
   CreateTransitaireApplicationInput,
   CreateUpgradeRequestInput,
   DownloadLink,
+  ExchangeRates,
   GetAdminSimulationsParams,
   GetAdminUsersParams,
   GetSimulationsParams,
@@ -454,6 +455,83 @@ export const useDeleteSimulation = <TError = ErrorType<void>,
       > => {
       return useMutation(getDeleteSimulationMutationOptions(options));
     }
+
+export const getGetExchangeRatesUrl = () => {
+
+
+
+
+  return `/api/exchange-rates`
+}
+
+/**
+ * @summary Indicative FCFA rates for the simulator (not the rate applied by customs)
+ */
+export const getExchangeRates = async ( options?: RequestInit): Promise<ExchangeRates> => {
+
+  return customFetch<ExchangeRates>(getGetExchangeRatesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExchangeRatesQueryKey = () => {
+    return [
+    `/api/exchange-rates`
+    ] as const;
+    }
+
+
+export const getGetExchangeRatesQueryOptions = <TData = Awaited<ReturnType<typeof getExchangeRates>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExchangeRates>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExchangeRatesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExchangeRates>>> = ({ signal }) => getExchangeRates({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExchangeRates>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExchangeRatesQueryResult = NonNullable<Awaited<ReturnType<typeof getExchangeRates>>>
+export type GetExchangeRatesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Indicative FCFA rates for the simulator (not the rate applied by customs)
+ */
+
+export function useGetExchangeRates<TData = Awaited<ReturnType<typeof getExchangeRates>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExchangeRates>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExchangeRatesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetSubscriptionPlansUrl = () => {
 

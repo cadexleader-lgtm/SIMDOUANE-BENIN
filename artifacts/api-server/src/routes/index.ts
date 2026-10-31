@@ -9,6 +9,7 @@ import adminTransitairesRouter from "./admin-transitaires";
 import filesRouter from "./files";
 import casesRouter from "./cases";
 import { transitaireAccessRouter, transitaireSpaceRouter } from "./transitaire-access";
+import exchangeRatesRouter from "./exchange-rates";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use("/transitaire-access", transitaireAccessRouter);
 router.use("/transitaire", transitaireSpaceRouter);
 router.use("/files", filesRouter);
 router.use("/cases", casesRouter);
+router.use("/exchange-rates", exchangeRatesRouter);
 
 export default router;
