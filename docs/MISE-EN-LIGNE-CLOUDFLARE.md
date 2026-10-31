@@ -4,7 +4,7 @@ Le site et l'API tournent sur **un seul Worker Cloudflare** : le site (pages
 de l'application) est servi directement par Cloudflare, et les adresses
 `/api/*` passent par l'API. La base reste chez Supabase (`simdouane-dev`), et
 Cloudflare s'y connecte via **Hyperdrive**. À chaque envoi sur GitHub
-(branche `mvp/dossiers`), Cloudflare reconstruit et remet en ligne
+(branche `main`), Cloudflare reconstruit et remet en ligne
 automatiquement. **Données fictives uniquement.**
 
 | Élément | Où |
@@ -47,7 +47,9 @@ gratuite : 3 Mo).
 3. **Build command** : `pnpm run build:cloudflare`.
 4. **Deploy command** : `npx wrangler deploy`.
 5. **Settings → Build → Branch control** : branche de production
-   **`mvp/dossiers`** (`main` ne contient pas ces fichiers).
+   **`main`** (réglage par défaut). Le travail se fait sur `mvp/dossiers`,
+   puis il est fusionné dans `main` pour être mis en ligne. Première fusion :
+   2026-10-31, à la demande du porteur du projet.
 6. **Settings → Build → Build variables and secrets** : ajoutez
    `NODE_VERSION` = `22` et `PNPM_VERSION` = `10.26.1` (valeurs publiques,
    type texte). Sans elles, Cloudflare peut prendre pnpm 9, qui échoue à
@@ -86,8 +88,8 @@ mot de passe oublié).
 
 | Message dans le journal | Cause | Correction |
 | --- | --- | --- |
-| `Detected … pnpm@9.x` puis `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH … "overrides"` | Cloudflare a pris pnpm 9 ; ce dépôt exige pnpm 10 (réglages dans `pnpm-workspace.yaml`). Reproduit en local le 2026-10-30 : même erreur avec pnpm 9.10.0, installation et build réussis avec pnpm 10.26.1 / Node 22. | Variables `PNPM_VERSION` = `10.26.1` et `NODE_VERSION` = `22` (étape 2.6), branche `mvp/dossiers` (étape 2.5), puis relancer. |
-| `Missing script: build:cloudflare` (souvent avec `Ignored build scripts: @clerk/shared`) | Cloudflare a construit `main`, qui n'a ni ce script ni la configuration Cloudflare. « Retry » reconstruit toujours le même commit. | Branche de production `mvp/dossiers` (étape 2.5), puis un nouvel envoi sur `mvp/dossiers` déclenche un build neuf. |
+| `Detected … pnpm@9.x` puis `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH … "overrides"` | Cloudflare a pris pnpm 9 ; ce dépôt exige pnpm 10 (réglages dans `pnpm-workspace.yaml`). Reproduit en local le 2026-10-30 : même erreur avec pnpm 9.10.0, installation et build réussis avec pnpm 10.26.1 / Node 22. | Variables `PNPM_VERSION` = `10.26.1` et `NODE_VERSION` = `22` (étape 2.6), puis relancer. |
+| `Missing script: build:cloudflare` (souvent avec `Ignored build scripts: @clerk/shared`) | Cloudflare a construit un commit de `main` antérieur à la fusion du 2026-10-31 (ni ce script ni la configuration Cloudflare). « Retry » reconstruit toujours le même commit. | Construire le dernier commit de `main` : chaque nouvel envoi sur `main` déclenche un build. |
 | Le nom du Worker ne correspond pas | Le projet Cloudflare et `name` dans `wrangler.jsonc` diffèrent. | Même nom des deux côtés (`simdouane-benin`). |
 | Le dossier `artifacts/simdouane/dist/public` n'existe pas | La commande de build est vide ou différente. | Build command : `pnpm run build:cloudflare`. |
 

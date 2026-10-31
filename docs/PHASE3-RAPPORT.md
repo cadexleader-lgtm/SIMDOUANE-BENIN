@@ -1,6 +1,8 @@
 # Phase 3 — Dossiers véhicules : rapport
 
-Branche `mvp/dossiers` (non fusionnée dans `main`). La phase 4 n'est pas
+Branche `mvp/dossiers`, fusionnée dans `main` le 2026-10-31 (avance rapide,
+à la demande du porteur du projet, pour la mise en ligne sur Cloudflare). La
+recette réelle reste à faire sur le site en ligne. La phase 4 n'est pas
 commencée. Données fictives uniquement.
 
 > SimDouane aide à **préparer** un dossier. Rien n'est déposé auprès des

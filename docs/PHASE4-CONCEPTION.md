@@ -4,8 +4,9 @@
 Décisions D1 à D7 confirmées le 2026-10-26 (§6). Le développement n'est
 **pas autorisé** tant que la recette réelle de la phase 3
 ([`RECETTE-PHASE3.md`](RECETTE-PHASE3.md)) n'est pas terminée et que le
-porteur du projet n'a pas donné son accord explicite. Branche `mvp/dossiers`,
-rien dans `main`.
+porteur du projet n'a pas donné son accord explicite. Aucun code de
+la phase 4, ni sur `mvp/dossiers` ni dans `main` (fusionnée le 2026-10-31
+pour la mise en ligne).
 
 ## 1. Checklist provisoire (version « 2026-10-provisoire-1 »)
 
