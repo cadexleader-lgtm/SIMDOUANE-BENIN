@@ -4,6 +4,7 @@ import { Info, AlertTriangle, ArrowLeft, CheckCircle2, Download } from "lucide-r
 import { getCurrentSimulation, HistoryEntry } from "@/lib/history";
 import { formatFCFA } from "@/lib/utils";
 import { formatRate, formatRateDate } from "@/lib/currency";
+import { CifBasis } from "@/components/cif-basis";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ export default function Resultats() {
   if (!simulation) return null;
 
   const { input, result } = simulation;
+  const basis = simulation.valueInput;
 
   const ageBadge =
     result.riskLevel === "faible"
@@ -110,9 +112,14 @@ export default function Resultats() {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs text-muted-foreground mb-0.5">{t.cif}</p>
+                <p className="text-xs text-muted-foreground mb-0.5" data-testid="cif-label">
+                  {basis?.mode === "total" ? t.totalBaseLabel
+                    : basis?.mode === "price" && basis.missing.length > 0 ? t.cifIncompleteLabel
+                    : t.cif}
+                </p>
                 <p className="text-xl font-bold">{formatFCFA(input.valeurCIF)}</p>
-                {simulation.conversion && (
+                {/* Simulations saved before the three cases existed (phase S3) */}
+                {!basis && simulation.conversion && (
                   <p className="text-[11px] text-muted-foreground mt-1 max-w-[260px] ml-auto" data-testid="cif-conversion">
                     {t.enteredAs(new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US").format(simulation.conversion.amount), simulation.conversion.currency)}
                     {" · "}
@@ -136,6 +143,7 @@ export default function Resultats() {
                 {result.regimeLabel ? ` — ${result.regimeLabel}` : ""}
               </span>
             </div>
+            {basis && <CifBasis basis={basis} lang={lang} />}
           </div>
 
           {/* Age warnings */}

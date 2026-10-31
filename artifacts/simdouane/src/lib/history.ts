@@ -1,6 +1,7 @@
 import { FormInput, SimulationResult } from "./calculator";
 import { Powertrain, VehicleCondition } from "./regulatory-config-2026";
 import type { CurrencyConversion } from "./currency";
+import type { CifDetermination } from "./cif-input";
 
 export interface HistoryEntry {
   id: string;
@@ -15,6 +16,8 @@ export interface HistoryEntry {
   regulatoryConfigVersion?: string;
   /** Amount entered in another currency and the rate used at that time (absent when entered in FCFA). */
   conversion?: CurrencyConversion;
+  /** How the value was entered (phase S2): case, amounts with their currency and rate, missing parts. */
+  valueInput?: CifDetermination;
 }
 
 export function getHistory(): HistoryEntry[] {
