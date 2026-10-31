@@ -70,7 +70,7 @@ function HeroCard({ visible }: { visible: boolean }) {
               <p className="text-white/40 text-[10px]">Port de Cotonou · Mise à la conso.</p>
             </div>
           </div>
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: "rgba(0,135,81,0.25)", color: "#4ade80" }}>✓ Calculé</span>
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: "rgba(0,135,81,0.25)", color: "#4ade80" }}>Exemple</span>
         </div>
         {/* Body */}
         <div className="p-5 space-y-3">
@@ -116,12 +116,12 @@ const FEATURES = [
   {
     icon: Calculator,
     title: "Calcul instantané",
-    desc: "Obtenez en quelques secondes une estimation précise des droits de douane et frais portuaires pour tout véhicule importé au Bénin.",
+    desc: "Obtenez en quelques secondes une estimation indicative des droits de douane et frais portuaires pour un véhicule importé au Bénin.",
   },
   {
     icon: Shield,
-    title: "Formules officielles",
-    desc: "Nos calculs sont basés sur les formules réelles de la DGDDI du Bénin. Aucune approximation, seulement des données fiables.",
+    title: "Calcul détaillé",
+    desc: "Chaque taxe et chaque frais est détaillé ligne par ligne. Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD).",
   },
   {
     icon: Cloud,
@@ -130,8 +130,8 @@ const FEATURES = [
   },
   {
     icon: TrendingUp,
-    title: "Tous les régimes",
-    desc: "Import temporaire, mise à la consommation, transit… SimDouane couvre tous les régimes douaniers en vigueur.",
+    title: "Guide du dédouanement",
+    desc: "Étapes au Port de Cotonou, documents à préparer et lexique douanier, expliqués simplement.",
   },
   {
     icon: Clock,
@@ -141,7 +141,7 @@ const FEATURES = [
   {
     icon: Zap,
     title: "Export PDF",
-    desc: "Téléchargez vos résultats en PDF pour les partager facilement avec vos clients ou les présenter en douane.",
+    desc: "Téléchargez vos résultats en PDF pour les partager facilement avec vos clients ou votre transitaire.",
   },
 ];
 
@@ -182,9 +182,9 @@ const PLANS = [
 ];
 
 const STATS = [
-  { value: "500+", label: "Importateurs actifs" },
-  { value: "10 000+", label: "Simulations réalisées" },
-  { value: "99%", label: "Précision des calculs" },
+  { value: "0 FCFA", label: "Simulation sans compte" },
+  { value: "PDF", label: "Export des résultats" },
+  { value: "FR · EN", label: "Deux langues" },
   { value: "24/7", label: "Disponibilité" },
 ];
 
@@ -262,7 +262,7 @@ function HeroSection() {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 text-xs font-semibold"
               style={{ backgroundColor: "rgba(252,209,22,0.12)", border: "1px solid rgba(252,209,22,0.25)", color: "#FCD116" }}>
               <Star className="h-3 w-3" fill="currentColor" />
-              Le simulateur douanier de référence au Bénin
+              Simulateur de coûts d'importation au Bénin
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-[1.05] tracking-tight mb-6">
@@ -272,8 +272,8 @@ function HeroSection() {
             </h1>
 
             <p className="text-white/65 text-base sm:text-lg leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-              SimDouane Bénin est le simulateur professionnel pour estimer les coûts d'importation
-              de véhicules au Port de Cotonou — basé sur les formules officielles de la DGDDI.
+              SimDouane Bénin vous aide à estimer les coûts d'importation de votre véhicule
+              au Port de Cotonou. Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD).
             </p>
 
             {/* CTAs */}
@@ -298,7 +298,7 @@ function HeroSection() {
             {/* Trust badges */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
               {[
-                { icon: Shield, text: "Formules DGDDI officielles" },
+                { icon: Shield, text: "Détail de chaque taxe" },
                 { icon: Lock,   text: "Données sécurisées" },
                 { icon: FileText, text: "Export PDF gratuit" },
               ].map(({ icon: Icon, text }) => (
@@ -434,7 +434,7 @@ export default function Accueil() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { step: "01", title: "Saisissez les infos", desc: "Marque, modèle, année, cylindrée, valeur CIF et durée de séjour au port." },
-              { step: "02", title: "Obtenez l'estimation", desc: "SimDouane calcule instantanément tous les droits, taxes et frais portuaires." },
+              { step: "02", title: "Obtenez l'estimation", desc: "SimDouane estime instantanément les droits, taxes et frais portuaires." },
               { step: "03", title: "Téléchargez le PDF", desc: "Exportez votre estimation en PDF pour la partager ou la conserver." },
             ].map((step) => (
               <div key={step.step} className="relative">
@@ -476,7 +476,7 @@ export default function Accueil() {
                 {plan.highlighted && (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-4 text-[10px] font-bold uppercase tracking-wider"
                     style={{ backgroundColor: "rgba(252,209,22,0.15)", color: "#FCD116" }}>
-                    <Star className="h-2.5 w-2.5" fill="currentColor" /> Le plus populaire
+                    <Star className="h-2.5 w-2.5" fill="currentColor" /> Recommandé
                   </div>
                 )}
                 <p className={`font-black text-lg mb-1 ${plan.highlighted ? "text-white" : "text-slate-900"}`}>{plan.name}</p>
@@ -528,7 +528,7 @@ export default function Accueil() {
             Prêt à simuler votre importation ?
           </h2>
           <p className="text-white/50 mb-8 text-base">
-            Rejoignez des centaines d'importateurs et transitaires qui font confiance à SimDouane.
+            Estimez gratuitement le coût d'importation de votre véhicule, en quelques minutes.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link

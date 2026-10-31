@@ -251,7 +251,7 @@ export default function Dashboard() {
             </Button>
             <div className="pt-4 border-t border-white/10">
               <p className="text-xs text-white/60 leading-relaxed">
-                Le simulateur utilise les formules douanières officielles. Si vous avez besoin d'aide pour interpréter un résultat, n'hésitez pas à nous contacter.
+                Les résultats du simulateur sont des estimations indicatives, à confirmer auprès d'un commissionnaire agréé en douane (CAD). Si vous avez besoin d'aide pour interpréter un résultat, n'hésitez pas à nous contacter.
               </p>
             </div>
           </CardContent>

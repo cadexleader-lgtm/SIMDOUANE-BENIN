@@ -565,9 +565,9 @@ export default function Simulateur() {
         {/* Feature bar */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           {[
-            { icon: Shield,     title: lang === "fr" ? "Estimation précise"  : "Accurate estimate",    desc: lang === "fr" ? "Basée sur les taux officiels en vigueur"               : "Based on official customs rates in force" },
+            { icon: Shield,     title: lang === "fr" ? "Estimation indicative" : "Indicative estimate", desc: lang === "fr" ? "À confirmer auprès d'un commissionnaire agréé en douane (CAD)" : "To be confirmed with a licensed customs broker (CAD)" },
             { icon: List,       title: lang === "fr" ? "Transparence totale"  : "Full transparency",   desc: lang === "fr" ? "Détail complet de tous les frais appliqués"            : "Complete breakdown of all applicable fees" },
-            { icon: Zap,        title: lang === "fr" ? "Gain de temps"        : "Time saving",         desc: lang === "fr" ? "Simulation rapide et fiable en quelques secondes"      : "Fast and reliable simulation in seconds" },
+            { icon: Zap,        title: lang === "fr" ? "Gain de temps"        : "Time saving",         desc: lang === "fr" ? "Simulation rapide en quelques secondes"                : "Fast simulation in seconds" },
             { icon: TrendingUp, title: lang === "fr" ? "Décision éclairée"    : "Informed decision",   desc: lang === "fr" ? "Planifiez votre budget en toute sérénité"              : "Plan your budget with confidence" },
           ].map((f) => (
             <div key={f.title} className="bg-card border rounded-xl p-4 flex items-start gap-3">

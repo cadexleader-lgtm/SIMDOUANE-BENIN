@@ -157,7 +157,7 @@ export function exportSimulationPDF(entry: HistoryEntry): void {
     { id: "DD",  nom: "Droit de Douane",                   base: input.valeurCIF, taux: result.ddRateLabel, montant: result.DD },
     { id: "RS",  nom: "Redevance Statistique",              base: input.valeurCIF, taux: "1%",              montant: result.RS },
     { id: "PC",  nom: "Prélèvement CEDEAO",                 base: input.valeurCIF, taux: "0,5%",           montant: result.PC },
-    { id: "PCS", nom: "Prélèv. Solidarité",                 base: input.valeurCIF, taux: "0,8%",           montant: result.PCS },
+    { id: "PCS", nom: "Prélèv. solidarité UEMOA",           base: input.valeurCIF, taux: "0,8%",           montant: result.PCS },
     { id: "TVA", nom: "Taxe sur la Valeur Ajoutée (18%)",   base: result.baseTVA,  taux: "18%",            montant: result.TVA },
   ];
 
@@ -286,10 +286,10 @@ export function exportSimulationPDF(entry: HistoryEntry): void {
   doc.text("⚠ Estimation indicative", MARGIN + 4, y + 5);
   doc.setFont("helvetica", "normal");
   doc.text(
-    "Ce document est une simulation basée sur les formules douanières en vigueur au Bénin. Le montant",
+    "À confirmer auprès d'un commissionnaire agréé en douane (CAD). Les taux et frais utilisés n'ont pas",
     MARGIN + 4, y + 10
   );
-  doc.text("final est déterminé par la DGDDI. Consultez un Commissionnaire Agréé en Douane pour confirmation.", MARGIN + 4, y + 14);
+  doc.text("été validés par la Direction générale des Douanes (DGD), qui fixe le montant final.", MARGIN + 4, y + 14);
 
   /* ── Footer ───────────────────────────────────────── */
   const pageHeight = 297;

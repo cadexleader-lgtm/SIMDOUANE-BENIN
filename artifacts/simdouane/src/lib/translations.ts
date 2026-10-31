@@ -26,7 +26,7 @@ export const T = {
     },
     sim: {
       title: "Nouvelle simulation",
-      subtitle: "Remplissez les informations ci-dessous pour obtenir une estimation précise.",
+      subtitle: "Remplissez les informations ci-dessous pour obtenir une estimation indicative.",
       vehicleInfo: "Informations du véhicule",
       brand: "Marque du véhicule",
       model: "Modèle du véhicule",
@@ -59,7 +59,7 @@ export const T = {
       previewDuties: "Droits & taxes",
       previewPort: "Frais port",
       previewTotal: "COÛT TOTAL D'IMPORTATION",
-      previewNote: "Cette simulation est une estimation basée sur les formules douanières en vigueur au Bénin. Le montant final peut varier selon l'appréciation de la douane.",
+      previewNote: "Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD). Le montant final dépend de la valeur retenue par la douane et des taux applicables le jour de la déclaration.",
       cylOptions: {
         lt1000: { label: "Moins de 1 000cc", liters: "< 1.0L" },
         "1000-1300": { label: "1 000 à 1 300cc", liters: "1.0L à 1.3L" },
@@ -89,10 +89,10 @@ export const T = {
       plates: "Plaques d'immatriculation",
       toRide: "Pour rouler",
       warning: "Estimation indicative",
-      warningText: "Cette simulation est basée sur les formules douanières en vigueur au Bénin. Le montant final est déterminé par la DGDDI selon la valeur réelle du véhicule. Consultez un Commissionnaire Agréé en Douane pour le montant officiel.",
+      warningText: "Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD). Les taux et frais utilisés n'ont pas été validés par la Direction générale des Douanes (DGD). Le montant final est fixé par la DGD, selon la valeur retenue pour le véhicule.",
       newSim: "Nouvelle Simulation",
-      warnOld: (age: number) => `Véhicule ancien (${age} ans) — risque de revalorisation douanière par la DGDDI. Le montant réel peut être supérieur à cette estimation.`,
-      warnMid: (age: number) => `Véhicule de 6 à 10 ans — taxation standard. Vérifiez les conditions d'importation en vigueur.`,
+      warnOld: (age: number) => `Véhicule ancien (${age} ans) — risque de revalorisation douanière par la DGD. Le montant réel peut être supérieur à cette estimation.`,
+      warnMid: (age: number) => `Véhicule de 6 à 10 ans. Vérifiez auprès d'un commissionnaire agréé en douane (CAD) les conditions d'importation applicables à cet âge.`,
       directEnlev: "Enlèvement direct — tous les frais portuaires réduits de 30%.",
     },
     history: {
@@ -123,9 +123,9 @@ export const T = {
       title: "SIMDOUANE",
       tagline: "Simulateur de droits et frais douaniers",
       motto: "Votre estimation, Notre expertise.",
-      desc: "SimDouane Bénin est un simulateur professionnel de droits et frais douaniers pour les importations de véhicules au Port de Cotonou, Bénin. Il permet à tout importateur, transitaire ou particulier d'estimer rapidement le coût réel d'importation d'un véhicule, basé sur les formules officielles de la DGDDI.",
-      reliable: "Fiable",
-      reliableDesc: "Calculs basés sur les taux douaniers officiels en vigueur.",
+      desc: "SimDouane Bénin est un simulateur professionnel de droits et frais douaniers pour les importations de véhicules au Port de Cotonou, Bénin. Il permet à tout importateur, transitaire ou particulier d'estimer rapidement le coût d'importation d'un véhicule. Les montants sont des estimations indicatives, à confirmer auprès d'un commissionnaire agréé en douane (CAD).",
+      reliable: "Transparent",
+      reliableDesc: "Chaque taxe et chaque frais est détaillé. Estimation indicative, à confirmer auprès d'un CAD.",
       fast: "Rapide",
       fastDesc: "Obtenez une estimation en quelques secondes, sans inscription.",
       simple: "Simple",
@@ -138,7 +138,7 @@ export const T = {
     procedure: {
       title: "Procédure de Dédouanement",
       subtitle: "Guide complet — de l'arrivée du véhicule au Port de Cotonou jusqu'à sa sortie.",
-      intro: "Le dédouanement d'un véhicule importé au Bénin suit un processus réglementé par la DGDDI (Direction Générale des Douanes et Droits Indirects). Voici les étapes complètes.",
+      intro: "Le dédouanement d'un véhicule importé au Bénin suit un processus encadré par la Direction générale des Douanes (DGD). Voici les principales étapes.",
       steps: [
         {
           number: "01",
@@ -259,7 +259,7 @@ export const T = {
           icon: "📄",
           desc: "Après confirmation du paiement, la douane délivre le BAE — Bon à Enlever. C'est le document officiel qui autorise la sortie physique du véhicule du port.",
           details: [
-            "Le BAE est délivré par la DGDDI après vérification du paiement",
+            "Le BAE est délivré par la DGD après vérification du paiement",
             "Document à conserver précieusement — il autorise l'enlèvement",
             "Le CAD remet le BAE original au propriétaire du véhicule",
             "Sans BAE, aucun véhicule ne peut quitter l'enceinte portuaire",
@@ -333,7 +333,7 @@ export const T = {
     },
     sim: {
       title: "New simulation",
-      subtitle: "Fill in the details below to get an accurate import cost estimate.",
+      subtitle: "Fill in the details below to get an indicative import cost estimate.",
       vehicleInfo: "Vehicle information",
       brand: "Vehicle brand",
       model: "Vehicle model",
@@ -366,7 +366,7 @@ export const T = {
       previewDuties: "Duties & taxes",
       previewPort: "Port fees",
       previewTotal: "TOTAL IMPORT COST",
-      previewNote: "This simulation is an estimate based on customs formulas in force in Benin. The final amount may vary depending on customs assessment.",
+      previewNote: "Indicative estimate, to be confirmed with a licensed customs broker (CAD). The final amount depends on the value accepted by customs and on the rates applicable on the day of the declaration.",
       cylOptions: {
         lt1000: { label: "Less than 1,000cc", liters: "< 1.0L" },
         "1000-1300": { label: "1,000 to 1,300cc", liters: "1.0L to 1.3L" },
@@ -396,10 +396,10 @@ export const T = {
       plates: "License plates",
       toRide: "To drive legally",
       warning: "Indicative estimate",
-      warningText: "This simulation is based on customs formulas in force in Benin. The final amount is determined by the DGDDI based on the actual vehicle value. Consult an Approved Customs Broker for the official amount.",
+      warningText: "Indicative estimate, to be confirmed with a licensed customs broker (CAD). The rates and fees used have not been validated by Benin's Directorate General of Customs (DGD). The final amount is set by the DGD, based on the value accepted for the vehicle.",
       newSim: "New Simulation",
-      warnOld: (age: number) => `Old vehicle (${age} years) — risk of customs revaluation by DGDDI. The actual amount may exceed this estimate.`,
-      warnMid: (age: number) => `Vehicle aged 6 to 10 years — standard taxation. Check current import conditions.`,
+      warnOld: (age: number) => `Old vehicle (${age} years) — risk of customs revaluation by the DGD. The actual amount may exceed this estimate.`,
+      warnMid: (age: number) => `Vehicle aged 6 to 10 years. Check with a licensed customs broker (CAD) which import conditions apply at this age.`,
       directEnlev: "Direct clearance — all port fees reduced by 30%.",
     },
     history: {
@@ -430,9 +430,9 @@ export const T = {
       title: "SIMDOUANE",
       tagline: "Customs duties and fees simulator",
       motto: "Your estimate, Our expertise.",
-      desc: "SimDouane Benin is a professional customs duties and fees simulator for vehicle imports through the Port of Cotonou, Benin. It enables any importer, freight forwarder, or individual to quickly estimate the true import cost of a vehicle, based on the official DGDDI formulas.",
-      reliable: "Reliable",
-      reliableDesc: "Calculations based on official customs rates in force.",
+      desc: "SimDouane Benin is a professional customs duties and fees simulator for vehicle imports through the Port of Cotonou, Benin. It enables any importer, freight forwarder, or individual to quickly estimate the import cost of a vehicle. Amounts are indicative estimates, to be confirmed with a licensed customs broker (CAD).",
+      reliable: "Transparent",
+      reliableDesc: "Every tax and fee is itemised. Indicative estimate, to be confirmed with a CAD.",
       fast: "Fast",
       fastDesc: "Get an estimate in seconds, no sign-up required.",
       simple: "Simple",
@@ -445,7 +445,7 @@ export const T = {
     procedure: {
       title: "Customs Clearance Procedure",
       subtitle: "Complete guide — from vehicle arrival at the Port of Cotonou to exit.",
-      intro: "Customs clearance of an imported vehicle in Benin follows a regulated process overseen by the DGDDI (Directorate General of Customs and Indirect Taxes). Here are the complete steps.",
+      intro: "Customs clearance of an imported vehicle in Benin follows a regulated process overseen by Benin's Directorate General of Customs (DGD). Here are the main steps.",
       steps: [
         {
           number: "01",
@@ -566,7 +566,7 @@ export const T = {
           icon: "📄",
           desc: "After payment confirmation, customs issues the BAE — Bon à Enlever (Release Order). This is the official document authorizing physical release of the vehicle from the port.",
           details: [
-            "The BAE is issued by the DGDDI after payment verification",
+            "The BAE is issued by the DGD after payment verification",
             "Keep this document carefully — it authorizes vehicle release",
             "The CAD hands the original BAE to the vehicle owner",
             "Without a BAE, no vehicle can leave the port premises",
