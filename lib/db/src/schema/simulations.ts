@@ -1,4 +1,4 @@
-import { pgTable, text, integer, numeric, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, numeric, timestamp, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -23,6 +23,10 @@ export const simulationsTable = pgTable("simulations", {
   regulatoryYear: integer("regulatory_year"),
   calculatorVersion: text("calculator_version").notNull().default("historical"),
   regulatoryConfigVersion: text("regulatory_config_version"),
+  // How the value was entered, situation of the vehicle, amounts already paid
+  // (validated by the API, see SimulationDetails in openapi.yaml). Null for
+  // simulations saved before migration 0008.
+  details:      jsonb("details").$type<Record<string, unknown>>(),
   createdAt:    timestamp("created_at").notNull().defaultNow(),
 }, (t) => [index("simulations_user_id_created_at_idx").on(t.userId, t.createdAt)]);
 

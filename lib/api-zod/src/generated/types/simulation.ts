@@ -5,6 +5,7 @@
  * SimDouane SaaS API specification
  * OpenAPI spec version: 0.2.0
  */
+import type { SimulationDetails } from './simulationDetails';
 
 export interface Simulation {
   id: string;
@@ -26,5 +27,7 @@ export interface Simulation {
   regulatoryYear?: number | null;
   calculatorVersion?: string | null;
   regulatoryConfigVersion?: string | null;
+  /** Null for simulations saved before the details were kept */
+  details?: SimulationDetails | null;
   createdAt: Date;
 }

@@ -520,6 +520,7 @@ export default function Simulateur() {
             totalPort: result.totalPort,
             totalGeneral: result.totalGeneral,
             ...metadata,
+            details: { schemaVersion: 1, valueInput: determined.value, situation: values.situation, paid: paidInputFrom(values) },
           }
         },
         {

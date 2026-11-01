@@ -2,9 +2,11 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { simulationsTable, usersTable, subscriptionsTable, subscriptionPlansTable } from "@workspace/db";
 import { eq, and, desc, gte, lte, ilike, or, sql, count, SQL, or as drizzleOr, isNull, gt } from "drizzle-orm";
+import { calculate } from "@workspace/sim-engine";
 import { requireAuth, type AuthedRequest } from "../middlewares/requireAuth";
 import { getOrCreateUser } from "../lib/userUtils";
 import { sendError } from "../lib/httpErrors";
+import { parseSimulationInput } from "../lib/simulationInput";
 
 const router = Router();
 
@@ -52,6 +54,9 @@ router.post("/", requireAuth, async (req, res) => {
     const authUserId = (req as AuthedRequest).authUserId;
     const user = await getOrCreateUser(authUserId, req);
 
+    // Invalid input → 400 INVALID_SIMULATION (French message per field).
+    const input = parseSimulationInput(req.body);
+
     // Check monthly simulation limit
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -88,28 +93,52 @@ router.post("/", requireAuth, async (req, res) => {
       return;
     }
 
-    const body = req.body;
+    // The totals are never taken from the client: recomputed with the same
+    // engine as the web app (lib/sim-engine).
+    const result = calculate({
+      marque:      input.marque,
+      modele:      input.modele,
+      annee:       input.annee,
+      cylindree:   input.cylindree,
+      carburant:   input.carburant,
+      valeurCIF:   input.valeurCIF,
+      joursAuPort: input.joursAuPort,
+      regime:      input.regime,
+    });
+    const totals = (["totalDouane", "totalPort", "totalGeneral"] as const).map((key) => ({
+      key,
+      client: input[key],
+      server: result[key],
+    }));
+    if (totals.some((t) => !(Math.abs(t.client - t.server) <= 1))) {
+      req.log.warn(
+        { userId: user.id, totals },
+        "simulation totals sent by the client differ from the server calculation; server totals stored",
+      );
+    }
+
     const [sim] = await db
       .insert(simulationsTable)
       .values({
         userId:       user.id,
-        marque:       body.marque,
-        modele:       body.modele,
-        annee:        body.annee,
-        cylindree:    body.cylindree,
-        carburant:    body.carburant,
-        valeurCIF:    String(body.valeurCIF),
-        joursAuPort:  body.joursAuPort,
-        regime:       body.regime,
-        totalDouane:  String(body.totalDouane),
-        totalPort:    String(body.totalPort),
-        totalGeneral: String(body.totalGeneral),
-        condition: body.condition ?? "Occasion",
-        powertrain: body.powertrain ?? null,
-        referenceDate: body.referenceDate ?? null,
-        regulatoryYear: body.regulatoryYear ?? null,
-        calculatorVersion: body.calculatorVersion ?? "historical",
-        regulatoryConfigVersion: body.regulatoryConfigVersion ?? null,
+        marque:       input.marque,
+        modele:       input.modele,
+        annee:        input.annee,
+        cylindree:    input.cylindree,
+        carburant:    input.carburant,
+        valeurCIF:    String(input.valeurCIF),
+        joursAuPort:  input.joursAuPort,
+        regime:       input.regime,
+        totalDouane:  String(result.totalDouane),
+        totalPort:    String(result.totalPort),
+        totalGeneral: String(result.totalGeneral),
+        condition: input.condition ?? "Occasion",
+        powertrain: input.powertrain ?? null,
+        referenceDate: input.referenceDate ?? null,
+        regulatoryYear: input.regulatoryYear ?? null,
+        calculatorVersion: input.calculatorVersion ?? "historical",
+        regulatoryConfigVersion: input.regulatoryConfigVersion ?? null,
+        details: input.details ?? null,
       })
       .returning();
 
@@ -196,6 +225,7 @@ function mapSim(s: typeof simulationsTable.$inferSelect) {
     regulatoryYear: s.regulatoryYear,
     calculatorVersion: s.calculatorVersion,
     regulatoryConfigVersion: s.regulatoryConfigVersion,
+    details:      s.details ?? null,
     createdAt:    s.createdAt.toISOString(),
   };
 }

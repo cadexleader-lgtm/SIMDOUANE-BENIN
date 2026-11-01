@@ -247,6 +247,8 @@ export const getCreateSimulationUrl = () => {
 }
 
 /**
+ * The inputs are validated and the totals (totalDouane, totalPort, totalGeneral) are recomputed by the server with the shared calculation engine (lib/sim-engine); the totals sent by the client are ignored.
+
  * @summary Save a simulation result
  */
 export const createSimulation = async (createSimulationInput: CreateSimulationInput, options?: RequestInit): Promise<Simulation> => {

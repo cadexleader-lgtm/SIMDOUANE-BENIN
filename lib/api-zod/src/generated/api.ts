@@ -30,6 +30,40 @@ export const GetSimulationsQueryParams = zod.object({
   "offset": zod.coerce.number().default(getSimulationsQueryOffsetDefault)
 })
 
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputValeurXofMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputValeurXofMax = 1000000000000;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemAmountMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemAmountMax = 1000000000000000;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemValeurXofMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemValeurXofMax = 1000000000000;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneAmountMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneAmountMax = 1000000000000000;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneXofPerUnitExclusiveMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneXofPerUnitMax = 1000000;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneRateDateMax = 40;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneFetchedAtMax = 40;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsMax = 10;
+
+export const getSimulationsResponseSimulationsItemDetailsOneValueInputMissingMax = 2;
+
+export const getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMax = 1000000000000;
+
+export const getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMin = 0;
+export const getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMax = 1000000000000;
+
+
+
 export const GetSimulationsResponse = zod.object({
   "simulations": zod.array(zod.object({
   "id": zod.string(),
@@ -51,6 +85,40 @@ export const GetSimulationsResponse = zod.object({
   "regulatoryYear": zod.number().nullish(),
   "calculatorVersion": zod.string().nullish(),
   "regulatoryConfigVersion": zod.string().nullish(),
+  "details": zod.union([zod.object({
+  "schemaVersion": zod.number().min(1).describe('Version of this structure. Currently 1; the server refuses versions it does not know.'),
+  "valueInput": zod.object({
+  "mode": zod.enum(['price', 'cif', 'total']),
+  "valeurXof": zod.number().min(getSimulationsResponseSimulationsItemDetailsOneValueInputValeurXofMin).max(getSimulationsResponseSimulationsItemDetailsOneValueInputValeurXofMax).describe('Resulting value in FCFA, used as the CIF value (equals valeurCIF)'),
+  "components": zod.array(zod.object({
+  "kind": zod.enum(['price', 'freight', 'insurance', 'cif', 'total']),
+  "amount": zod.number().min(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemAmountMin).max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemAmountMax).describe('Amount as entered, in its currency'),
+  "currency": zod.string().regex(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemCurrencyRegExp).describe('ISO 4217 code (XOF, EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF)'),
+  "valeurXof": zod.number().min(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemValeurXofMin).max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemValeurXofMax).describe('Amount converted to FCFA'),
+  "conversion": zod.union([zod.object({
+  "currency": zod.string().regex(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneCurrencyRegExp),
+  "amount": zod.number().min(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneAmountMin).max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneAmountMax),
+  "xofPerUnit": zod.number().gt(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneXofPerUnitExclusiveMin).max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneXofPerUnitMax).describe('FCFA for one unit of the currency'),
+  "method": zod.enum(['fixed_parity', 'ecb_cross']),
+  "rateDate": zod.string().max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneRateDateMax).nullable().describe('Publication date of the source rate (YYYY-MM-DD), null for the fixed parity'),
+  "fetchedAt": zod.string().max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsItemConversionOneFetchedAtMax).nullable().describe('When the rates were obtained from the server (ISO 8601), null if only the fixed parity was used'),
+  "status": zod.enum(['ok', 'stale']).describe('stale = rate from a previous answer, the service being unavailable')
+}).describe('Indicative rate used at the time of the simulation (see GET \/exchange-rates)'),zod.null()]).describe('Rate used, null for FCFA or a zero amount')
+})).max(getSimulationsResponseSimulationsItemDetailsOneValueInputComponentsMax),
+  "missing": zod.array(zod.enum(['freight', 'insurance'])).max(getSimulationsResponseSimulationsItemDetailsOneValueInputMissingMax).describe('Parts of the CIF the user did not know (mode price only); never counted as zero')
+}).optional().describe('How the vehicle value was entered. price = purchase price, plus freight and insurance when known; cif = CIF value already known; total = overall amount paid, used as is.\n'),
+  "situation": zod.enum(['not_arrived', 'in_transit', 'at_port']).optional().describe('not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou'),
+  "paid": zod.object({
+  "vehicleParts": zod.object({
+  "price": zod.boolean().optional(),
+  "freight": zod.boolean().optional(),
+  "insurance": zod.boolean().optional(),
+  "cif": zod.boolean().optional()
+}).describe('Vehicle parts already paid (their declared amount counts as paid)'),
+  "customsPaid": zod.number().min(getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMin).max(getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
+  "portPaid": zod.number().min(getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMin).max(getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
+}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n')
+}).describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n'),zod.null()]).optional().describe('Null for simulations saved before the details were kept'),
   "createdAt": zod.coerce.date()
 })),
   "total": zod.number()
@@ -58,28 +126,124 @@ export const GetSimulationsResponse = zod.object({
 
 
 /**
+ * The inputs are validated and the totals (totalDouane, totalPort, totalGeneral) are recomputed by the server with the shared calculation engine (lib/sim-engine); the totals sent by the client are ignored.
+
  * @summary Save a simulation result
  */
+export const createSimulationBodyMarqueMax = 100;
+
+export const createSimulationBodyModeleMax = 100;
+
+export const createSimulationBodyAnneeMin = 1900;
+
+export const createSimulationBodyCarburantMax = 50;
+
+export const createSimulationBodyValeurCIFExclusiveMin = 0;
+export const createSimulationBodyValeurCIFMax = 1000000000000;
+
+export const createSimulationBodyJoursAuPortMin = 0;
+export const createSimulationBodyJoursAuPortMax = 3650;
+
 export const createSimulationBodyConditionDefault = `Occasion`;
+export const createSimulationBodyConditionMax = 50;
+
+export const createSimulationBodyPowertrainMax = 50;
+
+export const createSimulationBodyReferenceDateMax = 30;
+
+export const createSimulationBodyRegulatoryYearMin = 1900;
+export const createSimulationBodyRegulatoryYearMax = 2100;
+
+export const createSimulationBodyCalculatorVersionMax = 50;
+
+export const createSimulationBodyRegulatoryConfigVersionMax = 50;
+
+
+export const createSimulationBodyDetailsValueInputValeurXofMin = 0;
+export const createSimulationBodyDetailsValueInputValeurXofMax = 1000000000000;
+
+export const createSimulationBodyDetailsValueInputComponentsItemAmountMin = 0;
+export const createSimulationBodyDetailsValueInputComponentsItemAmountMax = 1000000000000000;
+
+export const createSimulationBodyDetailsValueInputComponentsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createSimulationBodyDetailsValueInputComponentsItemValeurXofMin = 0;
+export const createSimulationBodyDetailsValueInputComponentsItemValeurXofMax = 1000000000000;
+
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneAmountMin = 0;
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneAmountMax = 1000000000000000;
+
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneXofPerUnitExclusiveMin = 0;
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneXofPerUnitMax = 1000000;
+
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneRateDateMax = 40;
+
+export const createSimulationBodyDetailsValueInputComponentsItemConversionOneFetchedAtMax = 40;
+
+export const createSimulationBodyDetailsValueInputComponentsMax = 10;
+
+export const createSimulationBodyDetailsValueInputMissingMax = 2;
+
+export const createSimulationBodyDetailsPaidCustomsPaidMin = 0;
+export const createSimulationBodyDetailsPaidCustomsPaidMax = 1000000000000;
+
+export const createSimulationBodyDetailsPaidPortPaidMin = 0;
+export const createSimulationBodyDetailsPaidPortPaidMax = 1000000000000;
+
+
 
 export const CreateSimulationBody = zod.object({
-  "marque": zod.string(),
-  "modele": zod.string(),
-  "annee": zod.number(),
-  "cylindree": zod.string(),
-  "carburant": zod.string(),
-  "valeurCIF": zod.number(),
-  "joursAuPort": zod.number(),
-  "regime": zod.string(),
-  "totalDouane": zod.number(),
-  "totalPort": zod.number(),
-  "totalGeneral": zod.number(),
-  "condition": zod.string().nullish().default(createSimulationBodyConditionDefault),
-  "powertrain": zod.string().nullish(),
-  "referenceDate": zod.string().nullish(),
-  "regulatoryYear": zod.number().nullish(),
-  "calculatorVersion": zod.string().nullish(),
-  "regulatoryConfigVersion": zod.string().nullish()
+  "marque": zod.string().max(createSimulationBodyMarqueMax),
+  "modele": zod.string().max(createSimulationBodyModeleMax),
+  "annee": zod.number().min(createSimulationBodyAnneeMin).describe('At most the current year + 1'),
+  "cylindree": zod.enum(['lt1000', '1000-1300', '1300-1600', '1600-2000', '2000-2500', 'gt2500']),
+  "carburant": zod.string().max(createSimulationBodyCarburantMax),
+  "valeurCIF": zod.number().gt(createSimulationBodyValeurCIFExclusiveMin).max(createSimulationBodyValeurCIFMax).describe('CIF value in FCFA'),
+  "joursAuPort": zod.number().min(createSimulationBodyJoursAuPortMin).max(createSimulationBodyJoursAuPortMax),
+  "regime": zod.enum(['Droit commun', 'Exonération partielle', 'Enlèvement direct']),
+  "totalDouane": zod.number().describe('Client estimate, ignored: recomputed by the server'),
+  "totalPort": zod.number().describe('Client estimate, ignored: recomputed by the server'),
+  "totalGeneral": zod.number().describe('Client estimate, ignored: recomputed by the server'),
+  "condition": zod.string().max(createSimulationBodyConditionMax).nullish().default(createSimulationBodyConditionDefault),
+  "powertrain": zod.string().max(createSimulationBodyPowertrainMax).nullish(),
+  "referenceDate": zod.string().max(createSimulationBodyReferenceDateMax).nullish(),
+  "regulatoryYear": zod.number().min(createSimulationBodyRegulatoryYearMin).max(createSimulationBodyRegulatoryYearMax).nullish(),
+  "calculatorVersion": zod.string().max(createSimulationBodyCalculatorVersionMax).nullish(),
+  "regulatoryConfigVersion": zod.string().max(createSimulationBodyRegulatoryConfigVersionMax).nullish(),
+  "details": zod.object({
+  "schemaVersion": zod.number().min(1).describe('Version of this structure. Currently 1; the server refuses versions it does not know.'),
+  "valueInput": zod.object({
+  "mode": zod.enum(['price', 'cif', 'total']),
+  "valeurXof": zod.number().min(createSimulationBodyDetailsValueInputValeurXofMin).max(createSimulationBodyDetailsValueInputValeurXofMax).describe('Resulting value in FCFA, used as the CIF value (equals valeurCIF)'),
+  "components": zod.array(zod.object({
+  "kind": zod.enum(['price', 'freight', 'insurance', 'cif', 'total']),
+  "amount": zod.number().min(createSimulationBodyDetailsValueInputComponentsItemAmountMin).max(createSimulationBodyDetailsValueInputComponentsItemAmountMax).describe('Amount as entered, in its currency'),
+  "currency": zod.string().regex(createSimulationBodyDetailsValueInputComponentsItemCurrencyRegExp).describe('ISO 4217 code (XOF, EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF)'),
+  "valeurXof": zod.number().min(createSimulationBodyDetailsValueInputComponentsItemValeurXofMin).max(createSimulationBodyDetailsValueInputComponentsItemValeurXofMax).describe('Amount converted to FCFA'),
+  "conversion": zod.union([zod.object({
+  "currency": zod.string().regex(createSimulationBodyDetailsValueInputComponentsItemConversionOneCurrencyRegExp),
+  "amount": zod.number().min(createSimulationBodyDetailsValueInputComponentsItemConversionOneAmountMin).max(createSimulationBodyDetailsValueInputComponentsItemConversionOneAmountMax),
+  "xofPerUnit": zod.number().gt(createSimulationBodyDetailsValueInputComponentsItemConversionOneXofPerUnitExclusiveMin).max(createSimulationBodyDetailsValueInputComponentsItemConversionOneXofPerUnitMax).describe('FCFA for one unit of the currency'),
+  "method": zod.enum(['fixed_parity', 'ecb_cross']),
+  "rateDate": zod.string().max(createSimulationBodyDetailsValueInputComponentsItemConversionOneRateDateMax).nullable().describe('Publication date of the source rate (YYYY-MM-DD), null for the fixed parity'),
+  "fetchedAt": zod.string().max(createSimulationBodyDetailsValueInputComponentsItemConversionOneFetchedAtMax).nullable().describe('When the rates were obtained from the server (ISO 8601), null if only the fixed parity was used'),
+  "status": zod.enum(['ok', 'stale']).describe('stale = rate from a previous answer, the service being unavailable')
+}).describe('Indicative rate used at the time of the simulation (see GET \/exchange-rates)'),zod.null()]).describe('Rate used, null for FCFA or a zero amount')
+})).max(createSimulationBodyDetailsValueInputComponentsMax),
+  "missing": zod.array(zod.enum(['freight', 'insurance'])).max(createSimulationBodyDetailsValueInputMissingMax).describe('Parts of the CIF the user did not know (mode price only); never counted as zero')
+}).optional().describe('How the vehicle value was entered. price = purchase price, plus freight and insurance when known; cif = CIF value already known; total = overall amount paid, used as is.\n'),
+  "situation": zod.enum(['not_arrived', 'in_transit', 'at_port']).optional().describe('not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou'),
+  "paid": zod.object({
+  "vehicleParts": zod.object({
+  "price": zod.boolean().optional(),
+  "freight": zod.boolean().optional(),
+  "insurance": zod.boolean().optional(),
+  "cif": zod.boolean().optional()
+}).describe('Vehicle parts already paid (their declared amount counts as paid)'),
+  "customsPaid": zod.number().min(createSimulationBodyDetailsPaidCustomsPaidMin).max(createSimulationBodyDetailsPaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
+  "portPaid": zod.number().min(createSimulationBodyDetailsPaidPortPaidMin).max(createSimulationBodyDetailsPaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
+}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n')
+}).optional().describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n')
 })
 
 
@@ -280,6 +444,40 @@ export const GetAdminSimulationsQueryParams = zod.object({
   "offset": zod.coerce.number().default(getAdminSimulationsQueryOffsetDefault)
 })
 
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputValeurXofMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputValeurXofMax = 1000000000000;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemAmountMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemAmountMax = 1000000000000000;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemValeurXofMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemValeurXofMax = 1000000000000;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneAmountMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneAmountMax = 1000000000000000;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneXofPerUnitExclusiveMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneXofPerUnitMax = 1000000;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneRateDateMax = 40;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneFetchedAtMax = 40;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsMax = 10;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputMissingMax = 2;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMax = 1000000000000;
+
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMin = 0;
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMax = 1000000000000;
+
+
+
 export const GetAdminSimulationsResponse = zod.object({
   "simulations": zod.array(zod.object({
   "id": zod.string(),
@@ -301,6 +499,40 @@ export const GetAdminSimulationsResponse = zod.object({
   "regulatoryYear": zod.number().nullish(),
   "calculatorVersion": zod.string().nullish(),
   "regulatoryConfigVersion": zod.string().nullish(),
+  "details": zod.union([zod.object({
+  "schemaVersion": zod.number().min(1).describe('Version of this structure. Currently 1; the server refuses versions it does not know.'),
+  "valueInput": zod.object({
+  "mode": zod.enum(['price', 'cif', 'total']),
+  "valeurXof": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputValeurXofMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputValeurXofMax).describe('Resulting value in FCFA, used as the CIF value (equals valeurCIF)'),
+  "components": zod.array(zod.object({
+  "kind": zod.enum(['price', 'freight', 'insurance', 'cif', 'total']),
+  "amount": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemAmountMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemAmountMax).describe('Amount as entered, in its currency'),
+  "currency": zod.string().regex(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemCurrencyRegExp).describe('ISO 4217 code (XOF, EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF)'),
+  "valeurXof": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemValeurXofMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemValeurXofMax).describe('Amount converted to FCFA'),
+  "conversion": zod.union([zod.object({
+  "currency": zod.string().regex(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneCurrencyRegExp),
+  "amount": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneAmountMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneAmountMax),
+  "xofPerUnit": zod.number().gt(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneXofPerUnitExclusiveMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneXofPerUnitMax).describe('FCFA for one unit of the currency'),
+  "method": zod.enum(['fixed_parity', 'ecb_cross']),
+  "rateDate": zod.string().max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneRateDateMax).nullable().describe('Publication date of the source rate (YYYY-MM-DD), null for the fixed parity'),
+  "fetchedAt": zod.string().max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsItemConversionOneFetchedAtMax).nullable().describe('When the rates were obtained from the server (ISO 8601), null if only the fixed parity was used'),
+  "status": zod.enum(['ok', 'stale']).describe('stale = rate from a previous answer, the service being unavailable')
+}).describe('Indicative rate used at the time of the simulation (see GET \/exchange-rates)'),zod.null()]).describe('Rate used, null for FCFA or a zero amount')
+})).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputComponentsMax),
+  "missing": zod.array(zod.enum(['freight', 'insurance'])).max(getAdminSimulationsResponseSimulationsItemOneDetailsOneValueInputMissingMax).describe('Parts of the CIF the user did not know (mode price only); never counted as zero')
+}).optional().describe('How the vehicle value was entered. price = purchase price, plus freight and insurance when known; cif = CIF value already known; total = overall amount paid, used as is.\n'),
+  "situation": zod.enum(['not_arrived', 'in_transit', 'at_port']).optional().describe('not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou'),
+  "paid": zod.object({
+  "vehicleParts": zod.object({
+  "price": zod.boolean().optional(),
+  "freight": zod.boolean().optional(),
+  "insurance": zod.boolean().optional(),
+  "cif": zod.boolean().optional()
+}).describe('Vehicle parts already paid (their declared amount counts as paid)'),
+  "customsPaid": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
+  "portPaid": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
+}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n')
+}).describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n'),zod.null()]).optional().describe('Null for simulations saved before the details were kept'),
   "createdAt": zod.coerce.date()
 }).and(zod.object({
   "userEmail": zod.string().optional(),

@@ -5,23 +5,55 @@
  * SimDouane SaaS API specification
  * OpenAPI spec version: 0.2.0
  */
+import type { CreateSimulationInputCylindree } from './createSimulationInputCylindree';
+import type { CreateSimulationInputRegime } from './createSimulationInputRegime';
+import type { SimulationDetails } from './simulationDetails';
 
 export interface CreateSimulationInput {
+  /** @maxLength 100 */
   marque: string;
+  /** @maxLength 100 */
   modele: string;
+  /**
+     * At most the current year + 1
+     * @minimum 1900
+     */
   annee: number;
-  cylindree: string;
+  cylindree: CreateSimulationInputCylindree;
+  /** @maxLength 50 */
   carburant: string;
+  /**
+     * CIF value in FCFA
+     * @maximum 1000000000000
+     * @exclusiveMinimum 0
+     */
   valeurCIF: number;
+  /**
+     * @minimum 0
+     * @maximum 3650
+     */
   joursAuPort: number;
-  regime: string;
+  regime: CreateSimulationInputRegime;
+  /** Client estimate, ignored: recomputed by the server */
   totalDouane: number;
+  /** Client estimate, ignored: recomputed by the server */
   totalPort: number;
+  /** Client estimate, ignored: recomputed by the server */
   totalGeneral: number;
+  /** @maxLength 50 */
   condition?: string | null;
+  /** @maxLength 50 */
   powertrain?: string | null;
+  /** @maxLength 30 */
   referenceDate?: string | null;
+  /**
+     * @minimum 1900
+     * @maximum 2100
+     */
   regulatoryYear?: number | null;
+  /** @maxLength 50 */
   calculatorVersion?: string | null;
+  /** @maxLength 50 */
   regulatoryConfigVersion?: string | null;
+  details?: SimulationDetails;
 }

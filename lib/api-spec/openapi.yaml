@@ -72,6 +72,10 @@ paths:
       operationId: createSimulation
       tags: [simulations]
       summary: Save a simulation result
+      description: >
+        The inputs are validated and the totals (totalDouane, totalPort,
+        totalGeneral) are recomputed by the server with the shared calculation
+        engine (lib/sim-engine); the totals sent by the client are ignored.
       requestBody:
         required: true
         content:
@@ -85,6 +89,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Simulation"
+        "400":
+          description: >
+            Invalid simulation: { error: "INVALID_SIMULATION", message (French),
+            fields: { "<path>": "<French message>" } }
         "401":
           description: Unauthorized
         "403":
@@ -858,23 +866,25 @@ components:
       type: object
       required: [marque, modele, annee, cylindree, carburant, valeurCIF, joursAuPort, regime, totalDouane, totalPort, totalGeneral]
       properties:
-        marque:       { type: string }
-        modele:       { type: string }
-        annee:        { type: integer }
-        cylindree:    { type: string }
-        carburant:    { type: string }
-        valeurCIF:    { type: number }
-        joursAuPort:  { type: integer }
-        regime:       { type: string }
-        totalDouane:  { type: number }
-        totalPort:    { type: number }
-        totalGeneral: { type: number }
-        condition:    { type: string, nullable: true, default: Occasion }
-        powertrain:   { type: string, nullable: true }
-        referenceDate: { type: string, nullable: true }
-        regulatoryYear: { type: integer, nullable: true }
-        calculatorVersion: { type: string, nullable: true }
-        regulatoryConfigVersion: { type: string, nullable: true }
+        marque:       { type: string, maxLength: 100 }
+        modele:       { type: string, maxLength: 100 }
+        annee:        { type: integer, minimum: 1900, description: "At most the current year + 1" }
+        cylindree:    { type: string, enum: ["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"] }
+        carburant:    { type: string, maxLength: 50 }
+        valeurCIF:    { type: number, exclusiveMinimum: 0, maximum: 1000000000000, description: "CIF value in FCFA" }
+        joursAuPort:  { type: integer, minimum: 0, maximum: 3650 }
+        regime:       { type: string, enum: ["Droit commun", "Exonération partielle", "Enlèvement direct"] }
+        totalDouane:  { type: number, description: "Client estimate, ignored: recomputed by the server" }
+        totalPort:    { type: number, description: "Client estimate, ignored: recomputed by the server" }
+        totalGeneral: { type: number, description: "Client estimate, ignored: recomputed by the server" }
+        condition:    { type: string, nullable: true, default: Occasion, maxLength: 50 }
+        powertrain:   { type: string, nullable: true, maxLength: 50 }
+        referenceDate: { type: string, nullable: true, maxLength: 30 }
+        regulatoryYear: { type: integer, nullable: true, minimum: 1900, maximum: 2100 }
+        calculatorVersion: { type: string, nullable: true, maxLength: 50 }
+        regulatoryConfigVersion: { type: string, nullable: true, maxLength: 50 }
+        details:
+          $ref: "#/components/schemas/SimulationDetails"
 
     Simulation:
       type: object
@@ -899,7 +909,149 @@ components:
         regulatoryYear: { type: integer, nullable: true }
         calculatorVersion: { type: string, nullable: true }
         regulatoryConfigVersion: { type: string, nullable: true }
+        details:
+          description: Null for simulations saved before the details were kept
+          anyOf:
+            - $ref: "#/components/schemas/SimulationDetails"
+            - type: "null"
         createdAt:    { type: string, format: date-time }
+
+    SimulationDetails:
+      type: object
+      description: >
+        What the simulation was based on, kept with it: how the vehicle value
+        was entered, where the vehicle was and what had already been paid.
+        Validated by the server (at most 20 KB of JSON); unknown properties
+        are dropped.
+      required: [schemaVersion]
+      properties:
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Version of this structure. Currently 1; the server refuses versions it does not know.
+        valueInput:
+          $ref: "#/components/schemas/SimulationValueInput"
+        situation:
+          type: string
+          enum: [not_arrived, in_transit, at_port]
+          description: not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou
+        paid:
+          $ref: "#/components/schemas/SimulationPaidInput"
+
+    SimulationValueInput:
+      type: object
+      description: >
+        How the vehicle value was entered. price = purchase price, plus freight
+        and insurance when known; cif = CIF value already known; total =
+        overall amount paid, used as is.
+      required: [mode, valeurXof, components, missing]
+      properties:
+        mode:
+          type: string
+          enum: [price, cif, total]
+        valeurXof:
+          type: number
+          minimum: 0
+          maximum: 1000000000000
+          description: Resulting value in FCFA, used as the CIF value (equals valeurCIF)
+        components:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/SimulationValueComponent"
+        missing:
+          type: array
+          maxItems: 2
+          description: Parts of the CIF the user did not know (mode price only); never counted as zero
+          items:
+            type: string
+            enum: [freight, insurance]
+
+    SimulationValueComponent:
+      type: object
+      required: [kind, amount, currency, valeurXof, conversion]
+      properties:
+        kind:
+          type: string
+          enum: [price, freight, insurance, cif, total]
+        amount:
+          type: number
+          minimum: 0
+          maximum: 1000000000000000
+          description: Amount as entered, in its currency
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: ISO 4217 code (XOF, EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF)
+        valeurXof:
+          type: number
+          minimum: 0
+          maximum: 1000000000000
+          description: Amount converted to FCFA
+        conversion:
+          description: Rate used, null for FCFA or a zero amount
+          anyOf:
+            - $ref: "#/components/schemas/SimulationCurrencyConversion"
+            - type: "null"
+
+    SimulationCurrencyConversion:
+      type: object
+      description: Indicative rate used at the time of the simulation (see GET /exchange-rates)
+      required: [currency, amount, xofPerUnit, method, rateDate, fetchedAt, status]
+      properties:
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        amount:
+          type: number
+          minimum: 0
+          maximum: 1000000000000000
+        xofPerUnit:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000000
+          description: FCFA for one unit of the currency
+        method:
+          type: string
+          enum: [fixed_parity, ecb_cross]
+        rateDate:
+          type: [string, "null"]
+          maxLength: 40
+          description: Publication date of the source rate (YYYY-MM-DD), null for the fixed parity
+        fetchedAt:
+          type: [string, "null"]
+          maxLength: 40
+          description: When the rates were obtained from the server (ISO 8601), null if only the fixed parity was used
+        status:
+          type: string
+          enum: [ok, stale]
+          description: stale = rate from a previous answer, the service being unavailable
+
+    SimulationPaidInput:
+      type: object
+      description: >
+        What the user had already paid. A real amount paid replaces the
+        estimate of the same line, it is never added to it.
+      required: [vehicleParts]
+      properties:
+        vehicleParts:
+          type: object
+          description: Vehicle parts already paid (their declared amount counts as paid)
+          properties:
+            price:     { type: boolean }
+            freight:   { type: boolean }
+            insurance: { type: boolean }
+            cif:       { type: boolean }
+        customsPaid:
+          type: number
+          minimum: 0
+          maximum: 1000000000000
+          description: Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)
+        portPaid:
+          type: number
+          minimum: 0
+          maximum: 1000000000000
+          description: Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)
 
     SimulationListResponse:
       type: object

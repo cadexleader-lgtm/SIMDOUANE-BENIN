@@ -85,24 +85,258 @@ export interface ExchangeRates {
   fetchedAt: string | null;
 }
 
+export type CreateSimulationInputCylindree = typeof CreateSimulationInputCylindree[keyof typeof CreateSimulationInputCylindree];
+
+
+export const CreateSimulationInputCylindree = {
+  lt1000: 'lt1000',
+  '1000-1300': '1000-1300',
+  '1300-1600': '1300-1600',
+  '1600-2000': '1600-2000',
+  '2000-2500': '2000-2500',
+  gt2500: 'gt2500',
+} as const;
+
+export type CreateSimulationInputRegime = typeof CreateSimulationInputRegime[keyof typeof CreateSimulationInputRegime];
+
+
+export const CreateSimulationInputRegime = {
+  Droit_commun: 'Droit commun',
+  Exonération_partielle: 'Exonération partielle',
+  Enlèvement_direct: 'Enlèvement direct',
+} as const;
+
+export type SimulationValueInputMode = typeof SimulationValueInputMode[keyof typeof SimulationValueInputMode];
+
+
+export const SimulationValueInputMode = {
+  price: 'price',
+  cif: 'cif',
+  total: 'total',
+} as const;
+
+export type SimulationValueComponentKind = typeof SimulationValueComponentKind[keyof typeof SimulationValueComponentKind];
+
+
+export const SimulationValueComponentKind = {
+  price: 'price',
+  freight: 'freight',
+  insurance: 'insurance',
+  cif: 'cif',
+  total: 'total',
+} as const;
+
+export type SimulationCurrencyConversionMethod = typeof SimulationCurrencyConversionMethod[keyof typeof SimulationCurrencyConversionMethod];
+
+
+export const SimulationCurrencyConversionMethod = {
+  fixed_parity: 'fixed_parity',
+  ecb_cross: 'ecb_cross',
+} as const;
+
+/**
+ * stale = rate from a previous answer, the service being unavailable
+ */
+export type SimulationCurrencyConversionStatus = typeof SimulationCurrencyConversionStatus[keyof typeof SimulationCurrencyConversionStatus];
+
+
+export const SimulationCurrencyConversionStatus = {
+  ok: 'ok',
+  stale: 'stale',
+} as const;
+
+/**
+ * Indicative rate used at the time of the simulation (see GET /exchange-rates)
+ */
+export interface SimulationCurrencyConversion {
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 1000000000000000
+     */
+  amount: number;
+  /**
+     * FCFA for one unit of the currency
+     * @maximum 1000000
+     * @exclusiveMinimum 0
+     */
+  xofPerUnit: number;
+  method: SimulationCurrencyConversionMethod;
+  /**
+     * Publication date of the source rate (YYYY-MM-DD), null for the fixed parity
+     * @maxLength 40
+     * @nullable
+     */
+  rateDate: string | null;
+  /**
+     * When the rates were obtained from the server (ISO 8601), null if only the fixed parity was used
+     * @maxLength 40
+     * @nullable
+     */
+  fetchedAt: string | null;
+  /** stale = rate from a previous answer, the service being unavailable */
+  status: SimulationCurrencyConversionStatus;
+}
+
+export interface SimulationValueComponent {
+  kind: SimulationValueComponentKind;
+  /**
+     * Amount as entered, in its currency
+     * @minimum 0
+     * @maximum 1000000000000000
+     */
+  amount: number;
+  /**
+     * ISO 4217 code (XOF, EUR, USD, CAD, GBP, JPY, CNY, KRW, CHF)
+     * @pattern ^[A-Z]{3}$
+     */
+  currency: string;
+  /**
+     * Amount converted to FCFA
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  valeurXof: number;
+  /** Rate used, null for FCFA or a zero amount */
+  conversion: SimulationCurrencyConversion | null;
+}
+
+export type SimulationValueInputMissingItem = typeof SimulationValueInputMissingItem[keyof typeof SimulationValueInputMissingItem];
+
+
+export const SimulationValueInputMissingItem = {
+  freight: 'freight',
+  insurance: 'insurance',
+} as const;
+
+/**
+ * How the vehicle value was entered. price = purchase price, plus freight and insurance when known; cif = CIF value already known; total = overall amount paid, used as is.
+
+ */
+export interface SimulationValueInput {
+  mode: SimulationValueInputMode;
+  /**
+     * Resulting value in FCFA, used as the CIF value (equals valeurCIF)
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  valeurXof: number;
+  /** @maxItems 10 */
+  components: SimulationValueComponent[];
+  /**
+     * Parts of the CIF the user did not know (mode price only); never counted as zero
+     * @maxItems 2
+     */
+  missing: SimulationValueInputMissingItem[];
+}
+
+/**
+ * not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou
+ */
+export type SimulationDetailsSituation = typeof SimulationDetailsSituation[keyof typeof SimulationDetailsSituation];
+
+
+export const SimulationDetailsSituation = {
+  not_arrived: 'not_arrived',
+  in_transit: 'in_transit',
+  at_port: 'at_port',
+} as const;
+
+/**
+ * Vehicle parts already paid (their declared amount counts as paid)
+ */
+export type SimulationPaidInputVehicleParts = {
+  price?: boolean;
+  freight?: boolean;
+  insurance?: boolean;
+  cif?: boolean;
+};
+
+/**
+ * What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.
+
+ */
+export interface SimulationPaidInput {
+  /** Vehicle parts already paid (their declared amount counts as paid) */
+  vehicleParts: SimulationPaidInputVehicleParts;
+  /**
+     * Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  customsPaid?: number;
+  /**
+     * Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  portPaid?: number;
+}
+
+/**
+ * What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.
+
+ */
+export interface SimulationDetails {
+  /**
+     * Version of this structure. Currently 1; the server refuses versions it does not know.
+     * @minimum 1
+     */
+  schemaVersion: number;
+  valueInput?: SimulationValueInput;
+  /** not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou */
+  situation?: SimulationDetailsSituation;
+  paid?: SimulationPaidInput;
+}
+
 export interface CreateSimulationInput {
+  /** @maxLength 100 */
   marque: string;
+  /** @maxLength 100 */
   modele: string;
+  /**
+     * At most the current year + 1
+     * @minimum 1900
+     */
   annee: number;
-  cylindree: string;
+  cylindree: CreateSimulationInputCylindree;
+  /** @maxLength 50 */
   carburant: string;
+  /**
+     * CIF value in FCFA
+     * @maximum 1000000000000
+     * @exclusiveMinimum 0
+     */
   valeurCIF: number;
+  /**
+     * @minimum 0
+     * @maximum 3650
+     */
   joursAuPort: number;
-  regime: string;
+  regime: CreateSimulationInputRegime;
+  /** Client estimate, ignored: recomputed by the server */
   totalDouane: number;
+  /** Client estimate, ignored: recomputed by the server */
   totalPort: number;
+  /** Client estimate, ignored: recomputed by the server */
   totalGeneral: number;
+  /** @maxLength 50 */
   condition?: string | null;
+  /** @maxLength 50 */
   powertrain?: string | null;
+  /** @maxLength 30 */
   referenceDate?: string | null;
+  /**
+     * @minimum 1900
+     * @maximum 2100
+     */
   regulatoryYear?: number | null;
+  /** @maxLength 50 */
   calculatorVersion?: string | null;
+  /** @maxLength 50 */
   regulatoryConfigVersion?: string | null;
+  details?: SimulationDetails;
 }
 
 export interface Simulation {
@@ -125,6 +359,8 @@ export interface Simulation {
   regulatoryYear?: number | null;
   calculatorVersion?: string | null;
   regulatoryConfigVersion?: string | null;
+  /** Null for simulations saved before the details were kept */
+  details?: SimulationDetails | null;
   createdAt: string;
 }
 
