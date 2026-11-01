@@ -6,6 +6,7 @@ import {
   ArrowRight, Phone, Mail, Star, Zap, ChevronRight, Lock, FileText,
 } from "lucide-react";
 import { SimDouaneLogo } from "@/components/logo";
+import { calculate } from "@/lib/calculator";
 import { useLang } from "@/context/language-context";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -37,13 +38,22 @@ function CountUp({ target, duration = 1800 }: { target: number; duration?: numbe
   return <span>{value.toLocaleString("fr-FR")}</span>;
 }
 
+/* Example shown on the home page: calculated by the simulator's own engine,
+   so the figures always match what a user would get for the same input. */
+const HERO_EXAMPLE = calculate({
+  marque: "Toyota", modele: "Corolla", annee: 2019, cylindree: "1300-1600", carburant: "Essence",
+  valeurCIF: 8_500_000, joursAuPort: 20, regime: "Droit commun",
+});
+
 /* Floating card with animated values */
 function HeroCard({ visible }: { visible: boolean }) {
+  const r = HERO_EXAMPLE;
   const rows = [
-    { label: "Valeur CIF",         raw: 8500000,  display: "8 500 000 F" },
-    { label: "Droit de douane",    raw: 2125000,  display: "2 125 000 F" },
-    { label: "TVA (18%)",          raw: 1827000,  display: "1 827 000 F" },
-    { label: "Frais de port (20j)",raw: 136000,   display: "136 000 F"   },
+    { label: "Valeur CIF",                raw: Math.round(8_500_000) },
+    { label: "Droit de douane",           raw: Math.round(r.DD) },
+    { label: "Autres prélèvements",       raw: Math.round(r.RS + r.PC + r.PCS) },
+    { label: "TVA (18%)",                 raw: Math.round(r.TVA) },
+    { label: "Frais de port (20j)",       raw: Math.round(r.totalPort) },
   ];
   return (
     <div
@@ -91,7 +101,7 @@ function HeroCard({ visible }: { visible: boolean }) {
               <span className="text-white/70 text-sm font-bold">Total estimé</span>
               {visible ? (
                 <span className="text-xl font-black" style={{ color: "#FCD116" }}>
-                  <CountUp target={12588000} duration={1800} /> F
+                  <CountUp target={Math.round(HERO_EXAMPLE.totalGeneral)} duration={1800} /> F
                 </span>
               ) : (
                 <span className="text-white/20 text-xl">…</span>

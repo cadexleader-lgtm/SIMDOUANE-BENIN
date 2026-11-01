@@ -370,7 +370,8 @@ export function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* ══ MAIN COLUMN ════════════════════════════════════════════════════ */}
-      <div className="flex-1 md:ml-56 flex flex-col min-h-[100dvh]">
+      {/* min-w-0: a wide child (e.g. a table) scrolls in its own frame instead of widening the page on a phone */}
+      <div className="flex-1 min-w-0 md:ml-56 flex flex-col min-h-[100dvh]">
 
         {/* ── Mobile header ── */}
         <header
