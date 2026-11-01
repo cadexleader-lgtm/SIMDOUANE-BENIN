@@ -35,12 +35,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 const CYL_KEYS: CylindreeKey[] = ["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"];
 
-const YEARS = Array.from({ length: 2025 - 1990 + 1 }, (_, i) => 2025 - i);
+// Up to next year, like the server's validation (the list used to stop at 2025).
+const MAX_YEAR = new Date().getFullYear() + 1;
+const YEARS = Array.from({ length: MAX_YEAR - 1990 + 1 }, (_, i) => MAX_YEAR - i);
+// Same limits as the server (POST /api/simulations), so nothing the form accepts is refused there.
+const MAX_AMOUNT = 1e12;
 
 const formSchema = z.object({
-  marque: z.string().min(1),
-  modele: z.string().min(1),
-  annee: z.coerce.number().min(1990).max(2025),
+  marque: z.string().min(1).max(100, "100 caractères au maximum."),
+  modele: z.string().min(1).max(100, "100 caractères au maximum."),
+  annee: z.coerce.number().min(1990).max(MAX_YEAR),
   condition: z.enum(["Occasion", "Neuf"]),
   cylindree: z.enum(["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"]),
   carburant: z.string().min(1),
@@ -67,7 +71,7 @@ const formSchema = z.object({
   droitsPayesMontant: z.string().optional(),
   fraisPayes: z.boolean(),
   fraisPayesMontant: z.string().optional(),
-  joursAuPort: z.coerce.number().min(0),
+  joursAuPort: z.coerce.number().int("Nombre de jours entier.").min(0).max(3650),
   regime: z.string().min(1),
 });
 
@@ -463,11 +467,16 @@ export default function Simulateur() {
       for (const [checked, field] of [[values.droitsPayes, "droitsPayesMontant"], [values.fraisPayes, "fraisPayesMontant"]] as const) {
         if (!checked) continue;
         const amount = parseAmount(values[field]);
-        if (amount === undefined || Number.isNaN(amount) || amount < 0) {
+        if (amount === undefined || Number.isNaN(amount) || amount < 0 || amount > MAX_AMOUNT) {
           form.setError(field, { message: amount === undefined ? t.errRequired : t.errInvalid });
           paidOk = false;
         }
       }
+    }
+    // The value must be at least 1 FCFA once converted and stay within the server's limit.
+    if (determined.ok && (determined.value.valeurXof < 1 || determined.value.valeurXof > MAX_AMOUNT)) {
+      form.setError(determined.value.mode === "price" ? "prix" : "montant", { message: t.errInvalid });
+      return;
     }
     if (!determined.ok || !paidOk) return;
 
@@ -562,7 +571,7 @@ export default function Simulateur() {
                         <FormItem>
                           <FormLabel>{t.brand}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Toyota" {...field} data-testid="input-marque" />
+                            <Input placeholder="Ex: Toyota" maxLength={100} {...field} data-testid="input-marque" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -572,7 +581,7 @@ export default function Simulateur() {
                         <FormItem>
                           <FormLabel>{t.model}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: RAV4" {...field} data-testid="input-modele" />
+                            <Input placeholder="Ex: RAV4" maxLength={100} {...field} data-testid="input-modele" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -801,7 +810,7 @@ export default function Simulateur() {
                         <FormItem>
                           <FormLabel>{t.days}</FormLabel>
                           <FormControl>
-                            <Input type="number" min={0} {...field} data-testid="input-jours" />
+                            <Input type="number" min={0} max={3650} step={1} {...field} data-testid="input-jours" />
                           </FormControl>
                           <FormDescription>{t.daysNote}</FormDescription>
                           <FormMessage />
