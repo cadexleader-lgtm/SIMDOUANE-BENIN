@@ -5,6 +5,8 @@ import { getCurrentSimulation, HistoryEntry } from "@/lib/history";
 import { formatFCFA } from "@/lib/utils";
 import { formatRate, formatRateDate } from "@/lib/currency";
 import { CifBasis } from "@/components/cif-basis";
+import { BudgetCard } from "@/components/budget-card";
+import { buildBudget, legacyValue, NOTHING_PAID } from "@/lib/budget";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +39,13 @@ export default function Resultats() {
 
   const { input, result } = simulation;
   const basis = simulation.valueInput;
+  // Older simulations (before phases S2 and S6): one CIF line, nothing paid.
+  const budget = buildBudget(
+    simulation.situation ?? "not_arrived",
+    basis ?? legacyValue(input.valeurCIF),
+    result,
+    simulation.paid ?? NOTHING_PAID,
+  );
 
   const ageBadge =
     result.riskLevel === "faible"
@@ -282,6 +291,9 @@ export default function Resultats() {
             </div>
           </div>
         </Card>
+
+        {/* Budget, already paid, balance (phase S6) */}
+        <BudgetCard budget={budget} lang={lang} />
 
         {/* Post-port + disclaimer */}
         <div className="grid md:grid-cols-2 gap-5">

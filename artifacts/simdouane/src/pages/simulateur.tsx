@@ -29,7 +29,8 @@ import { getRegulatoryNotice, Powertrain, VehicleCondition } from "@/lib/regulat
 import { CURRENCY_CODES, type CurrencyCode } from "@/lib/currency";
 import { useExchangeRates } from "@/lib/use-exchange-rates";
 import { ConversionNote, CurrencySelect } from "@/components/currency-field";
-import { CIF_MODES, determineCif, type CifInputs, type CifMode, type CifResult, type FieldError } from "@/lib/cif-input";
+import { CIF_MODES, determineCif, parseAmount, type CifInputs, type CifMode, type CifResult, type FieldError } from "@/lib/cif-input";
+import { NOTHING_PAID, SITUATIONS, type ImportSituation, type PaidInput, type VehiclePart } from "@/lib/budget";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const CYL_KEYS: CylindreeKey[] = ["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"];
@@ -56,11 +57,32 @@ const formSchema = z.object({
   assurance: z.string().optional(),
   assuranceDevise: z.enum(CURRENCY_CODES),
   assuranceInconnu: z.boolean(),
+  // Import situation and what is already paid (phase S6).
+  situation: z.enum(SITUATIONS),
+  payePrix: z.boolean(),
+  payeTransport: z.boolean(),
+  payeAssurance: z.boolean(),
+  payeCif: z.boolean(),
+  droitsPayes: z.boolean(),
+  droitsPayesMontant: z.string().optional(),
+  fraisPayes: z.boolean(),
+  fraisPayesMontant: z.string().optional(),
   joursAuPort: z.coerce.number().min(0),
   regime: z.string().min(1),
 });
 
 const AMOUNT_FIELDS = ["montant", "prix", "transport", "assurance"] as const;
+
+const PAID_FIELDS = { price: "payePrix", freight: "payeTransport", insurance: "payeAssurance", cif: "payeCif" } as const;
+
+function paidInputFrom(v: z.infer<typeof formSchema>): PaidInput {
+  if (v.situation === "not_arrived") return NOTHING_PAID;
+  return {
+    vehicleParts: { price: v.payePrix, freight: v.payeTransport, insurance: v.payeAssurance, cif: v.payeCif },
+    customsPaid: v.droitsPayes ? parseAmount(v.droitsPayesMontant) : undefined,
+    portPaid: v.fraisPayes ? parseAmount(v.fraisPayesMontant) : undefined,
+  };
+}
 const ERROR_FIELDS = { price: "prix", freight: "transport", insurance: "assurance", single: "montant" } as const;
 
 /**
@@ -257,6 +279,62 @@ function CifSummary({ preview, lang }: { preview: CifResult; lang: "fr" | "en" }
   );
 }
 
+/* ─── Phase S6: "already paid" inputs ───────────────────────────────────── */
+type PaidCheckField = "payePrix" | "payeTransport" | "payeAssurance" | "payeCif";
+
+function PaidCheck({ control, name, label, testId }: {
+  control: Control<FormValues>; name: PaidCheckField; label: string; testId: string;
+}) {
+  return (
+    <FormField control={control} name={name} render={({ field }) => (
+      <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
+        <Checkbox checked={!!field.value} onCheckedChange={(v) => field.onChange(v === true)} data-testid={testId} />
+        {label}
+      </label>
+    )} />
+  );
+}
+
+function PaidAmount({ control, checkName, amountName, label, amountLabel, testId }: {
+  control: Control<FormValues>;
+  checkName: "droitsPayes" | "fraisPayes";
+  amountName: "droitsPayesMontant" | "fraisPayesMontant";
+  label: string;
+  amountLabel: string;
+  testId: string;
+}) {
+  const { clearErrors, setValue } = useFormContext<FormValues>();
+  const checked = useWatch({ control, name: checkName });
+  return (
+    <div className="space-y-2">
+      <FormField control={control} name={checkName} render={({ field }) => (
+        <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
+          <Checkbox
+            checked={!!field.value}
+            onCheckedChange={(v) => {
+              field.onChange(v === true);
+              if (v !== true) { setValue(amountName, ""); clearErrors(amountName); }
+            }}
+            data-testid={testId}
+          />
+          {label}
+        </label>
+      )} />
+      {checked && (
+        <FormField control={control} name={amountName} render={({ field }) => (
+          <FormItem className="pl-6">
+            <FormLabel className="text-xs">{amountLabel}</FormLabel>
+            <FormControl>
+              <Input type="number" min={0} step="any" {...field} data-testid={`${testId}-amount`} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+      )}
+    </div>
+  );
+}
+
 /* ─── Quota Modal ─────────────────────────────────────────────────────── */
 interface QuotaModalProps {
   used: number;
@@ -332,6 +410,15 @@ export default function Simulateur() {
       assurance: "",
       assuranceDevise: "XOF",
       assuranceInconnu: false,
+      situation: "not_arrived",
+      payePrix: false,
+      payeTransport: false,
+      payeAssurance: false,
+      payeCif: false,
+      droitsPayes: false,
+      droitsPayesMontant: "",
+      fraisPayes: false,
+      fraisPayesMontant: "",
       joursAuPort: 0,
       regime: "Droit commun",
     },
@@ -343,6 +430,13 @@ export default function Simulateur() {
   const watchedDevise = (watchedValues.devise ?? "XOF") as CurrencyCode;
   const preview = useMemo(() => determineCif(cifInputs(watchedValues, true), rates), [watchedValues, rates]);
   const watchedXof = preview.ok ? preview.value.valeurXof : null;
+  const watchedSituation = (watchedValues.situation ?? "not_arrived") as ImportSituation;
+  // Vehicle parts that can be ticked as paid: only those the user entered.
+  const payableParts: VehiclePart[] = watchedMode === "cif" ? ["cif"]
+    : watchedMode === "price"
+      ? (["price", "freight", "insurance"] as const).filter((p) =>
+          p === "price" || (p === "freight" ? !watchedValues.transportInconnu : !watchedValues.assuranceInconnu))
+      : [];
 
   async function onSubmit(values: FormValues) {
     // Block if quota reached for logged-in users
@@ -362,8 +456,20 @@ export default function Simulateur() {
           : t.errRequired;
         form.setError(ERROR_FIELDS[key], { message });
       }
-      return;
     }
+    // An amount ticked as paid must be given (a real amount, never guessed).
+    let paidOk = true;
+    if (values.situation !== "not_arrived") {
+      for (const [checked, field] of [[values.droitsPayes, "droitsPayesMontant"], [values.fraisPayes, "fraisPayesMontant"]] as const) {
+        if (!checked) continue;
+        const amount = parseAmount(values[field]);
+        if (amount === undefined || Number.isNaN(amount) || amount < 0) {
+          form.setError(field, { message: amount === undefined ? t.errRequired : t.errInvalid });
+          paidOk = false;
+        }
+      }
+    }
+    if (!determined.ok || !paidOk) return;
 
     setIsCalculating(true);
     await new Promise((r) => setTimeout(r, 1000));
@@ -390,7 +496,12 @@ export default function Simulateur() {
       calculatorVersion: "historical",
       regulatoryConfigVersion: "2026.1-announced",
     } as const;
-    const entry = addHistory({ input, result, ...metadata, valueInput: determined.value });
+    const entry = addHistory({
+      input, result, ...metadata,
+      valueInput: determined.value,
+      situation: values.situation,
+      paid: paidInputFrom(values),
+    });
     setCurrentSimulation(entry);
     
     if (user) {
@@ -569,6 +680,40 @@ export default function Simulateur() {
                   </CardContent>
                 </Card>
 
+                {/* Import situation (phase S6) */}
+                <Card>
+                  <CardHeader className="border-b pb-4 mb-1">
+                    <CardTitle className="text-sm font-semibold">{t.situationTitle}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <FormField control={form.control} name="situation" render={({ field }) => (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" role="radiogroup" aria-label={t.situationTitle}>
+                        {SITUATIONS.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            role="radio"
+                            aria-checked={field.value === s}
+                            data-testid={`situation-${s}`}
+                            onClick={() => field.onChange(s)}
+                            className={cn(
+                              "text-left px-3 py-2 rounded-lg border transition-all",
+                              field.value === s
+                                ? "bg-primary text-white border-primary shadow-sm"
+                                : "bg-background text-foreground border-border hover:border-primary",
+                            )}
+                          >
+                            <span className="block text-xs font-semibold leading-tight">{t.situations[s].title}</span>
+                            <span className={cn("block text-[10px] mt-0.5 leading-snug", field.value === s ? "text-white/75" : "text-muted-foreground")}>
+                              {t.situations[s].desc}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )} />
+                  </CardContent>
+                </Card>
+
                 {/* Value & port card */}
                 <Card>
                   <CardHeader className="border-b pb-4 mb-1">
@@ -703,6 +848,27 @@ export default function Simulateur() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Already paid (phase S6): only once the vehicle is on its way */}
+                {watchedSituation !== "not_arrived" && (
+                  <Card data-testid="paid-card">
+                    <CardHeader className="border-b pb-4 mb-1">
+                      <CardTitle className="text-sm font-semibold">{t.paidTitle}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 pt-2">
+                      <p className="text-xs text-muted-foreground">{t.paidHelp}</p>
+                      {watchedMode === "total" ? (
+                        <p className="text-xs text-green-800 bg-green-50 border border-green-200 rounded-lg px-3 py-2" data-testid="paid-total-note">{t.paidTotalNote}</p>
+                      ) : (
+                        payableParts.map((part) => (
+                          <PaidCheck key={part} control={form.control} name={PAID_FIELDS[part]} label={t.paidVehicle[part]} testId={`paid-${part}`} />
+                        ))
+                      )}
+                      <PaidAmount control={form.control} checkName="droitsPayes" amountName="droitsPayesMontant" label={t.paidCustoms} amountLabel={t.paidAmountLabel} testId="paid-customs" />
+                      <PaidAmount control={form.control} checkName="fraisPayes" amountName="fraisPayesMontant" label={t.paidPort} amountLabel={t.paidAmountLabel} testId="paid-port" />
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Quota warning banner for logged-in users */}
                 {user && simLimit !== null && (

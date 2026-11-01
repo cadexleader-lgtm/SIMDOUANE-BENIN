@@ -2,6 +2,7 @@ import { FormInput, SimulationResult } from "./calculator";
 import { Powertrain, VehicleCondition } from "./regulatory-config-2026";
 import type { CurrencyConversion } from "./currency";
 import type { CifDetermination } from "./cif-input";
+import type { ImportSituation, PaidInput } from "./budget";
 
 export interface HistoryEntry {
   id: string;
@@ -18,6 +19,9 @@ export interface HistoryEntry {
   conversion?: CurrencyConversion;
   /** How the value was entered (phase S2): case, amounts with their currency and rate, missing parts. */
   valueInput?: CifDetermination;
+  /** Where the vehicle was (phase S6) and what the user had already paid. */
+  situation?: ImportSituation;
+  paid?: PaidInput;
 }
 
 export function getHistory(): HistoryEntry[] {
