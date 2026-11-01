@@ -3,9 +3,9 @@ import { useLocation } from "wouter";
 import { Info, AlertTriangle, ArrowLeft, CheckCircle2, Download } from "lucide-react";
 import { getCurrentSimulation, HistoryEntry } from "@/lib/history";
 import { formatFCFA } from "@/lib/utils";
-import { formatRate, formatRateDate, type CurrencyConversion } from "@/lib/currency";
 import { CifBasis } from "@/components/cif-basis";
 import { buildBudget, legacyValue, NOTHING_PAID, type BudgetLine, type LineBasis } from "@/lib/budget";
+import { buildHypotheses } from "@/lib/result-hypotheses";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,12 +63,6 @@ function Category({ value, title, amount, tags, testId, children }: {
   );
 }
 
-function rateLabel(c: CurrencyConversion, lang: Lang) {
-  const t = T[lang].results;
-  const source = c.method === "fixed_parity" ? t.rateFixedShort : t.rateEcbShort(formatRateDate(c.rateDate ?? ""));
-  return `1 ${c.currency} = ${formatRate(c.xofPerUnit, lang)} FCFA (${source}${c.status === "stale" ? `, ${t.rateStaleShort}` : ""})`;
-}
-
 export default function Resultats() {
   const [, setLocation] = useLocation();
   const [simulation, setSimulation] = useState<HistoryEntry | null>(null);
@@ -123,26 +117,8 @@ export default function Resultats() {
   ];
   const portSubtotal = portRows.reduce((s, r) => s + r.montant, 0);
 
-  // Unique exchange rates used for this simulation.
-  const conversions: CurrencyConversion[] = [];
-  for (const c of value.components) {
-    if (c.conversion && !conversions.some((x) => x.currency === c.conversion!.currency)) conversions.push(c.conversion);
-  }
-  if (!basis && simulation.conversion) conversions.push(simulation.conversion);
-
-  const simDate = simulation.date ? formatRateDate(simulation.date.slice(0, 10)) : null;
-  const hypotheses: Array<{ key: string; text: string; strong?: boolean }> = [
-    { key: "indicative", text: t.warningText, strong: true },
-    ...(simDate ? [{ key: "date", text: t.hypDate(simDate) }] : []),
-    { key: "basis", text: `${t.basisTitle} : ${t.basisModes[value.mode]}.` },
-    ...(value.mode === "price" && value.missing.length > 0 ? [{ key: "partial", text: t.cifPartialResult, strong: true }] : []),
-    ...(value.mode === "total" ? [{ key: "total", text: t.totalWarningResult, strong: true }] : []),
-    ...(conversions.length > 0 ? [{ key: "rates", text: `${t.hypRates} : ${conversions.map((c) => rateLabel(c, lang)).join(" ; ")}.` }] : []),
-    { key: "storage", text: t.hypStorage(input.joursAuPort) },
-    { key: "regime", text: `${t.regime} : ${input.regime}${result.regimeLabel ? ` — ${result.regimeLabel}` : ""}.` },
-    { key: "customs", text: t.customsMayDiffer },
-    { key: "tags", text: t.budgetNote },
-  ];
+  // Shared with the PDF export (same list, same order, same texts).
+  const hypotheses = buildHypotheses(simulation, value, lang);
 
   return (
     <TooltipProvider delayDuration={300}>
