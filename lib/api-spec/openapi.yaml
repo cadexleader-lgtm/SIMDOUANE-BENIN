@@ -937,6 +937,12 @@ components:
           description: not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou
         paid:
           $ref: "#/components/schemas/SimulationPaidInput"
+        vehicleType:
+          type: string
+          enum: [tourisme, utilitaire]
+          description: >
+            tourisme = passenger car; utilitaire = utility vehicle (pick-up,
+            van). Only used for warnings: it does not change the amounts.
 
     SimulationValueInput:
       type: object

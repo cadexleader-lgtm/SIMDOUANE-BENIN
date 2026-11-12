@@ -25,7 +25,7 @@ import { T } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import { useCreateSimulation, useGetUserSubscription, getGetUserSubscriptionQueryKey } from "@workspace/api-client-react";
 import { UpgradeRequestForm } from "@/components/upgrade-request-form";
-import { getRegulatoryNotice, Powertrain, VehicleCondition } from "@/lib/regulatory-config-2026";
+import { Powertrain, VehicleCondition, VEHICLE_TYPES, vehicleNotices, type VehicleType } from "@/lib/regulatory-config-2026";
 import { CURRENCY_CODES, type CurrencyCode } from "@/lib/currency";
 import { useExchangeRates } from "@/lib/use-exchange-rates";
 import { ConversionNote, CurrencySelect } from "@/components/currency-field";
@@ -46,6 +46,7 @@ const formSchema = z.object({
   modele: z.string().min(1).max(100, "100 caractères au maximum."),
   annee: z.coerce.number().min(1990).max(MAX_YEAR),
   condition: z.enum(["Occasion", "Neuf"]),
+  typeVehicule: z.enum(VEHICLE_TYPES),
   cylindree: z.enum(["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"]),
   carburant: z.string().min(1),
   // Value of the vehicle: one of three cases, each amount in its own currency
@@ -401,6 +402,7 @@ export default function Simulateur() {
       modele: "",
       annee: undefined as unknown as number,
       condition: "Occasion",
+      typeVehicule: "tourisme",
       cylindree: undefined as unknown as CylindreeKey,
       carburant: "",
       mode: "cif",
@@ -435,6 +437,14 @@ export default function Simulateur() {
   const preview = useMemo(() => determineCif(cifInputs(watchedValues, true), rates), [watchedValues, rates]);
   const watchedXof = preview.ok ? preview.value.valeurXof : null;
   const watchedSituation = (watchedValues.situation ?? "not_arrived") as ImportSituation;
+  // Phase S7: live warnings about the vehicle (no effect on the amounts).
+  const watchedAge = watchedValues.annee ? new Date().getFullYear() - Number(watchedValues.annee) : undefined;
+  const liveVehicleNotices = vehicleNotices({
+    condition: watchedValues.condition as VehicleCondition | undefined,
+    carburant: watchedValues.carburant,
+    vehicleType: watchedValues.typeVehicule as VehicleType | undefined,
+    age: watchedAge,
+  }, lang);
   // Vehicle parts that can be ticked as paid: only those the user entered.
   const payableParts: VehiclePart[] = watchedMode === "cif" ? ["cif"]
     : watchedMode === "price"
@@ -508,6 +518,7 @@ export default function Simulateur() {
     const entry = addHistory({
       input, result, ...metadata,
       valueInput: determined.value,
+      vehicleType: values.typeVehicule,
       situation: values.situation,
       paid: paidInputFrom(values),
     });
@@ -529,7 +540,7 @@ export default function Simulateur() {
             totalPort: result.totalPort,
             totalGeneral: result.totalGeneral,
             ...metadata,
-            details: { schemaVersion: 1, valueInput: determined.value, situation: values.situation, paid: paidInputFrom(values) },
+            details: { schemaVersion: 1, valueInput: determined.value, situation: values.situation, paid: paidInputFrom(values), vehicleType: values.typeVehicule },
           }
         },
         {
@@ -623,7 +634,58 @@ export default function Simulateur() {
                           <FormMessage />
                         </FormItem>
                       )} />
+
+                      {/* Phase S7: condition and type (warnings only, no effect on the amounts) */}
+                      <FormField control={form.control} name="condition" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.conditionLabel}</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-etat"><SelectValue /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Occasion" data-testid="etat-Occasion">{t.conditionOptions.Occasion}</SelectItem>
+                              <SelectItem value="Neuf" data-testid="etat-Neuf">{t.conditionOptions.Neuf}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <FormField control={form.control} name="typeVehicule" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t.typeLabel}</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-type"><SelectValue /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {VEHICLE_TYPES.map((v) => (
+                                <SelectItem key={v} value={v} data-testid={`type-${v}`}>{t.typeOptions[v]}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
                     </div>
+
+                    {liveVehicleNotices.length > 0 && (
+                      <div className="space-y-2" data-testid="vehicle-notices">
+                        {liveVehicleNotices.map((n) => (
+                          <p
+                            key={n.key}
+                            data-testid={`vehicle-notice-${n.key}`}
+                            className={cn(
+                              "text-xs rounded-lg px-3 py-2 flex items-start gap-1.5 border",
+                              n.strong ? "text-amber-800 bg-amber-50 border-amber-200" : "text-muted-foreground bg-muted/40 border-border",
+                            )}
+                          >
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" /> {n.text}
+                          </p>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Cylindrée */}
                     <FormField control={form.control} name="cylindree" render={({ field }) => (

@@ -8,6 +8,7 @@ import type { HistoryEntry } from "./history";
 import type { CifDetermination } from "./cif-input";
 import { formatRate, formatRateDate, type CurrencyConversion } from "./currency";
 import { T } from "./translations";
+import { vehicleNotices } from "./regulatory-config-2026";
 
 export type ResultLang = "fr" | "en";
 
@@ -53,8 +54,14 @@ export function buildHypotheses(simulation: HistoryEntry, value: CifDeterminatio
   const { input, result } = simulation;
   const conversions = conversionsUsed(simulation, value);
   const simDate = simulation.date ? formatRateDate(simulation.date.slice(0, 10)) : null;
+  // Phase S7: warnings about the vehicle itself (condition, type, age); no effect on the amounts.
+  const vehicle = vehicleNotices(
+    { condition: simulation.condition, carburant: input.carburant, vehicleType: simulation.vehicleType, age: result.ageVehicule },
+    lang,
+  ).map((n) => ({ key: `veh-${n.key}`, text: n.text, strong: n.strong }));
   return [
     { key: "indicative", text: t.warningText, strong: true },
+    ...vehicle,
     ...(simDate ? [{ key: "date", text: t.hypDate(simDate) }] : []),
     { key: "basis", text: `${t.basisTitle} : ${t.basisModes[value.mode]}.` },
     ...(value.mode === "price" && value.missing.length > 0 ? [{ key: "partial", text: t.cifPartialResult, strong: true }] : []),

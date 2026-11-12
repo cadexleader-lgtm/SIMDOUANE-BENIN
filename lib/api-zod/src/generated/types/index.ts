@@ -58,6 +58,7 @@ export * from './simulationCurrencyConversionMethod';
 export * from './simulationCurrencyConversionStatus';
 export * from './simulationDetails';
 export * from './simulationDetailsSituation';
+export * from './simulationDetailsVehicleType';
 export * from './simulationListResponse';
 export * from './simulationPaidInput';
 export * from './simulationPaidInputVehicleParts';

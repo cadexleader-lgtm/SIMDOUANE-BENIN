@@ -85,6 +85,7 @@ function frenchMessage(issue: ZodIssue): string {
       if (field === "cylindree") return `Cylindrée inconnue (valeurs acceptées : ${CYLINDREES.join(", ")}).`;
       if (field === "regime") return `Régime inconnu (valeurs acceptées : ${REGIMES.join(", ")}).`;
       if (field === "situation") return "Situation inconnue (not_arrived, in_transit ou at_port).";
+      if (field === "vehicleType") return "Type de véhicule inconnu (tourisme ou utilitaire).";
       if (field === "mode") return "Mode de saisie de la valeur inconnu (price, cif ou total).";
       return "Valeur non reconnue.";
     case "too_small":

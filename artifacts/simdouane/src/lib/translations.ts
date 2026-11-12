@@ -57,6 +57,11 @@ export const T = {
       ratesFixedOnly: "Service de change indisponible : seuls le FCFA et l'euro (parité fixe) peuvent être utilisés.",
       ratesLoading: "Chargement des taux…",
       unavailableTag: "indisponible",
+      conditionLabel: "État du véhicule",
+      conditionOptions: { Occasion: "Occasion", Neuf: "Neuf" },
+      typeLabel: "Type de véhicule",
+      typeOptions: { tourisme: "Voiture de tourisme (berline, SUV, 4x4)", utilitaire: "Utilitaire (pick-up, camionnette, fourgon)" },
+      typeShort: { tourisme: "Tourisme", utilitaire: "Utilitaire" },
       modeQuestion: "Que connaissez-vous de la valeur du véhicule ?",
       modes: {
         price: { title: "Le prix d'achat", desc: "Ajoutez le transport et l'assurance si vous les connaissez." },
@@ -183,6 +188,12 @@ export const T = {
       warnOld: (age: number) => `Véhicule ancien (${age} ans) — risque de revalorisation douanière par la DGD. Le montant réel peut être supérieur à cette estimation.`,
       warnMid: (age: number) => `Véhicule de 6 à 10 ans. Vérifiez auprès d'un commissionnaire agréé en douane (CAD) les conditions d'importation applicables à cet âge.`,
       directEnlev: "Enlèvement direct — tous les frais portuaires réduits de 30%.",
+    },
+    notices: {
+      newBenefit: (pct: number) => `Véhicule neuf : la loi de finances 2024 prévoyait un abattement de ${pct} % sur la valeur en douane (99 % électrique, 95 % hybride, 90 % autres), sous condition d'immatriculation du propriétaire à l'IFU ; des exonérations de TVA ont aussi été annoncées. Leur reconduction en 2026 (loi n° 2025-22) n'a pas été vérifiée sur le texte. SimDouane ne les applique pas : le montant affiché peut être très supérieur au montant réel. À confirmer avec un commissionnaire agréé en douane (CAD).`,
+      ageLimit: (limit: number, age: number) => `Un décret de 2000 (n° 2000-671) limite l'importation des véhicules d'occasion à ${limit} ans d'âge pour cette catégorie (10 ans pour les véhicules de tourisme, 13 ans pour les autres). Votre véhicule a ${age} ans : son importation pourrait être refusée. L'application actuelle de cette règle est à confirmer auprès d'un CAD.`,
+      utility: "Véhicule utilitaire : il relève d'autres positions tarifaires (8704) que les voitures de tourisme (8703). Les taux de SimDouane sont prévus pour les voitures de tourisme : l'estimation peut être encore plus éloignée du montant réel. À confirmer avec un CAD.",
+      usedGreen: "Aucun avantage fiscal propre aux véhicules électriques ou hybrides d'occasion n'a été confirmé : aucun n'est appliqué.",
     },
     history: {
       title: "Historique",
@@ -453,6 +464,11 @@ export const T = {
       ratesFixedOnly: "Exchange-rate service unavailable: only FCFA and euro (fixed parity) can be used.",
       ratesLoading: "Loading rates…",
       unavailableTag: "unavailable",
+      conditionLabel: "Vehicle condition",
+      conditionOptions: { Occasion: "Used", Neuf: "New" },
+      typeLabel: "Vehicle type",
+      typeOptions: { tourisme: "Passenger car (sedan, SUV, 4x4)", utilitaire: "Utility (pick-up, van)" },
+      typeShort: { tourisme: "Passenger car", utilitaire: "Utility" },
       modeQuestion: "What do you know about the vehicle's value?",
       modes: {
         price: { title: "The purchase price", desc: "Add freight and insurance if you know them." },
@@ -579,6 +595,12 @@ export const T = {
       warnOld: (age: number) => `Old vehicle (${age} years) — risk of customs revaluation by the DGD. The actual amount may exceed this estimate.`,
       warnMid: (age: number) => `Vehicle aged 6 to 10 years. Check with a licensed customs broker (CAD) which import conditions apply at this age.`,
       directEnlev: "Direct clearance — all port fees reduced by 30%.",
+    },
+    notices: {
+      newBenefit: (pct: number) => `New vehicle: the 2024 finance law provided a ${pct}% reduction of the customs value (99% electric, 95% hybrid, 90% others), provided the owner has a tax ID (IFU); VAT exemptions were also announced. Their renewal in 2026 (law no. 2025-22) has not been checked against the text. SimDouane does not apply them: the amount shown may be much higher than the real one. To be confirmed with a licensed customs broker (CAD).`,
+      ageLimit: (limit: number, age: number) => `A 2000 decree (no. 2000-671) limits imports of used vehicles to ${limit} years of age for this category (10 years for passenger cars, 13 years for others). Your vehicle is ${age} years old: its import could be refused. Whether this rule is still applied must be confirmed with a CAD.`,
+      utility: "Utility vehicle: it falls under other tariff headings (8704) than passenger cars (8703). SimDouane's rates are designed for passenger cars: the estimate may be even further from the real amount. To be confirmed with a CAD.",
+      usedGreen: "No tax advantage specific to used electric or hybrid vehicles has been confirmed: none is applied.",
     },
     history: {
       title: "History",

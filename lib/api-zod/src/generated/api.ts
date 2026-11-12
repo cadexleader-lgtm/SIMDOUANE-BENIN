@@ -117,7 +117,8 @@ export const GetSimulationsResponse = zod.object({
 }).describe('Vehicle parts already paid (their declared amount counts as paid)'),
   "customsPaid": zod.number().min(getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMin).max(getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
   "portPaid": zod.number().min(getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMin).max(getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
-}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n')
+}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n'),
+  "vehicleType": zod.enum(['tourisme', 'utilitaire']).optional().describe('tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.\n')
 }).describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n'),zod.null()]).optional().describe('Null for simulations saved before the details were kept'),
   "createdAt": zod.coerce.date()
 })),
@@ -242,7 +243,8 @@ export const CreateSimulationBody = zod.object({
 }).describe('Vehicle parts already paid (their declared amount counts as paid)'),
   "customsPaid": zod.number().min(createSimulationBodyDetailsPaidCustomsPaidMin).max(createSimulationBodyDetailsPaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
   "portPaid": zod.number().min(createSimulationBodyDetailsPaidPortPaidMin).max(createSimulationBodyDetailsPaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
-}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n')
+}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n'),
+  "vehicleType": zod.enum(['tourisme', 'utilitaire']).optional().describe('tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.\n')
 }).optional().describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n')
 })
 
@@ -531,7 +533,8 @@ export const GetAdminSimulationsResponse = zod.object({
 }).describe('Vehicle parts already paid (their declared amount counts as paid)'),
   "customsPaid": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
   "portPaid": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
-}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n')
+}).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n'),
+  "vehicleType": zod.enum(['tourisme', 'utilitaire']).optional().describe('tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.\n')
 }).describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n'),zod.null()]).optional().describe('Null for simulations saved before the details were kept'),
   "createdAt": zod.coerce.date()
 }).and(zod.object({

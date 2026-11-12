@@ -275,6 +275,18 @@ export interface SimulationPaidInput {
 }
 
 /**
+ * tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.
+
+ */
+export type SimulationDetailsVehicleType = typeof SimulationDetailsVehicleType[keyof typeof SimulationDetailsVehicleType];
+
+
+export const SimulationDetailsVehicleType = {
+  tourisme: 'tourisme',
+  utilitaire: 'utilitaire',
+} as const;
+
+/**
  * What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.
 
  */
@@ -288,6 +300,9 @@ export interface SimulationDetails {
   /** not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou */
   situation?: SimulationDetailsSituation;
   paid?: SimulationPaidInput;
+  /** tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.
+   */
+  vehicleType?: SimulationDetailsVehicleType;
 }
 
 export interface CreateSimulationInput {

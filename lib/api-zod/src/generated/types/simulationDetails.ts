@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { SimulationDetailsSituation } from './simulationDetailsSituation';
+import type { SimulationDetailsVehicleType } from './simulationDetailsVehicleType';
 import type { SimulationPaidInput } from './simulationPaidInput';
 import type { SimulationValueInput } from './simulationValueInput';
 
@@ -23,4 +24,7 @@ export interface SimulationDetails {
   /** not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou */
   situation?: SimulationDetailsSituation;
   paid?: SimulationPaidInput;
+  /** tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.
+   */
+  vehicleType?: SimulationDetailsVehicleType;
 }

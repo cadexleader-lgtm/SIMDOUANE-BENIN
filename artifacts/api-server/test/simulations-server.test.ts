@@ -51,6 +51,7 @@ const details = {
   },
   situation: "at_port",
   paid: { vehicleParts: { price: true, freight: true }, portPaid: 180_000 },
+  vehicleType: "utilitaire",
 };
 
 describe.skipIf(!TEST_DB)("simulations enregistrées : contrôle et recalcul côté serveur", () => {
@@ -141,6 +142,7 @@ describe.skipIf(!TEST_DB)("simulations enregistrées : contrôle et recalcul cô
       ["annee", { annee: 1850 }],
       ["details", { details: { ...details, padding: "x".repeat(21 * 1024) } }],
       ["details.situation", { details: { ...details, situation: "unknown" } }],
+      ["details.vehicleType", { details: { ...details, vehicleType: "camion" } }],
       ["details.valueInput.mode", { details: { ...details, valueInput: { ...details.valueInput, mode: "estimate" } } }],
       ["details.paid.portPaid", { details: { ...details, paid: { vehicleParts: {}, portPaid: -5 } } }],
     ];

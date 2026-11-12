@@ -1,5 +1,5 @@
 import { FormInput, SimulationResult } from "./calculator";
-import { Powertrain, VehicleCondition } from "./regulatory-config-2026";
+import { Powertrain, VehicleCondition, type VehicleType } from "./regulatory-config-2026";
 import type { CurrencyConversion } from "./currency";
 import type { CifDetermination } from "./cif-input";
 import type { ImportSituation, PaidInput } from "./budget";
@@ -22,6 +22,8 @@ export interface HistoryEntry {
   /** Where the vehicle was (phase S6) and what the user had already paid. */
   situation?: ImportSituation;
   paid?: PaidInput;
+  /** Phase S7: passenger car or utility vehicle (warnings only, no effect on the amounts). */
+  vehicleType?: VehicleType;
 }
 
 export function getHistory(): HistoryEntry[] {

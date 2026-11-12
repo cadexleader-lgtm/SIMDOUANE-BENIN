@@ -113,6 +113,7 @@ describe("validation des simulations envoyées au serveur", () => {
     ["details.schemaVersion", { ...details, schemaVersion: 2 }],
     ["details.schemaVersion", { situation: "at_port" }],
     ["details.situation", { ...details, situation: "lost_at_sea" }],
+    ["details.vehicleType", { ...details, vehicleType: "camion" }],
     ["details.valueInput.mode", { ...details, valueInput: { ...details.valueInput, mode: "guess" } }],
     ["details.valueInput.valeurXof", { ...details, valueInput: { ...details.valueInput, valeurXof: -1 } }],
     ["details.valueInput.valeurXof", { ...details, valueInput: { ...details.valueInput, valeurXof: 4_000_000 } }],

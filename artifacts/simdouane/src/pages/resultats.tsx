@@ -135,6 +135,8 @@ export default function Resultats() {
               <span className="font-semibold text-foreground" data-testid="vehicle-title">{input.marque} {input.modele}</span>
               <span>· {input.annee}</span>
               <span>· {input.carburant}</span>
+              {simulation.condition && <span data-testid="vehicle-condition">· {T[lang].sim.conditionOptions[simulation.condition]}</span>}
+              {simulation.vehicleType && <span data-testid="vehicle-type">· {T[lang].sim.typeShort[simulation.vehicleType]}</span>}
               <Badge className={`${ageCls} font-semibold px-2 py-0`} data-testid="badge-age">{age}</Badge>
             </div>
           </div>

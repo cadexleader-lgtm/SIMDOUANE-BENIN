@@ -313,7 +313,13 @@ export function exportSimulationPDF(simulation: HistoryEntry): void {
   w.font(14, "bold", DARK);
   w.text(vehicleName, MARGIN + 5, w.y + 7.5);
   const cyl = T.fr.sim.cylOptions[input.cylindree]?.label;
-  const details = [`Année ${input.annee}`, input.carburant, ...(cyl ? [cyl] : [])].join("  ·  ");
+  const details = [
+    `Année ${input.annee}`,
+    input.carburant,
+    ...(cyl ? [cyl] : []),
+    ...(simulation.condition ? [T.fr.sim.conditionOptions[simulation.condition]] : []),
+    ...(simulation.vehicleType ? [T.fr.sim.typeShort[simulation.vehicleType]] : []),
+  ].join("  ·  ");
   w.font(9, "normal", MUTED);
   w.text(details, MARGIN + 5, w.y + 13.8);
   const ageColors: Colors = result.riskLevel === "faible" ? { bg: GREEN, fg: WHITE }

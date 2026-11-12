@@ -92,6 +92,18 @@ describe("hypothèses et avertissements", () => {
     );
   });
 
+  it("avertissements du véhicule (S7) juste après l'avertissement général", () => {
+    const sim = entry({ annee: 2010 }, { valueInput: legacyValue(5_000_000), condition: "Occasion", vehicleType: "utilitaire" });
+    const list = buildHypotheses(sim, sim.valueInput!, "fr");
+    expect(keys(list).slice(0, 3)).toEqual(["indicative", "veh-age_limit", "veh-utility"]);
+    expect(list[1].strong).toBe(true);
+
+    const fresh = entry({ carburant: "Électrique" }, { valueInput: legacyValue(5_000_000), condition: "Neuf" });
+    const freshList = buildHypotheses(fresh, fresh.valueInput!, "fr");
+    expect(keys(freshList)[1]).toBe("veh-new_benefit");
+    expect(freshList[1].text).toContain("99 %");
+  });
+
   it("sans date de simulation : pas de ligne de date", () => {
     const sim = entry({}, { date: "" });
     expect(keys(buildHypotheses(sim, legacyValue(5_000_000), "fr"))).not.toContain("date");
