@@ -250,7 +250,7 @@ export const T = {
             "Réception de l'Avis d'Arrivée (AA) par email ou courrier",
             "Le BL (Bill of Lading / Connaissement) est le titre de propriété du véhicule",
             "Délai : le véhicule doit être retiré dans les délais pour éviter le magasinage",
-            "Chaque jour supplémentaire génère des frais de magasinage (3 500 FCFA/jour)",
+            "Chaque jour supplémentaire génère des frais de magasinage (SimDouane compte 3 500 FCFA par jour, montant indicatif)",
           ],
         },
         {
@@ -280,7 +280,7 @@ export const T = {
             "Il vérifie la conformité de tous les documents",
             "Il calcule les droits et taxes estimés à payer",
             "Il prépare la Déclaration en Douane (DI) dans SYDONIA",
-            "Frais CAD : inclus dans les frais de dédouanement (~150 000 FCFA)",
+            "Honoraires du CAD : variables selon le commissionnaire ; SimDouane compte 65 000 FCFA par défaut (montant indicatif, demandez un devis à votre CAD)",
           ],
         },
         {
@@ -398,7 +398,7 @@ export const T = {
       notes: [
         "Faites appel à un CAD (transitaire) agréé — c'est obligatoire et vous protège.",
         "Conservez TOUS vos documents originaux (BL, factures, quittances).",
-        "Calculez les frais de magasinage : 3 500 FCFA × nombre de jours au port.",
+        "Estimez les frais de magasinage : SimDouane compte 3 500 FCFA × nombre de jours au port (montant indicatif).",
         "Le montant final peut différer de votre simulation si la douane rehausse la valeur CIF.",
         "Prévoyez 3 à 15 jours ouvrés selon le circuit attribué.",
       ],
@@ -657,7 +657,7 @@ export const T = {
             "Receive the Arrival Notice (AN) by email or mail",
             "The Bill of Lading (BL) is the title of ownership of the vehicle",
             "Deadline: the vehicle must be collected within set timeframes to avoid storage fees",
-            "Each additional day generates storage fees (3,500 FCFA/day)",
+            "Each additional day generates storage fees (SimDouane counts 3,500 FCFA per day, indicative amount)",
           ],
         },
         {
@@ -687,7 +687,7 @@ export const T = {
             "Verifies compliance of all documents",
             "Calculates estimated duties and taxes payable",
             "Prepares the Customs Declaration (DI) in SYDONIA",
-            "CAD fees: included in clearance costs (~150,000 FCFA)",
+            "CAD fees: vary by broker; SimDouane counts 65,000 FCFA by default (indicative amount, ask your CAD for a quote)",
           ],
         },
         {
@@ -805,7 +805,7 @@ export const T = {
       notes: [
         "Use a licensed CAD (freight forwarder) — it is mandatory and protects you.",
         "Keep ALL original documents (BL, invoices, receipts).",
-        "Calculate storage fees: 3,500 FCFA × number of days at port.",
+        "Estimate storage fees: SimDouane counts 3,500 FCFA × number of days at port (indicative amount).",
         "The final amount may differ from your simulation if customs revises the CIF value.",
         "Allow 3 to 15 working days depending on the assigned circuit.",
       ],
