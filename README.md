@@ -15,7 +15,9 @@ liquidation douanière, ni une décision de l'administration.
 > - [`docs/MISE-EN-LIGNE-CLOUDFLARE.md`](docs/MISE-EN-LIGNE-CLOUDFLARE.md) — version de test en ligne sur Cloudflare (Workers + Hyperdrive) ;
 > - [`docs/PHASE4-CONCEPTION.md`](docs/PHASE4-CONCEPTION.md) — checklist provisoire et sources, conception des documents (avant développement) ;
 > - [`docs/SECURITE-DONNEES.md`](docs/SECURITE-DONNEES.md) — rôles et permissions, sécurité, protection des données ;
-> - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application.
+> - [`docs/SUPABASE-DEV.md`](docs/SUPABASE-DEV.md) — projet Supabase de développement et comment y brancher l'application ;
+> - [`docs/VALIDATION-SIMULATEUR.md`](docs/VALIDATION-SIMULATEUR.md) — état du simulateur (phases S0-S10), tests, ce qui reste à faire valider par un CAD, recette avant mise en ligne ;
+> - [`docs/GRILLE-REGLEMENTAIRE-S1.md`](docs/GRILLE-REGLEMENTAIRE-S1.md) — recherche sur les taux et règles 2026, avec sources et statuts.
 
 ## Fonctionnalités
 
