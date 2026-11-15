@@ -9,3 +9,4 @@ export * from "./stored_files";
 export * from "./transitaire_access";
 export * from "./audit_logs";
 export * from "./clearance_cases";
+export * from "./anonymous_devices";

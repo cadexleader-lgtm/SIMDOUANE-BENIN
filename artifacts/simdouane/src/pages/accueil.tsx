@@ -219,14 +219,14 @@ const STEPS = [
 ];
 
 const PLANS = [
-  { name: "Gratuit", price: "0", period: "FCFA", desc: "Pour découvrir SimDouane", features: ["3 simulations enregistrées par mois", "Détail complet du calcul", "Export PDF", "Dossiers véhicules"], cta: "Commencer gratuitement", highlighted: false },
-  { name: "Standard", price: "2 500", period: "FCFA / mois", desc: "Pour les importateurs réguliers", features: ["30 simulations enregistrées par mois", "Tout ce que contient la formule Gratuit"], cta: "Choisir Standard", highlighted: true },
-  { name: "Pro", price: "5 000", period: "FCFA / mois", desc: "Pour les transitaires et les professionnels", features: ["Simulations enregistrées illimitées", "Tout ce que contient la formule Standard"], cta: "Choisir Pro", highlighted: false },
+  { name: "Gratuit", price: "0", period: "FCFA", desc: "Pour découvrir SimDouane", features: ["3 estimations par mois", "Détail complet du calcul", "Export PDF", "Dossiers véhicules"], cta: "Commencer gratuitement", highlighted: false },
+  { name: "Standard", price: "2 500", period: "FCFA / mois", desc: "Pour les importateurs réguliers", features: ["30 estimations par mois", "Tout ce que contient la formule Gratuit"], cta: "Choisir Standard", highlighted: true },
+  { name: "Pro", price: "5 000", period: "FCFA / mois", desc: "Pour les transitaires et les professionnels", features: ["Estimations illimitées", "Tout ce que contient la formule Standard"], cta: "Choisir Pro", highlighted: false },
 ];
 
 const FAQ = [
   { q: "Le montant affiché est-il le montant officiel ?", a: "Non. SimDouane donne une estimation indicative. Les taux et les frais n'ont pas été validés par la Direction générale des Douanes : le montant final est fixé par la douane, selon la valeur qu'elle retient pour le véhicule. Faites toujours confirmer par un commissionnaire agréé en douane (CAD)." },
-  { q: "Faut-il créer un compte ?", a: "Non, le simulateur fonctionne sans compte. Un compte gratuit sert à enregistrer vos simulations et à les retrouver sur un autre appareil." },
+  { q: "Faut-il créer un compte ?", a: "Pas pour commencer : vos deux premières estimations se font sans compte. Ensuite, un compte gratuit est demandé ; il donne 3 estimations par mois, enregistrées et retrouvées sur tous vos appareils." },
   { q: "Dans quelles devises puis-je saisir le prix ?", a: "En FCFA, euro, dollar américain, livre sterling, dollar canadien, franc suisse, yen, yuan ou won sud-coréen. L'euro est converti à la parité fixe (655,957 FCFA) ; les autres devises avec le taux de référence de la Banque centrale européenne, dont la date est affichée." },
   { q: "Puis-je installer SimDouane sur mon téléphone ?", a: "Oui. Sur Android, ouvrez le site dans Chrome puis touchez « Installer ». Sur iPhone, ouvrez-le dans Safari, touchez le bouton Partager puis « Sur l'écran d'accueil ». SimDouane s'ouvre ensuite comme une application." },
   { q: "Comment passer à une formule payante ?", a: "Depuis votre espace, page Abonnement : vous envoyez la référence de votre paiement Mobile Money et la formule est activée après vérification." },
@@ -236,7 +236,7 @@ const FAQ = [
 export default function Accueil() {
   usePageMeta(
     "SimDouane Bénin — Simulateur du coût d'importation d'un véhicule au Port de Cotonou",
-    "Estimez en quelques minutes le coût total d'importation d'un véhicule au Bénin : droits de douane, taxes et frais du Port de Cotonou. Gratuit, sans compte, résultat en PDF.",
+    "Estimez en quelques minutes le coût total d'importation d'un véhicule au Bénin : droits de douane, taxes et frais du Port de Cotonou. Deux estimations gratuites sans compte, résultat en PDF.",
   );
 
   return (
@@ -257,7 +257,7 @@ export default function Accueil() {
             </h1>
             <p className="mt-5 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
               SimDouane estime le coût total d'importation d'un véhicule au Bénin : droits de douane, taxes
-              et frais du port. En quelques minutes, sans compte.
+              et frais du port. Vos deux premières estimations sont gratuites, sans compte.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
@@ -297,7 +297,7 @@ export default function Accueil() {
       <section className="border-y border-slate-200 bg-white">
         <ul className="max-w-6xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-5">
           {[
-            { icon: BadgeCheck, title: "Sans compte", text: "Simulation immédiate" },
+            { icon: BadgeCheck, title: "2 essais sans compte", text: "Puis compte gratuit" },
             { icon: Coins, title: "9 monnaies", text: "FCFA et 8 devises" },
             { icon: FileDown, title: "PDF", text: "Résultat à télécharger" },
             { icon: Languages, title: "Français · English", text: "Deux langues" },
@@ -409,7 +409,7 @@ export default function Accueil() {
       {/* ── Pricing ────────────────────────────────────────────────────── */}
       <section id="tarifs" className="scroll-mt-20 py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <SectionTitle eyebrow="Tarifs" title="Gratuit pour commencer" text="Le simulateur est libre d'accès. Les formules servent à enregistrer plus de simulations dans votre espace." />
+          <SectionTitle eyebrow="Tarifs" title="Gratuit pour commencer" text="Deux estimations sans compte, puis un compte gratuit avec 3 estimations par mois. Les formules payantes en donnent davantage." />
           <div className="grid md:grid-cols-3 gap-6 items-stretch">
             {PLANS.map((plan) => (
               <div
@@ -471,7 +471,7 @@ export default function Accueil() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <span className="inline-flex h-14 w-14 rounded-2xl bg-[#EAF4EE] items-center justify-center mb-6"><Smartphone className="h-7 w-7 text-[#003D24]" /></span>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">Prêt à connaître votre budget ?</h2>
-          <p className="mt-4 text-slate-600">La simulation est gratuite et ne demande pas de compte.</p>
+          <p className="mt-4 text-slate-600">Vos deux premières estimations sont gratuites et sans compte.</p>
           <Link
             href="/simulateur"
             className="mt-8 inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl text-base font-bold text-white bg-[#003D24] hover:bg-[#00522f] transition-colors shadow-lg shadow-[#003D24]/20"

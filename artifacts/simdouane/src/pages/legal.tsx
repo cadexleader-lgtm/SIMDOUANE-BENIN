@@ -70,8 +70,13 @@ export function Confidentialite() {
     <LegalPage title="Politique de confidentialité" intro="Quelles données SimDouane Bénin traite, pourquoi, et quels sont vos droits.">
       <Block title="Sans compte">
         <p>
-          Le simulateur fonctionne sans compte. Vos simulations sont alors gardées uniquement dans votre navigateur
+          Vos deux premières estimations se font sans compte. Elles sont gardées uniquement dans votre navigateur
           (stockage local de l'appareil) et ne nous sont pas envoyées. Vous pouvez les effacer depuis la page Historique.
+        </p>
+        <p>
+          Pour compter ces estimations gratuites, votre navigateur crée un identifiant aléatoire, gardé sur votre appareil
+          (stockage local et cookie) et envoyé à notre serveur avec le nombre d'estimations faites. Cet identifiant ne
+          contient ni votre nom, ni votre numéro, ni le contenu de vos estimations.
         </p>
         <p>Pour convertir une devise, le site demande les taux de change à notre serveur ; aucun montant saisi n'est transmis pour cela.</p>
       </Block>
@@ -102,7 +107,8 @@ export function Confidentialite() {
       <Block title="Cookies">
         <p>
           SimDouane n'utilise pas de cookie publicitaire ni de traceur d'audience. Le navigateur garde seulement ce qui est
-          nécessaire au fonctionnement : votre session de connexion, la langue choisie et votre historique local.
+          nécessaire au fonctionnement : votre session de connexion, la langue choisie, votre historique local et
+          l'identifiant qui compte les estimations gratuites sans compte.
         </p>
       </Block>
       <Block title="Durée de conservation">
@@ -154,7 +160,8 @@ export function Conditions() {
       </Block>
       <Block title="Formules payantes">
         <p>
-          Le simulateur est gratuit. Les formules payantes augmentent le nombre de simulations enregistrées chaque mois.
+          Deux estimations sont possibles sans compte. Un compte gratuit donne ensuite 3 estimations par mois ; les
+          formules payantes en donnent davantage.
           Elles sont activées manuellement, après vérification du paiement Mobile Money que vous déclarez. Les prix sont
           indiqués en FCFA sur la page d'accueil et dans votre espace.
         </p>

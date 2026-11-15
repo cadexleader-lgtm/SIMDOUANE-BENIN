@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from "react";
-import { useLocation } from "wouter";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { Link, useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFormContext, useWatch, type Control } from "react-hook-form";
 import * as z from "zod";
@@ -32,6 +32,7 @@ import { ConversionNote, CurrencySelect } from "@/components/currency-field";
 import { CIF_MODES, determineCif, parseAmount, type CifInputs, type CifMode, type CifResult, type FieldError } from "@/lib/cif-input";
 import { NOTHING_PAID, SITUATIONS, type ImportSituation, type PaidInput, type VehiclePart } from "@/lib/budget";
 import { Checkbox } from "@/components/ui/checkbox";
+import { consumeAnonymousEstimate, fetchAnonymousQuota, type AnonymousQuota } from "@/lib/anonymous-quota";
 
 const CYL_KEYS: CylindreeKey[] = ["lt1000", "1000-1300", "1300-1600", "1600-2000", "2000-2500", "gt2500"];
 
@@ -109,12 +110,12 @@ function cifInputs(v: Partial<z.infer<typeof formSchema>>, lenient = false): Cif
 
 type FormValues = z.infer<typeof formSchema>;
 
-function LivePreview({ values, valeurCIF }: { values: Partial<FormValues>; valeurCIF: number | null }) {
+function LivePreview({ values, valeurCIF, locked }: { values: Partial<FormValues>; valeurCIF: number | null; locked?: boolean }) {
   const { lang } = useLang();
   const t = T[lang].sim;
 
   const result = useMemo(() => {
-    if (!valeurCIF || valeurCIF <= 0 || !values.cylindree || !values.annee || !values.regime) return null;
+    if (locked || !valeurCIF || valeurCIF <= 0 || !values.cylindree || !values.annee || !values.regime) return null;
     try {
       return calculate({
         marque: values.marque || "",
@@ -127,7 +128,7 @@ function LivePreview({ values, valeurCIF }: { values: Partial<FormValues>; valeu
         regime: values.regime as RegimeKey,
       } as FormInput);
     } catch { return null; }
-  }, [valeurCIF, values.cylindree, values.annee, values.regime, values.joursAuPort, values.marque, values.modele, values.carburant]);
+  }, [locked, valeurCIF, values.cylindree, values.annee, values.regime, values.joursAuPort, values.marque, values.modele, values.carburant]);
 
   const dash = "—";
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(Math.round(n));
@@ -136,7 +137,11 @@ function LivePreview({ values, valeurCIF }: { values: Partial<FormValues>; valeu
     <div className="space-y-4">
       <div>
         <h3 className="font-bold text-base">{t.preview}</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">{t.previewSub}</p>
+        <p className="text-xs text-muted-foreground mt-0.5" data-testid="preview-sub">
+          {locked
+            ? (lang === "fr" ? "L'aperçu en direct est réservé aux comptes. Lancez le calcul pour voir votre résultat." : "The live preview is for accounts only. Run the calculation to see your result.")
+            : t.previewSub}
+        </p>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/50 rounded-lg p-3 text-center">
@@ -347,6 +352,56 @@ interface QuotaModalProps {
   planName: string;
   onClose: () => void;
 }
+/** Shown to a visitor without an account once the free estimates are used. */
+function AccountRequiredModal({ limit, onClose }: { limit: number; onClose: () => void }) {
+  const { lang } = useLang();
+  const fr = lang === "fr";
+  const next = encodeURIComponent(`${import.meta.env.BASE_URL}simulateur`);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" data-testid="account-required">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="bg-[#003D24] px-6 py-5 text-white flex items-center gap-3">
+          <div className="h-10 w-10 bg-[#FCD116] rounded-xl flex items-center justify-center shrink-0">
+            <Shield className="h-5 w-5 text-[#003D24]" />
+          </div>
+          <div>
+            <h2 className="font-bold text-lg leading-tight">{fr ? "Créez un compte pour continuer" : "Create an account to continue"}</h2>
+            <p className="text-white/70 text-xs mt-0.5">
+              {fr ? `Vous avez utilisé vos ${limit} estimations gratuites sans compte.` : `You have used your ${limit} free estimates without an account.`}
+            </p>
+          </div>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <ul className="space-y-2 text-sm text-slate-700">
+            {(fr
+              ? ["Le compte est gratuit et se crée en une minute", "3 estimations enregistrées chaque mois", "Vos résultats retrouvés sur tous vos appareils"]
+              : ["The account is free and takes a minute to create", "3 saved estimates every month", "Your results available on all your devices"]
+            ).map((line) => (
+              <li key={line} className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-[#008751] mt-0.5 shrink-0" />{line}</li>
+            ))}
+          </ul>
+          <Link
+            href={`/sign-up?redirect_url=${next}`}
+            data-testid="account-required-signup"
+            className="flex items-center justify-center h-12 rounded-xl bg-[#003D24] text-white text-sm font-bold"
+          >
+            {fr ? "Créer mon compte gratuit" : "Create my free account"}
+          </Link>
+          <Link
+            href={`/sign-in?redirect_url=${next}`}
+            className="flex items-center justify-center h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700"
+          >
+            {fr ? "J'ai déjà un compte" : "I already have an account"}
+          </Link>
+          <button type="button" onClick={onClose} className="block w-full text-center text-xs text-slate-500 hover:text-slate-700">
+            {fr ? "Fermer" : "Close"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuotaModal({ used, limit, planName, onClose }: QuotaModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
@@ -381,7 +436,18 @@ export default function Simulateur() {
   const [quotaModal, setQuotaModal] = useState(false);
   const { lang } = useLang();
   const t = T[lang].sim;
-  const { user } = useAuth();
+  const { user, isLoaded } = useAuth();
+  // Visitor without an account: 2 free estimates per browser, then an account is required.
+  const isAnonymous = isLoaded && !user;
+  const [anonQuota, setAnonQuota] = useState<AnonymousQuota | null>(null);
+  const [accountModal, setAccountModal] = useState(false);
+  useEffect(() => {
+    if (!isAnonymous) return;
+    let cancelled = false;
+    fetchAnonymousQuota().then((q) => { if (!cancelled) setAnonQuota(q); });
+    return () => { cancelled = true; };
+  }, [isAnonymous]);
+  const anonBlocked = isAnonymous && anonQuota !== null && anonQuota.remaining === 0;
   const createSimulation = useCreateSimulation();
   const createMutationRef = useRef(createSimulation.mutate);
   createMutationRef.current = createSimulation.mutate;
@@ -458,6 +524,11 @@ export default function Simulateur() {
       setQuotaModal(true);
       return;
     }
+    if (!isLoaded) return;
+    if (anonBlocked) {
+      setAccountModal(true);
+      return;
+    }
 
     // No guessed amount or rate: every missing or unconvertible amount is refused.
     const determined = determineCif(cifInputs(values), rates);
@@ -491,6 +562,16 @@ export default function Simulateur() {
     if (!determined.ok || !paidOk) return;
 
     setIsCalculating(true);
+    if (!user) {
+      // Counted by the server only once the form is valid.
+      const quota = await consumeAnonymousEstimate();
+      setAnonQuota(quota);
+      if (!quota.allowed) {
+        setIsCalculating(false);
+        setAccountModal(true);
+        return;
+      }
+    }
     await new Promise((r) => setTimeout(r, 1000));
     const condition = values.condition;
     const input: FormInput = {
@@ -978,6 +1059,30 @@ export default function Simulateur() {
                   </div>
                 )}
 
+                {/* Free estimates left for a visitor without an account */}
+                {isAnonymous && anonQuota && (
+                  <div
+                    data-testid="anon-quota"
+                    className={`rounded-xl p-3 flex items-center justify-between gap-3 text-xs font-semibold border ${
+                      anonBlocked ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-slate-50 border-slate-100 text-slate-600"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 shrink-0" />
+                      {anonBlocked
+                        ? (lang === "fr" ? "Vos estimations gratuites sans compte sont utilisées." : "Your free estimates without an account are used.")
+                        : lang === "fr"
+                          ? `Sans compte : ${anonQuota.remaining} estimation${anonQuota.remaining > 1 ? "s" : ""} gratuite${anonQuota.remaining > 1 ? "s" : ""} restante${anonQuota.remaining > 1 ? "s" : ""} sur ${anonQuota.limit}.`
+                          : `Without an account: ${anonQuota.remaining} of ${anonQuota.limit} free estimate${anonQuota.limit > 1 ? "s" : ""} left.`}
+                    </span>
+                    {anonBlocked && (
+                      <button type="button" onClick={() => setAccountModal(true)} className="whitespace-nowrap rounded-lg bg-[#003D24] text-white px-2.5 py-1">
+                        {lang === "fr" ? "Créer un compte" : "Create an account"}
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   size="lg"
@@ -1001,7 +1106,7 @@ export default function Simulateur() {
           <div className="hidden lg:block w-80 xl:w-96 shrink-0">
             <Card className="sticky top-6">
               <CardContent className="pt-5 pb-5">
-                <LivePreview values={watchedValues} valeurCIF={watchedXof} />
+                <LivePreview values={watchedValues} valeurCIF={watchedXof} locked={!user || isAtQuota} />
               </CardContent>
             </Card>
           </div>
@@ -1028,6 +1133,8 @@ export default function Simulateur() {
         </div>
       </div>
     </TooltipProvider>
+
+    {accountModal && <AccountRequiredModal limit={anonQuota?.limit ?? 2} onClose={() => setAccountModal(false)} />}
 
     {/* Quota modal */}
     {quotaModal && (

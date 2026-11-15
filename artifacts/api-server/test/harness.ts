@@ -16,7 +16,7 @@ export const ALL_TABLES =
   "case_events, clearance_cases, vehicles, " +
   "audit_logs, transitaire_access_decisions, transitaire_application_documents, transitaire_applications, " +
   "stored_files, organization_members, organizations, admin_logs, upgrade_requests, simulations, " +
-  "subscriptions, subscription_plans, users";
+  "subscriptions, subscription_plans, users, anonymous_devices";
 
 export async function startTestApp() {
   const filesDir = mkdtempSync(path.join(tmpdir(), "simdouane-files-"));

@@ -23,6 +23,7 @@
 | Historique des dossiers (qui, quoi, quand, ancien/nouveau statut) | `case_events` (non modifiable) | Système |
 | Demandes d'abonnement : téléphone Mobile Money, référence de transaction, montant | `upgrade_requests` | Utilisateur |
 | Historique local des simulations | `localStorage` du navigateur (jamais envoyé) | Utilisateur |
+| Estimations gratuites sans compte : identifiant aléatoire du navigateur et nombre d'estimations (aucune donnée personnelle, aucun contenu d'estimation) | `anonymous_devices` ; identifiant gardé dans le navigateur (`localStorage` + cookie) | Système |
 
 Sous-traitants techniques : **Supabase** (comptes, base de données et
 fichiers ; projet en région Paris) et **Cloudflare** (hébergement du site et

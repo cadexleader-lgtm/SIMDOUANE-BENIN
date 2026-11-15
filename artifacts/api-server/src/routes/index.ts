@@ -10,6 +10,7 @@ import filesRouter from "./files";
 import casesRouter from "./cases";
 import { transitaireAccessRouter, transitaireSpaceRouter } from "./transitaire-access";
 import exchangeRatesRouter from "./exchange-rates";
+import anonymousEstimatesRouter from "./anonymous-estimates";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use("/transitaire", transitaireSpaceRouter);
 router.use("/files", filesRouter);
 router.use("/cases", casesRouter);
 router.use("/exchange-rates", exchangeRatesRouter);
+router.use("/anonymous-estimates", anonymousEstimatesRouter);
 
 export default router;

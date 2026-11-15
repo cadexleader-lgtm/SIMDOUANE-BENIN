@@ -64,6 +64,13 @@
       "when": 1793521491655,
       "tag": "0008_simulation_details",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794707554444,
+      "tag": "0009_anonymous_devices",
+      "breakpoints": true
     }
   ]
 }
