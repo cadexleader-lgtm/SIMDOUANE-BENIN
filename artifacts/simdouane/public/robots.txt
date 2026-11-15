@@ -1,2 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profil
+Disallow: /dossiers
+
+Sitemap: https://simdouane-benin.cadexleader.workers.dev/sitemap.xml

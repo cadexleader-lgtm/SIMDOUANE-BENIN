@@ -1,604 +1,485 @@
 import { Link } from "wouter";
-import { useAuth } from "@/lib/auth";
-import { useState, useEffect, useRef } from "react";
 import {
-  Calculator, Shield, Clock, Cloud, TrendingUp, CheckCircle,
-  ArrowRight, Phone, Mail, Star, Zap, ChevronRight, Lock, FileText,
+  ArrowRight, BadgeCheck, Calculator, Check, ChevronDown, Coins, FileDown, FolderOpen,
+  Info, Languages, MapPin, ShieldCheck, Smartphone, Star, Wallet,
 } from "lucide-react";
-import { SimDouaneLogo } from "@/components/logo";
 import { calculate } from "@/lib/calculator";
-import { useLang } from "@/context/language-context";
+import { SiteShell, usePageMeta } from "@/components/site-shell";
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-const HERO_IMAGES = [
-  `${basePath}/hero1.jpg`,
-  `${basePath}/hero2.jpg`,
-  `${basePath}/hero3.jpg`,
-  `${basePath}/hero4.jpg`,
-  `${basePath}/hero5.jpg`,
-];
-
-/* Animated number counter */
-function CountUp({ target, duration = 1800 }: { target: number; duration?: number }) {
-  const [value, setValue] = useState(0);
-  const startedRef = useRef(false);
-  useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      setValue(Math.round(ease * target));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [target, duration]);
-  return <span>{value.toLocaleString("fr-FR")}</span>;
-}
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const img = (name: string) => `${base}/img/${name}`;
+const fcfa = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} FCFA`;
 
 /* Example shown on the home page: calculated by the simulator's own engine,
    so the figures always match what a user would get for the same input. */
-const HERO_EXAMPLE = calculate({
+const EXAMPLE_CIF = 8_500_000;
+const EXAMPLE = calculate({
   marque: "Toyota", modele: "Corolla", annee: 2019, cylindree: "1300-1600", carburant: "Essence",
-  valeurCIF: 8_500_000, joursAuPort: 20, regime: "Droit commun",
+  valeurCIF: EXAMPLE_CIF, joursAuPort: 20, regime: "Droit commun",
 });
+const EXAMPLE_PARTS = [
+  { label: "Véhicule (valeur CIF)", value: EXAMPLE_CIF, color: "#003D24" },
+  { label: "Droits et taxes", value: EXAMPLE.totalDouane, color: "#FCD116" },
+  { label: "Port et formalités", value: EXAMPLE.totalPort, color: "#E8112D" },
+];
 
-/* Floating card with animated values */
-function HeroCard({ visible }: { visible: boolean }) {
-  const r = HERO_EXAMPLE;
-  const rows = [
-    { label: "Valeur CIF",                raw: Math.round(8_500_000) },
-    { label: "Droit de douane",           raw: Math.round(r.DD) },
-    { label: "Autres prélèvements",       raw: Math.round(r.RS + r.PC + r.PCS) },
-    { label: "TVA (18%)",                 raw: Math.round(r.TVA) },
-    { label: "Frais de port (20j)",       raw: Math.round(r.totalPort) },
-  ];
+/* ─── Small building blocks ──────────────────────────────────────────────── */
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="text-[#008751] text-xs font-bold uppercase tracking-[0.18em] mb-3">{children}</p>;
+}
+
+function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
   return (
-    <div
-      className="relative w-full max-w-sm mx-auto lg:mx-0"
-      style={{
-        animation: visible ? "floatCard 0.7s ease-out forwards, floatAnim 4s ease-in-out 1s infinite" : "none",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(24px)",
-      }}
-    >
-      {/* Glow */}
-      <div className="absolute -inset-2 rounded-3xl opacity-30 blur-xl" style={{ background: "radial-gradient(ellipse, #FCD116 0%, transparent 70%)" }} />
+    <div className="max-w-2xl mx-auto text-center mb-12">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">{title}</h2>
+      {text && <p className="text-slate-600 mt-4 text-base leading-relaxed">{text}</p>}
+    </div>
+  );
+}
 
-      {/* Glass card */}
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
-        {/* Header */}
-        <div className="px-5 py-4 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-[#FCD116] flex items-center justify-center shadow">
-              <Calculator className="h-4 w-4 text-[#003D24]" />
-            </div>
-            <div>
-              <p className="text-white text-xs font-bold">Toyota Corolla — 2019</p>
-              <p className="text-white/40 text-[10px]">Port de Cotonou · Mise à la conso.</p>
-            </div>
-          </div>
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: "rgba(0,135,81,0.25)", color: "#4ade80" }}>Exemple</span>
+/** Example result card (figures from the engine). */
+function ExampleCard({ className = "" }: { className?: string }) {
+  return (
+    <div className={`rounded-2xl bg-white shadow-xl ring-1 ring-slate-900/5 p-5 ${className}`} data-testid="home-example">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-900 truncate">Toyota Corolla · 2019</p>
+          <p className="text-xs text-slate-500">20 jours au port · droit commun</p>
         </div>
-        {/* Body */}
-        <div className="p-5 space-y-3">
-          {rows.map((row, i) => (
-            <div key={row.label} className="flex items-center justify-between">
-              <span className="text-white/50 text-xs">{row.label}</span>
-              {visible ? (
-                <span className="text-white text-xs font-semibold" style={{ animationDelay: `${i * 180}ms` }}>
-                  <CountUp target={row.raw} duration={1200 + i * 150} /> F
-                </span>
-              ) : (
-                <span className="text-white/20 text-xs">…</span>
-              )}
-            </div>
+        <span className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#008751]/10 text-[#00693f]">Exemple</span>
+      </div>
+      <div className="flex h-2.5 rounded-full overflow-hidden mb-4" aria-hidden="true">
+        {EXAMPLE_PARTS.map((p) => (
+          <div key={p.label} style={{ width: `${(p.value / EXAMPLE.totalGeneral) * 100}%`, backgroundColor: p.color }} />
+        ))}
+      </div>
+      <ul className="space-y-2.5">
+        {EXAMPLE_PARTS.map((p) => (
+          <li key={p.label} className="flex items-center justify-between gap-3 text-sm">
+            <span className="flex items-center gap-2 text-slate-600 min-w-0">
+              <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+              <span className="truncate">{p.label}</span>
+            </span>
+            <span className="font-semibold text-slate-900 tabular-nums whitespace-nowrap">{fcfa(p.value)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+        <span className="text-sm font-semibold text-slate-600">Coût total estimé</span>
+        <span className="text-2xl font-extrabold text-[#003D24] tabular-nums whitespace-nowrap" data-testid="home-example-total">
+          {fcfa(EXAMPLE.totalGeneral)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Illustrations (drawn for SimDouane, brand colours) ─────────────────── */
+function PortScene() {
+  return (
+    <svg viewBox="0 0 480 300" className="w-full h-auto" role="img" aria-label="Un navire décharge des véhicules au port">
+      <rect width="480" height="300" rx="24" fill="#EAF4EE" />
+      <circle cx="396" cy="62" r="26" fill="#FCD116" />
+      {/* sea */}
+      <path d="M0 204c30-10 50 10 80 0s50 10 80 0 50 10 80 0v96H0z" fill="#BFE0CF" />
+      {/* ship */}
+      <path d="M22 176h188l-18 40H46z" fill="#003D24" />
+      <rect x="54" y="140" width="34" height="36" rx="3" fill="#E8112D" />
+      <rect x="92" y="140" width="34" height="36" rx="3" fill="#FCD116" />
+      <rect x="130" y="140" width="34" height="36" rx="3" fill="#008751" />
+      <rect x="73" y="104" width="34" height="36" rx="3" fill="#008751" />
+      <rect x="111" y="104" width="34" height="36" rx="3" fill="#E8112D" />
+      <rect x="170" y="150" width="22" height="26" rx="3" fill="#fff" />
+      {/* quay */}
+      <rect x="228" y="212" width="252" height="88" fill="#CBD5D0" />
+      <rect x="228" y="212" width="252" height="8" fill="#003D24" />
+      {/* crane */}
+      <rect x="262" y="70" width="10" height="142" fill="#003D24" />
+      <rect x="196" y="70" width="150" height="10" rx="3" fill="#003D24" />
+      <path d="M272 80l52 0-52 44z" fill="none" stroke="#003D24" strokeWidth="4" />
+      <line x1="214" y1="80" x2="214" y2="112" stroke="#003D24" strokeWidth="3" />
+      <rect x="198" y="112" width="32" height="20" rx="3" fill="#FCD116" />
+      {/* car */}
+      <g transform="translate(330 168)">
+        <path d="M14 22l10-18a8 8 0 0 1 7-4h36a8 8 0 0 1 6 3l14 19z" fill="#008751" />
+        <rect x="0" y="20" width="118" height="24" rx="10" fill="#008751" />
+        <path d="M30 8h18v14H22zM54 8h14l10 14H54z" fill="#EAF4EE" />
+        <circle cx="28" cy="44" r="11" fill="#00170d" /><circle cx="28" cy="44" r="4.5" fill="#CBD5D0" />
+        <circle cx="90" cy="44" r="11" fill="#00170d" /><circle cx="90" cy="44" r="4.5" fill="#CBD5D0" />
+      </g>
+      {/* customs barrier */}
+      <rect x="296" y="172" width="12" height="40" rx="3" fill="#fff" stroke="#003D24" strokeWidth="2" />
+      <g transform="rotate(-38 302 186)">
+        <rect x="302" y="181" width="70" height="9" rx="4.5" fill="#FCD116" />
+        <rect x="322" y="181" width="12" height="9" fill="#E8112D" /><rect x="346" y="181" width="12" height="9" fill="#E8112D" />
+      </g>
+    </svg>
+  );
+}
+
+function CurrencyVisual() {
+  return (
+    <div className="rounded-3xl bg-[#EAF4EE] p-6 sm:p-8">
+      <div className="rounded-2xl bg-white shadow-lg ring-1 ring-slate-900/5 p-5 max-w-sm mx-auto">
+        <p className="text-xs font-semibold text-slate-500 mb-2">Prix d'achat du véhicule</p>
+        <div className="flex gap-2">
+          <div className="flex-1 h-12 rounded-xl border border-slate-200 px-3 flex items-center text-lg font-bold text-slate-900 tabular-nums">11 500</div>
+          <div className="h-12 rounded-xl border border-slate-200 px-3 flex items-center gap-1.5 text-sm font-bold text-slate-700">EUR <ChevronDown className="h-4 w-4 text-slate-400" /></div>
+        </div>
+        <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+          <div className="h-px flex-1 bg-slate-200" /><Coins className="h-4 w-4 text-[#008751]" /><div className="h-px flex-1 bg-slate-200" />
+        </div>
+        <p className="text-2xl font-extrabold text-[#003D24] tabular-nums">7 543 506 FCFA</p>
+        <p className="text-xs text-slate-500 mt-1">1 EUR = 655,957 FCFA (parité fixe)</p>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {["EUR", "USD", "CAD", "GBP", "JPY", "CNY", "KRW", "CHF"].map((c) => (
+            <span key={c} className={`text-[11px] font-bold px-2 py-1 rounded-md ${c === "EUR" ? "bg-[#003D24] text-white" : "bg-slate-100 text-slate-600"}`}>{c}</span>
           ))}
-          <div className="pt-3 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-            <div className="flex items-center justify-between">
-              <span className="text-white/70 text-sm font-bold">Total estimé</span>
-              {visible ? (
-                <span className="text-xl font-black" style={{ color: "#FCD116" }}>
-                  <CountUp target={Math.round(HERO_EXAMPLE.totalGeneral)} duration={1800} /> F
-                </span>
-              ) : (
-                <span className="text-white/20 text-xl">…</span>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* Footer bar */}
-        <div className="px-5 py-3 flex items-center gap-3" style={{ background: "rgba(0,0,0,0.2)" }}>
-          <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-            <div className="h-1 bg-[#FCD116] rounded-full transition-all duration-[2000ms]" style={{ width: visible ? "100%" : "0%" }} />
-          </div>
-          <span className="text-white/40 text-[10px] font-medium whitespace-nowrap">Résultat en 2 secondes</span>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Data ───────────────────────────────────────────────────────────────── */
-const FEATURES = [
-  {
-    icon: Calculator,
-    title: "Calcul instantané",
-    desc: "Obtenez en quelques secondes une estimation indicative des droits de douane et frais portuaires pour un véhicule importé au Bénin.",
-  },
-  {
-    icon: Shield,
-    title: "Calcul détaillé",
-    desc: "Chaque taxe et chaque frais est détaillé ligne par ligne. Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD).",
-  },
-  {
-    icon: Cloud,
-    title: "Historique cloud",
-    desc: "Toutes vos simulations sont sauvegardées dans le cloud. Retrouvez-les où que vous soyez, sur n'importe quel appareil.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Guide du dédouanement",
-    desc: "Étapes au Port de Cotonou, documents à préparer et lexique douanier, expliqués simplement.",
-  },
-  {
-    icon: Clock,
-    title: "Disponible 24h/24",
-    desc: "Simulez vos importations à toute heure, sans attendre un expert. Idéal pour les transitaires et importateurs actifs.",
-  },
-  {
-    icon: Zap,
-    title: "Export PDF",
-    desc: "Téléchargez vos résultats en PDF pour les partager facilement avec vos clients ou votre transitaire.",
-  },
-];
-
-const PLANS = [
-  {
-    name: "Gratuit",
-    price: "0",
-    period: "",
-    desc: "Pour découvrir SimDouane",
-    quota: "3 simulations / mois",
-    features: ["3 simulations mensuelles", "Calcul instantané", "Export PDF", "Guide douanier"],
-    cta: "Commencer gratuitement",
-    href: "/sign-up",
-    highlighted: false,
-  },
-  {
-    name: "Standard",
-    price: "2 500",
-    period: "FCFA / mois",
-    desc: "Pour les importateurs réguliers",
-    quota: "30 simulations / mois",
-    features: ["30 simulations mensuelles", "Historique cloud", "Export PDF", "Toutes les fonctionnalités", "Support prioritaire"],
-    cta: "Choisir Standard",
-    href: "/sign-up",
-    highlighted: true,
-  },
-  {
-    name: "Pro",
-    price: "5 000",
-    period: "FCFA / mois",
-    desc: "Pour les transitaires et pros",
-    quota: "Simulations illimitées",
-    features: ["Simulations illimitées", "Historique complet", "Export PDF", "Toutes les fonctionnalités", "Support dédié", "Accès API (bientôt)"],
-    cta: "Choisir Pro",
-    href: "/sign-up",
-    highlighted: false,
-  },
-];
-
-const STATS = [
-  { value: "0 FCFA", label: "Simulation sans compte" },
-  { value: "PDF", label: "Export des résultats" },
-  { value: "FR · EN", label: "Deux langues" },
-  { value: "24/7", label: "Disponibilité" },
-];
-
-/* ─── Hero Section ───────────────────────────────────────────────────────── */
-function HeroSection() {
-  const [slide, setSlide] = useState(0);
-  const [cardVisible, setCardVisible] = useState(false);
-
-  // Auto-advance slideshow every 5s
-  useEffect(() => {
-    const id = setInterval(() => setSlide(s => (s + 1) % HERO_IMAGES.length), 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Trigger counting animation after short delay
-  useEffect(() => {
-    const id = setTimeout(() => setCardVisible(true), 600);
-    return () => clearTimeout(id);
-  }, []);
-
+function ProgressVisual() {
+  const steps = [
+    { label: "Pas encore arrivé", done: true },
+    { label: "En mer", done: true },
+    { label: "Au port de Cotonou", done: true, current: true },
+  ];
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden pt-16">
-      {/* ── Slideshow background ── */}
-      <div className="absolute inset-0 z-0">
-        {HERO_IMAGES.map((src, i) => (
-          <div
-            key={src}
-            className="absolute inset-0 transition-opacity duration-[1500ms]"
-            style={{
-              opacity: i === slide ? 1 : 0,
-              backgroundImage: `url(${src})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center 25%",
-              backgroundRepeat: "no-repeat",
-            }}
-          />
-        ))}
-        {/* Multi-layer overlay for legibility */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, rgba(0,20,10,0.88) 0%, rgba(0,61,36,0.80) 50%, rgba(0,40,24,0.85) 100%)" }} />
-        {/* Subtle geometric accent */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #FCD116 0%, transparent 50%), radial-gradient(circle at 80% 20%, #008751 0%, transparent 40%)" }} />
-      </div>
-
-      {/* ── Slide indicators ── */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-        {HERO_IMAGES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setSlide(i)}
-            className="transition-all duration-300 rounded-full"
-            style={{
-              height: "3px",
-              width: i === slide ? "24px" : "8px",
-              background: i === slide ? "#FCD116" : "rgba(255,255,255,0.3)",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* ── Content ── */}
-      <div className="relative z-10 max-w-6xl mx-auto px-5 py-16 w-full">
-        {/* Benin flag strip */}
-        <div className="flex items-center justify-center gap-2 mb-10">
-          <div className="h-0.5 w-8 rounded-full bg-[#FCD116]/60" />
-          <div className="h-0.5 w-8 rounded-full bg-[#008751]/60" />
-          <div className="h-0.5 w-8 rounded-full bg-[#E8112D]/60" />
-          <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest ml-1">République du Bénin</span>
-        </div>
-
-        {/* Two-column layout */}
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-
-          {/* ── Left: copy ── */}
-          <div className="flex-1 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 text-xs font-semibold"
-              style={{ backgroundColor: "rgba(252,209,22,0.12)", border: "1px solid rgba(252,209,22,0.25)", color: "#FCD116" }}>
-              <Star className="h-3 w-3" fill="currentColor" />
-              Simulateur de coûts d'importation au Bénin
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-[1.05] tracking-tight mb-6">
-              Calculez vos<br />
-              <span style={{ color: "#FCD116" }}>droits de douane</span><br />
-              en secondes.
-            </h1>
-
-            <p className="text-white/65 text-base sm:text-lg leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-              SimDouane Bénin vous aide à estimer les coûts d'importation de votre véhicule
-              au Port de Cotonou. Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD).
-            </p>
-
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-6">
-              <Link
-                href="/sign-up"
-                className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-sm font-bold text-[#003D24] transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ backgroundColor: "#FCD116", boxShadow: "0 8px 24px rgba(252,209,22,0.35)" }}
-              >
-                Essayer gratuitement <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/simulateur"
-                className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-sm font-bold transition-all hover:bg-white/10"
-                style={{ border: "1px solid rgba(255,255,255,0.22)", color: "rgba(255,255,255,0.88)" }}
-              >
-                <Calculator className="h-4 w-4" />
-                Simuler sans compte
-              </Link>
-            </div>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
-              {[
-                { icon: Shield, text: "Détail de chaque taxe" },
-                { icon: Lock,   text: "Données sécurisées" },
-                { icon: FileText, text: "Export PDF gratuit" },
-              ].map(({ icon: Icon, text }) => (
-                <div
-                  key={text}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.65)" }}
-                >
-                  <Icon className="h-3 w-3 text-[#FCD116]" />
-                  {text}
+    <div className="rounded-3xl bg-[#FFF8DC] p-6 sm:p-8">
+      <div className="rounded-2xl bg-white shadow-lg ring-1 ring-slate-900/5 p-5 max-w-sm mx-auto">
+        <ol className="flex items-start justify-between gap-2 mb-5">
+          {steps.map((s, i) => (
+            <li key={s.label} className="flex-1 text-center">
+              <div className="flex items-center">
+                <div className={`h-0.5 flex-1 ${i === 0 ? "bg-transparent" : "bg-[#008751]"}`} />
+                <div className={`h-7 w-7 rounded-full flex items-center justify-center ${s.current ? "bg-[#003D24] text-[#FCD116]" : "bg-[#008751] text-white"}`}>
+                  {s.current ? <MapPin className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Right: animated glass card ── */}
-          <div className="w-full lg:w-96 lg:shrink-0">
-            <HeroCard visible={cardVisible} />
-          </div>
-
-        </div>
-
-        {/* ── Stats bar ── */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-3">
-          {STATS.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl p-4 text-center"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", backdropFilter: "blur(4px)" }}
-            >
-              <p className="text-2xl font-black text-white">{s.value}</p>
-              <p className="text-white/40 text-xs mt-1 font-medium">{s.label}</p>
-            </div>
+                <div className={`h-0.5 flex-1 ${i === steps.length - 1 ? "bg-transparent" : "bg-[#008751]"}`} />
+              </div>
+              <p className={`text-[11px] mt-2 leading-tight ${s.current ? "font-bold text-slate-900" : "text-slate-500"}`}>{s.label}</p>
+            </li>
           ))}
+        </ol>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-[#008751]/10 p-3">
+            <p className="text-[11px] font-semibold text-[#00693f]">Déjà payé</p>
+            <p className="text-base font-extrabold text-slate-900 tabular-nums">5 095 000 F</p>
+          </div>
+          <div className="rounded-xl bg-[#003D24] p-3">
+            <p className="text-[11px] font-semibold text-[#FCD116]">Reste à payer</p>
+            <p className="text-base font-extrabold text-white tabular-nums">2 687 700 F</p>
+          </div>
         </div>
+        <p className="text-xs text-slate-500 mt-3">Vos montants réels remplacent les estimations.</p>
       </div>
-    </section>
+    </div>
   );
 }
 
-/* ─── Component ──────────────────────────────────────────────────────────── */
+/* ─── Content ────────────────────────────────────────────────────────────── */
+const FEATURE_ROWS = [
+  {
+    eyebrow: "Le budget complet",
+    title: "Tout ce que vous allez payer, pas seulement la douane",
+    text: "SimDouane additionne la valeur du véhicule, les droits et taxes de douane et les frais au port (magasinage, manutention, formalités, commissionnaire). Chaque ligne est détaillée.",
+    points: ["Détail taxe par taxe", "Frais de port selon le nombre de jours", "Frais après le port rappelés à part"],
+    visual: <div className="rounded-3xl bg-[#EAF4EE] p-6 sm:p-8"><ExampleCard className="max-w-sm mx-auto" /></div>,
+  },
+  {
+    eyebrow: "Votre prix, votre devise",
+    title: "Saisissez le prix comme vous le connaissez",
+    text: "Prix d'achat avec ou sans transport et assurance, valeur CIF déjà connue, ou montant global payé : SimDouane s'adapte. Les montants en devise sont convertis en FCFA, avec le taux utilisé et sa date.",
+    points: ["8 devises en plus du FCFA", "Euro à la parité fixe de 655,957", "Taux conservé avec la simulation"],
+    visual: <CurrencyVisual />,
+  },
+  {
+    eyebrow: "Où en est votre véhicule",
+    title: "Ce qui est déjà payé, ce qu'il reste à prévoir",
+    text: "Indiquez si le véhicule n'est pas encore parti, s'il est en mer ou déjà au port, et les montants que vous avez réglés. Vous voyez tout de suite ce qu'il reste à payer.",
+    points: ["Trois situations d'importation", "Montants réels à la place des estimations", "Résultat à télécharger en PDF"],
+    visual: <ProgressVisual />,
+  },
+];
+
+const AUDIENCES = [
+  { image: "parc-vehicules.webp", alt: "Parc de véhicules importés vu du ciel", title: "Particuliers", text: "Vous achetez une voiture à l'étranger : connaissez le budget total avant de payer le vendeur." },
+  { image: "agent-port.webp", alt: "Professionnel au port avec un ordinateur portable", title: "Importateurs et revendeurs", text: "Comparez plusieurs véhicules, gardez l'historique de vos simulations et vos dossiers." },
+  { image: "agent-conteneur.webp", alt: "Professionnel au téléphone devant des conteneurs", title: "Transitaires", text: "Donnez à vos clients une première estimation claire, à télécharger en PDF." },
+];
+
+const STEPS = [
+  { icon: Calculator, title: "Décrivez le véhicule", text: "Marque, année, cylindrée, prix et nombre de jours au port." },
+  { icon: Wallet, title: "Lisez votre budget", text: "Le coût total en tête, puis le détail des droits, taxes et frais." },
+  { icon: FileDown, title: "Gardez le résultat", text: "Téléchargez le PDF ou retrouvez la simulation dans votre historique." },
+];
+
+const PLANS = [
+  { name: "Gratuit", price: "0", period: "FCFA", desc: "Pour découvrir SimDouane", features: ["3 simulations enregistrées par mois", "Détail complet du calcul", "Export PDF", "Dossiers véhicules"], cta: "Commencer gratuitement", highlighted: false },
+  { name: "Standard", price: "2 500", period: "FCFA / mois", desc: "Pour les importateurs réguliers", features: ["30 simulations enregistrées par mois", "Tout ce que contient la formule Gratuit"], cta: "Choisir Standard", highlighted: true },
+  { name: "Pro", price: "5 000", period: "FCFA / mois", desc: "Pour les transitaires et les professionnels", features: ["Simulations enregistrées illimitées", "Tout ce que contient la formule Standard"], cta: "Choisir Pro", highlighted: false },
+];
+
+const FAQ = [
+  { q: "Le montant affiché est-il le montant officiel ?", a: "Non. SimDouane donne une estimation indicative. Les taux et les frais n'ont pas été validés par la Direction générale des Douanes : le montant final est fixé par la douane, selon la valeur qu'elle retient pour le véhicule. Faites toujours confirmer par un commissionnaire agréé en douane (CAD)." },
+  { q: "Faut-il créer un compte ?", a: "Non, le simulateur fonctionne sans compte. Un compte gratuit sert à enregistrer vos simulations et à les retrouver sur un autre appareil." },
+  { q: "Dans quelles devises puis-je saisir le prix ?", a: "En FCFA, euro, dollar américain, livre sterling, dollar canadien, franc suisse, yen, yuan ou won sud-coréen. L'euro est converti à la parité fixe (655,957 FCFA) ; les autres devises avec le taux de référence de la Banque centrale européenne, dont la date est affichée." },
+  { q: "Puis-je installer SimDouane sur mon téléphone ?", a: "Oui. Sur Android, ouvrez le site dans Chrome puis touchez « Installer ». Sur iPhone, ouvrez-le dans Safari, touchez le bouton Partager puis « Sur l'écran d'accueil ». SimDouane s'ouvre ensuite comme une application." },
+  { q: "Comment passer à une formule payante ?", a: "Depuis votre espace, page Abonnement : vous envoyez la référence de votre paiement Mobile Money et la formule est activée après vérification." },
+];
+
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function Accueil() {
-  const { user } = useAuth();
+  usePageMeta(
+    "SimDouane Bénin — Simulateur du coût d'importation d'un véhicule au Port de Cotonou",
+    "Estimez en quelques minutes le coût total d'importation d'un véhicule au Bénin : droits de douane, taxes et frais du Port de Cotonou. Gratuit, sans compte, résultat en PDF.",
+  );
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-
-      {/* ── Topbar ─────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <SimDouaneLogo size={32} />
-            <span className="font-black text-[#003D24] text-base tracking-widest">SIMDOUANE</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
-            <a href="#fonctionnalites" className="hover:text-[#003D24] transition-colors">Fonctionnalités</a>
-            <a href="#tarifs" className="hover:text-[#003D24] transition-colors">Tarifs</a>
-            <a href="#contact" className="hover:text-[#003D24] transition-colors">Contact</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            {user ? (
+    <SiteShell>
+      {/* ── Hero ───────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-[#F6F4EC]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-14 sm:pt-16 sm:pb-20 grid [&>*]:min-w-0 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 text-xs font-bold text-[#003D24] bg-white rounded-full pl-1.5 pr-3 py-1.5 ring-1 ring-slate-900/5 mb-6">
+              <span className="flex h-5 w-8 rounded-full overflow-hidden" aria-hidden="true">
+                <span className="w-2/5 bg-[#008751]" />
+                <span className="flex-1 flex flex-col"><span className="flex-1 bg-[#FCD116]" /><span className="flex-1 bg-[#E8112D]" /></span>
+              </span>
+              Importation de véhicules · Port de Cotonou
+            </p>
+            <h1 className="text-[2.1rem] leading-[1.1] sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight text-slate-900">
+              Combien va coûter votre véhicule, <span className="text-[#008751]">une fois sorti du port ?</span>
+            </h1>
+            <p className="mt-5 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
+              SimDouane estime le coût total d'importation d'un véhicule au Bénin : droits de douane, taxes
+              et frais du port. En quelques minutes, sans compte.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
-                href="/dashboard"
-                className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl text-white transition-all"
-                style={{ backgroundColor: "#003D24" }}
+                href="/simulateur"
+                data-testid="hero-cta"
+                className="inline-flex items-center justify-center gap-2 h-14 px-7 rounded-2xl text-base font-bold text-white bg-[#003D24] hover:bg-[#00522f] transition-colors shadow-lg shadow-[#003D24]/20"
               >
-                Mon espace <ChevronRight className="h-3.5 w-3.5" />
+                <Calculator className="h-5 w-5" /> Simuler mon véhicule
               </Link>
-            ) : (
-              <>
-                <Link
-                  href="/sign-in"
-                  className="text-sm font-semibold text-slate-700 hover:text-[#003D24] transition-colors px-3 py-2"
-                >
-                  Se connecter
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="text-sm font-semibold px-4 py-2 rounded-xl text-white transition-all"
-                  style={{ backgroundColor: "#003D24" }}
-                >
-                  Commencer
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <HeroSection />
-
-      {/* ── Features ────────────────────────────────────────────────────── */}
-      <section id="fonctionnalites" className="py-20 px-5 bg-[#F0F2F5]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-[#003D24] text-xs font-bold uppercase tracking-widest mb-3">Fonctionnalités</p>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-              Tout ce dont vous avez besoin
-            </h2>
-            <p className="text-slate-500 mt-3 text-base max-w-lg mx-auto">
-              SimDouane regroupe tous les outils nécessaires aux importateurs, transitaires et particuliers.
+              <Link
+                href="/sign-up"
+                className="inline-flex items-center justify-center gap-2 h-14 px-7 rounded-2xl text-base font-bold text-[#003D24] bg-white ring-1 ring-slate-900/10 hover:ring-[#003D24]/40 transition"
+              >
+                Créer un compte gratuit
+              </Link>
+            </div>
+            <p className="mt-5 flex items-start gap-2 text-sm text-slate-500 max-w-xl">
+              <Info className="h-4 w-4 mt-0.5 shrink-0 text-[#008751]" />
+              Estimation indicative, à confirmer auprès d'un commissionnaire agréé en douane (CAD).
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
-              <div
-                key={f.title}
-                className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-[#003D24]/20 hover:shadow-md transition-all group"
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors"
-                  style={{ backgroundColor: "rgba(0,61,36,0.07)" }}
-                >
-                  <f.icon className="h-5 w-5 text-[#003D24]" />
+          <div className="relative">
+            <img
+              src={img("port-vehicules.webp")}
+              alt="Véhicules importés alignés sur un terminal portuaire"
+              width={1200} height={675}
+              className="w-full aspect-[4/3] object-cover rounded-3xl shadow-2xl"
+              fetchPriority="high"
+            />
+            <ExampleCard className="relative -mt-16 mx-4 sm:absolute sm:mt-0 sm:mx-0 sm:-bottom-10 sm:left-auto sm:-right-4 lg:right-auto lg:-left-12 sm:w-[20rem]" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Facts strip ────────────────────────────────────────────────── */}
+      <section className="border-y border-slate-200 bg-white">
+        <ul className="max-w-6xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-5">
+          {[
+            { icon: BadgeCheck, title: "Sans compte", text: "Simulation immédiate" },
+            { icon: Coins, title: "9 monnaies", text: "FCFA et 8 devises" },
+            { icon: FileDown, title: "PDF", text: "Résultat à télécharger" },
+            { icon: Languages, title: "Français · English", text: "Deux langues" },
+          ].map((f) => (
+            <li key={f.title} className="flex items-center gap-3">
+              <span className="h-10 w-10 rounded-xl bg-[#EAF4EE] flex items-center justify-center shrink-0"><f.icon className="h-5 w-5 text-[#003D24]" /></span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-slate-900">{f.title}</span>
+                <span className="block text-xs text-slate-500">{f.text}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* ── Features ───────────────────────────────────────────────────── */}
+      <section id="fonctionnalites" className="scroll-mt-20 py-16 sm:py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <SectionTitle eyebrow="Fonctionnalités" title="Un budget clair avant d'acheter" text="SimDouane vous montre le coût total, explique d'où vient chaque montant et vous dit ce qui reste incertain." />
+          <div className="space-y-16 sm:space-y-24">
+            {FEATURE_ROWS.map((row, i) => (
+              <div key={row.title} className="grid [&>*]:min-w-0 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
+                <div className={i % 2 === 1 ? "lg:order-2" : ""}>
+                  <Eyebrow>{row.eyebrow}</Eyebrow>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{row.title}</h3>
+                  <p className="mt-4 text-slate-600 leading-relaxed">{row.text}</p>
+                  <ul className="mt-5 space-y-2.5">
+                    {row.points.map((p) => (
+                      <li key={p} className="flex items-start gap-2.5 text-sm font-medium text-slate-700">
+                        <span className="mt-0.5 h-5 w-5 rounded-full bg-[#008751] flex items-center justify-center shrink-0"><Check className="h-3 w-3 text-white" /></span>
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <h3 className="font-bold text-slate-900 mb-2 text-base">{f.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
+                <div className={i % 2 === 1 ? "lg:order-1" : ""}>{row.visual}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── How it works ────────────────────────────────────────────────── */}
-      <section className="py-20 px-5 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-[#003D24] text-xs font-bold uppercase tracking-widest mb-3">Comment ça marche</p>
-          <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-14">
-            3 étapes, c'est tout.
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { step: "01", title: "Saisissez les infos", desc: "Marque, modèle, année, cylindrée, valeur CIF et durée de séjour au port." },
-              { step: "02", title: "Obtenez l'estimation", desc: "SimDouane estime instantanément les droits, taxes et frais portuaires." },
-              { step: "03", title: "Téléchargez le PDF", desc: "Exportez votre estimation en PDF pour la partager ou la conserver." },
-            ].map((step) => (
-              <div key={step.step} className="relative">
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 font-black text-lg"
-                  style={{ backgroundColor: "#003D24", color: "#FCD116" }}
-                >
-                  {step.step}
+      {/* ── How it works ───────────────────────────────────────────────── */}
+      <section id="fonctionnement" className="scroll-mt-20 py-16 sm:py-24 bg-[#F6F4EC]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid [&>*]:min-w-0 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <PortScene />
+          <div>
+            <Eyebrow>Fonctionnement</Eyebrow>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">Trois étapes, quelques minutes</h2>
+            <ol className="mt-8 space-y-6">
+              {STEPS.map((s, i) => (
+                <li key={s.title} className="flex gap-4">
+                  <span className="h-12 w-12 rounded-2xl bg-[#003D24] text-[#FCD116] flex items-center justify-center shrink-0 font-extrabold">{i + 1}</span>
+                  <span>
+                    <span className="flex items-center gap-2 font-bold text-slate-900"><s.icon className="h-4 w-4 text-[#008751]" />{s.title}</span>
+                    <span className="block text-sm text-slate-600 mt-1 leading-relaxed">{s.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <Link href="/simulateur" className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#003D24] hover:underline">
+              Lancer une simulation <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Audiences ──────────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <SectionTitle eyebrow="Pour qui" title="Pensé pour ceux qui importent" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {AUDIENCES.map((a) => (
+              <article key={a.title} className="rounded-3xl overflow-hidden bg-white ring-1 ring-slate-200">
+                <img src={img(a.image)} alt={a.alt} loading="lazy" width={900} height={600} className="w-full aspect-[3/2] object-cover" />
+                <div className="p-6">
+                  <h3 className="text-lg font-extrabold text-slate-900">{a.title}</h3>
+                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">{a.text}</p>
                 </div>
-                <h3 className="font-bold text-slate-900 mb-2">{step.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{step.desc}</p>
-              </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Pricing ─────────────────────────────────────────────────────── */}
-      <section id="tarifs" className="py-20 px-5 bg-[#F0F2F5]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-[#003D24] text-xs font-bold uppercase tracking-widest mb-3">Tarifs</p>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-              Des plans pour chaque besoin
-            </h2>
-            <p className="text-slate-500 mt-3 text-base">Commencez gratuitement. Passez au Pro quand vous êtes prêt.</p>
+      {/* ── Honesty ────────────────────────────────────────────────────── */}
+      <section className="px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto rounded-3xl bg-[#003D24] text-white p-7 sm:p-12 grid lg:grid-cols-[1fr_auto] gap-8 items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#FCD116] mb-3"><ShieldCheck className="h-4 w-4" /> Transparence</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Une estimation, pas une facture</h2>
+            <p className="mt-4 text-white/75 leading-relaxed max-w-2xl">
+              Les taux et les frais utilisés par SimDouane n'ont pas été validés par la Direction générale des Douanes.
+              La douane peut retenir une autre valeur pour votre véhicule. Chaque résultat liste ses hypothèses, et le
+              guide vous explique les étapes et les documents à préparer.
+            </p>
           </div>
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
+            <Link href="/guide" className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl text-sm font-bold bg-[#FCD116] text-[#003D24]">
+              <FolderOpen className="h-4 w-4" /> Lire le guide
+            </Link>
+            <Link href="/procedure" className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl text-sm font-bold ring-1 ring-white/30 text-white">
+              Voir la procédure
+            </Link>
+          </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+      {/* ── Pricing ────────────────────────────────────────────────────── */}
+      <section id="tarifs" className="scroll-mt-20 py-16 sm:py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <SectionTitle eyebrow="Tarifs" title="Gratuit pour commencer" text="Le simulateur est libre d'accès. Les formules servent à enregistrer plus de simulations dans votre espace." />
+          <div className="grid md:grid-cols-3 gap-6 items-stretch">
             {PLANS.map((plan) => (
               <div
                 key={plan.name}
-                className="rounded-2xl p-6 border transition-all"
-                style={plan.highlighted
-                  ? { backgroundColor: "#003D24", border: "2px solid #003D24", boxShadow: "0 20px 48px rgba(0,61,36,0.25)" }
-                  : { backgroundColor: "#FFFFFF", borderColor: "#E2E8F0" }
-                }
+                className={`rounded-3xl p-7 flex flex-col ${plan.highlighted ? "bg-[#003D24] text-white shadow-2xl shadow-[#003D24]/25" : "bg-white ring-1 ring-slate-200"}`}
               >
                 {plan.highlighted && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-4 text-[10px] font-bold uppercase tracking-wider"
-                    style={{ backgroundColor: "rgba(252,209,22,0.15)", color: "#FCD116" }}>
-                    <Star className="h-2.5 w-2.5" fill="currentColor" /> Recommandé
-                  </div>
+                  <p className="inline-flex self-start items-center gap-1.5 px-2.5 py-1 rounded-full mb-4 text-[11px] font-bold uppercase tracking-wider bg-[#FCD116] text-[#003D24]">
+                    <Star className="h-3 w-3" fill="currentColor" /> Le plus choisi
+                  </p>
                 )}
-                <p className={`font-black text-lg mb-1 ${plan.highlighted ? "text-white" : "text-slate-900"}`}>{plan.name}</p>
-                <p className={`text-sm mb-4 ${plan.highlighted ? "text-white/50" : "text-slate-400"}`}>{plan.desc}</p>
-                <div className="flex items-baseline gap-1.5 mb-6">
-                  <span className={`text-4xl font-black ${plan.highlighted ? "text-white" : "text-slate-900"}`}>{plan.price}</span>
-                  {plan.period && (
-                    <span className={`text-xs font-medium ${plan.highlighted ? "text-white/40" : "text-slate-400"}`}>{plan.period}</span>
-                  )}
-                </div>
-                <div
-                  className="rounded-xl px-3.5 py-2 mb-6 text-xs font-semibold text-center"
-                  style={plan.highlighted
-                    ? { backgroundColor: "rgba(252,209,22,0.12)", color: "#FCD116" }
-                    : { backgroundColor: "#F0F2F5", color: "#003D24" }
-                  }
-                >
-                  {plan.quota}
-                </div>
-                <ul className="space-y-2.5 mb-8">
+                <p className="font-extrabold text-xl">{plan.name}</p>
+                <p className={`text-sm mt-1 ${plan.highlighted ? "text-white/60" : "text-slate-500"}`}>{plan.desc}</p>
+                <p className="flex items-baseline gap-2 mt-5 mb-6">
+                  <span className="text-4xl font-extrabold tabular-nums">{plan.price}</span>
+                  <span className={`text-sm font-medium ${plan.highlighted ? "text-white/60" : "text-slate-500"}`}>{plan.period}</span>
+                </p>
+                <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((f) => (
-                    <li key={f} className={`flex items-center gap-2.5 text-sm ${plan.highlighted ? "text-white/80" : "text-slate-600"}`}>
-                      <CheckCircle className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-[#FCD116]" : "text-[#003D24]"}`} />
+                    <li key={f} className={`flex items-start gap-2.5 text-sm ${plan.highlighted ? "text-white/85" : "text-slate-700"}`}>
+                      <Check className={`h-4 w-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-[#FCD116]" : "text-[#008751]"}`} />
                       {f}
                     </li>
                   ))}
                 </ul>
                 <Link
-                  href={plan.href}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition-all"
-                  style={plan.highlighted
-                    ? { backgroundColor: "#FCD116", color: "#003D24" }
-                    : { backgroundColor: "#003D24", color: "#FFFFFF" }
-                  }
+                  href="/sign-up"
+                  className={`inline-flex items-center justify-center gap-2 h-12 rounded-xl text-sm font-bold ${plan.highlighted ? "bg-[#FCD116] text-[#003D24]" : "bg-[#003D24] text-white"}`}
                 >
                   {plan.cta} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             ))}
           </div>
-          <p className="text-center text-slate-400 text-xs mt-6">Paiement via Mobile Money (MTN, Moov). Aucune carte bancaire requise.</p>
+          <p className="text-center text-slate-500 text-sm mt-6">Paiement par Mobile Money, activation après vérification. Aucune carte bancaire demandée.</p>
         </div>
       </section>
 
-      {/* ── CTA banner ──────────────────────────────────────────────────── */}
-      <section className="py-20 px-5" style={{ background: "linear-gradient(135deg, #001f12 0%, #003D24 100%)" }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
-            Prêt à simuler votre importation ?
-          </h2>
-          <p className="text-white/50 mb-8 text-base">
-            Estimez gratuitement le coût d'importation de votre véhicule, en quelques minutes.
-          </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Link
-              href="/sign-up"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold text-[#003D24]"
-              style={{ backgroundColor: "#FCD116", boxShadow: "0 8px 24px rgba(252,209,22,0.3)" }}
-            >
-              Créer un compte gratuit <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/simulateur"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold"
-              style={{ border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.8)" }}
-            >
-              <Calculator className="h-4 w-4" />
-              Simuler sans compte
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer id="contact" style={{ backgroundColor: "#001a0f" }}>
-        <div className="h-[3px]" style={{ background: "linear-gradient(90deg, #FCD116 0%, #008751 40%, #E8112D 100%)" }} />
-        <div className="max-w-6xl mx-auto px-5 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div className="flex items-center gap-2.5 mb-4">
-              <SimDouaneLogo size={28} />
-              <span className="font-black text-white text-sm tracking-widest">SIMDOUANE</span>
-            </div>
-            <p className="text-white/35 text-sm leading-relaxed">
-              Simulateur professionnel de droits et frais douaniers pour l'importation de véhicules au Port de Cotonou, Bénin.
-            </p>
-          </div>
-          <div>
-            <p className="text-[#FCD116]/60 text-[10px] font-bold uppercase tracking-widest mb-4">Contact</p>
-            {[
-              { icon: Phone, text: "+229 56 50 13 48", href: "tel:+22956501348" },
-              { icon: Phone, text: "+229 41 82 27 30", href: "tel:+22941822730" },
-              { icon: Mail, text: "hazoumeclarence@gmail.com", href: "mailto:hazoumeclarence@gmail.com" },
-            ].map((c) => (
-              <a key={c.href} href={c.href} className="flex items-center gap-2 mb-2.5 group">
-                <c.icon className="h-3.5 w-3.5 text-white/30 group-hover:text-[#FCD116] transition-colors" />
-                <span className="text-white/45 text-sm group-hover:text-white/80 transition-colors">{c.text}</span>
-              </a>
+      {/* ── FAQ ────────────────────────────────────────────────────────── */}
+      <section id="questions" className="scroll-mt-20 py-16 sm:py-24 bg-[#F6F4EC]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <SectionTitle eyebrow="Questions fréquentes" title="Ce qu'on nous demande souvent" />
+          <div className="space-y-3">
+            {FAQ.map((f) => (
+              <details key={f.q} className="group rounded-2xl bg-white ring-1 ring-slate-200 open:shadow-md">
+                <summary className="flex items-center justify-between gap-4 cursor-pointer list-none px-5 py-4 font-bold text-slate-900 [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <ChevronDown className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="px-5 pb-5 text-sm text-slate-600 leading-relaxed">{f.a}</p>
+              </details>
             ))}
           </div>
-          <div>
-            <p className="text-[#FCD116]/60 text-[10px] font-bold uppercase tracking-widest mb-4">Créateur</p>
-            <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <p className="text-white font-bold text-sm">HAZOUME AKUEGNON Clarence Alvin</p>
-              <p className="text-white/40 text-xs mt-1">Fondateur & Expert Douanier</p>
-            </div>
-          </div>
         </div>
-        <div className="border-t border-white/5 px-5 py-4 max-w-6xl mx-auto flex items-center justify-between">
-          <p className="text-white/20 text-xs">© 2026 SimDouane Bénin. Tous droits réservés.</p>
-          <p className="text-white/15 text-xs italic">Estimation indicative — non contractuelle</p>
+      </section>
+
+      {/* ── Final call ─────────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <span className="inline-flex h-14 w-14 rounded-2xl bg-[#EAF4EE] items-center justify-center mb-6"><Smartphone className="h-7 w-7 text-[#003D24]" /></span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">Prêt à connaître votre budget ?</h2>
+          <p className="mt-4 text-slate-600">La simulation est gratuite et ne demande pas de compte.</p>
+          <Link
+            href="/simulateur"
+            className="mt-8 inline-flex items-center justify-center gap-2 h-14 px-8 rounded-2xl text-base font-bold text-white bg-[#003D24] hover:bg-[#00522f] transition-colors shadow-lg shadow-[#003D24]/20"
+          >
+            <Calculator className="h-5 w-5" /> Simuler mon véhicule
+          </Link>
         </div>
-      </footer>
-    </div>
+      </section>
+    </SiteShell>
   );
 }

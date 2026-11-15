@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Download, X } from "lucide-react";
+import { Download, Share, X } from "lucide-react";
+
+const IOS_HINT_KEY = "simdouane_ios_install_hint";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,12 +12,24 @@ export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const [iosHint, setIosHint] = useState(false);
+  const dismissIosHint = () => {
+    setIosHint(false);
+    try { localStorage.setItem(IOS_HINT_KEY, "1"); } catch { /* private mode */ }
+  };
 
   useEffect(() => {
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setInstalled(true);
       return;
     }
+
+    const ua = navigator.userAgent;
+    const isIos = /iPhone|iPad|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
+    const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    let seen = false;
+    try { seen = localStorage.getItem(IOS_HINT_KEY) === "1"; } catch { /* private mode */ }
+    if (isIos && isSafari && !seen && !(navigator as { standalone?: boolean }).standalone) setIosHint(true);
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -40,7 +54,26 @@ export function InstallPrompt() {
     setDeferredPrompt(null);
   };
 
-  if (installed || !visible) return null;
+  if (installed) return null;
+
+  // iPhone and iPad have no install button: explain the two gestures, once.
+  if (!visible) {
+    if (!iosHint) return null;
+    return (
+      <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-sm" data-testid="ios-install-hint">
+        <div className="flex items-start gap-3 rounded-2xl px-4 py-3 shadow-2xl bg-[#004D2E] border border-white/15">
+          <Share className="h-5 w-5 text-white shrink-0 mt-0.5" />
+          <p className="flex-1 text-white text-xs leading-snug">
+            <span className="font-bold block">Installer SimDouane</span>
+            Touchez le bouton Partager de Safari, puis « Sur l'écran d'accueil ».
+          </p>
+          <button onClick={dismissIosHint} className="shrink-0 text-white/60 hover:text-white" aria-label="Fermer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-sm">

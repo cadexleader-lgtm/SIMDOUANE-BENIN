@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @layer theme, base, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -251,6 +251,34 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Stable display on phones: no automatic text resizing, no sideways
+     scrolling, no double-tap zoom, no zoom when a field gets the focus
+     (iOS zooms on fields whose text is smaller than 16px). */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+  @media (max-width: 767px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+  /* Installed app: no rubber-band effect, room for the notch and home bar. */
+  @media (display-mode: standalone) {
+    html, body {
+      overscroll-behavior: none;
+    }
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   }
 }
 

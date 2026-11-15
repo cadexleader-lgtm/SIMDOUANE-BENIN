@@ -14,6 +14,7 @@ import Abonnement from "@/pages/abonnement";
 import Profil from "@/pages/profil";
 import Admin from "@/pages/admin";
 import Accueil from "@/pages/accueil";
+import { Conditions, Confidentialite, MentionsLegales } from "@/pages/legal";
 import Onboarding from "@/pages/onboarding";
 import Dossiers from "@/pages/dossiers";
 import DossierNouveau from "@/pages/dossier-nouveau";
@@ -79,7 +80,7 @@ function AppRoutes() {
   const [location] = useLocation();
   const isAuthPage    = AUTH_PAGES.test(location);
   const isOnboarding  = /^\/onboarding(\/|$)/.test(location);
-  const isStandalone  = /^\/(accueil)(\/|$)/.test(location) || location === "/";
+  const isStandalone  = /^\/(accueil|mentions-legales|confidentialite|conditions)(\/|$)/.test(location) || location === "/";
 
   return (
     <AuthProvider>
@@ -107,6 +108,9 @@ function AppRoutes() {
           <Switch>
             <Route path="/" component={HomeRedirect} />
             <Route path="/accueil" component={Accueil} />
+            <Route path="/mentions-legales" component={MentionsLegales} />
+            <Route path="/confidentialite" component={Confidentialite} />
+            <Route path="/conditions" component={Conditions} />
           </Switch>
         )}
 
