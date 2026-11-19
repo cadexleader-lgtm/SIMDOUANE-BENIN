@@ -8,10 +8,10 @@ Supabase (projet `simdouane-dev`).
 
 *Authentication → URL Configuration* :
 
-- **Site URL** : `https://simdouane-benin.cadexleader.workers.dev`
-- **Redirect URLs** → *Add URL* : `https://simdouane-benin.cadexleader.workers.dev/**`
+- **Site URL** : `https://simdouanebenin.com`
+- **Redirect URLs** → *Add URL* : `https://simdouanebenin.com/**`
 
-À refaire avec la nouvelle adresse le jour où le site a son nom de domaine.
+Adresse du site : le domaine simdouanebenin.com (acheté chez LWS, relié à Cloudflare).
 
 ## 2. Modèles
 

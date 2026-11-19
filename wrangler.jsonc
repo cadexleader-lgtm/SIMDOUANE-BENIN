@@ -3,9 +3,6 @@
   "name": "simdouane-benin",
   "main": "artifacts/api-server/src/worker.ts",
   "compatibility_date": "2026-10-01",
-  // Variables added by hand in the Cloudflare dashboard are kept at each
-  // deployment (without this, every deployment removes the text variables
-  // that are not listed below).
   "keep_vars": true,
   "compatibility_flags": [
     "nodejs_compat"
