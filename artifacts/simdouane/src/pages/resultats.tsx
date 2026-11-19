@@ -132,6 +132,9 @@ export default function Resultats() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold">{t.title}</h1>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-sm text-muted-foreground">
+              {simulation.clientName && (
+                <span className="font-semibold text-[#003D24]" data-testid="client-name">{simulation.clientName} ·</span>
+              )}
               <span className="font-semibold text-foreground" data-testid="vehicle-title">{input.marque} {input.modele}</span>
               <span>· {input.annee}</span>
               <span>· {input.carburant}</span>

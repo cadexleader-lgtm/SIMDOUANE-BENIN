@@ -60,6 +60,19 @@ describe.skipIf(!TEST_DB)("activité vue par l'administrateur", () => {
     expect(byEmail["bob@test.local"]).toMatchObject({ simulationsCount: 1, simulationsThisMonth: 1 });
   });
 
+  it("transitaire : nom du client conservé avec la simulation et retrouvé par la recherche", async () => {
+    const details = { schemaVersion: 1, clientName: "M. Koffi Adjovi" };
+    const created = await app.call("alice", "POST", "/simulations", { ...vehicle, details });
+    expect(created.status).toBe(201);
+    expect((await created.json()).details).toEqual(details);
+    await app.call("alice", "POST", "/simulations", { ...vehicle, marque: "Lexus" });
+    const found = await (await app.call("alice", "GET", "/simulations?search=koffi")).json();
+    expect(found.simulations).toHaveLength(1);
+    expect(found.simulations[0].details.clientName).toBe("M. Koffi Adjovi");
+    const tooLong = await app.call("alice", "POST", "/simulations", { ...vehicle, details: { schemaVersion: 1, clientName: "x".repeat(81) } });
+    expect(tooLong.status).toBe(400);
+  });
+
   it("le tableau de bord admin reste réservé à l'administrateur", async () => {
     expect((await app.call("alice", "GET", "/admin/dashboard")).status).toBe(403);
     expect((await app.call(null, "GET", "/admin/dashboard")).status).toBe(401);

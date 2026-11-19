@@ -9,14 +9,19 @@ import { SimDouaneLogo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { safeAppPath } from "@/lib/redirects";
 
-const POSTES = [
-  "Transitaire",
-  "Importateur de véhicules",
-  "Commissionnaire en douane",
-  "Courtier en douane",
-  "Agent maritime",
-  "Particulier importateur",
-  "Autre",
+// Two kinds of users only: a private person who checks the cost of one
+// vehicle, and a professional who runs simulations for clients every day.
+const PROFILES = [
+  {
+    value: "Particulier",
+    title: "Particulier",
+    text: "J'importe ou j'achète un véhicule et je veux connaître le coût.",
+  },
+  {
+    value: "Transitaire",
+    title: "Transitaire / professionnel",
+    text: "Je fais des simulations pour mes clients, tous les jours.",
+  },
 ];
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -45,9 +50,10 @@ export default function Onboarding() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
           setStep("done");
-          // Back to the page the user was heading to (invitation, direct link).
+          // Back to the page the user was heading to (invitation, direct link);
+          // otherwise a professional sees the plans, a private person the simulator.
           const next = safeAppPath(new URLSearchParams(window.location.search).get("next"), basePath, window.location.origin);
-          setTimeout(() => setLocation(next ?? "/dashboard"), 1400);
+          setTimeout(() => setLocation(next ?? (poste === "Transitaire" ? "/abonnement" : "/simulateur")), 1400);
         },
       }
     );
@@ -103,23 +109,26 @@ export default function Onboarding() {
                 <div className="h-10 w-10 bg-[#003D24]/10 rounded-xl flex items-center justify-center mb-4">
                   <Briefcase className="h-5 w-5 text-[#003D24]" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">Quel est votre poste ?</h2>
-                <p className="text-slate-500 text-sm mt-1">Cela nous aide à personnaliser votre expérience.</p>
+                <h2 className="text-xl font-bold text-slate-900">Vous êtes…</h2>
+                <p className="text-slate-500 text-sm mt-1">Vous pourrez changer plus tard dans votre profil.</p>
               </div>
 
-              <div className="space-y-2">
-                {POSTES.map((p) => (
+              <div className="space-y-3">
+                {PROFILES.map((p) => (
                   <button
-                    key={p}
-                    onClick={() => setPoste(p)}
+                    key={p.value}
+                    type="button"
+                    data-testid={`profile-${p.value}`}
+                    onClick={() => setPoste(p.value)}
                     className={cn(
-                      "w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all",
-                      poste === p
-                        ? "border-[#003D24] bg-[#003D24]/5 text-[#003D24] font-semibold"
-                        : "border-slate-200 text-slate-700 hover:border-slate-300"
+                      "w-full text-left px-4 py-4 rounded-xl border-2 transition-all",
+                      poste === p.value
+                        ? "border-[#003D24] bg-[#003D24]/5"
+                        : "border-slate-200 hover:border-slate-300"
                     )}
                   >
-                    {p}
+                    <span className={cn("block text-base font-bold", poste === p.value ? "text-[#003D24]" : "text-slate-900")}>{p.title}</span>
+                    <span className="block text-sm text-slate-500 mt-0.5">{p.text}</span>
                   </button>
                 ))}
               </div>

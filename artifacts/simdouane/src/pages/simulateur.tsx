@@ -43,6 +43,7 @@ const YEARS = Array.from({ length: MAX_YEAR - 1990 + 1 }, (_, i) => MAX_YEAR - i
 const MAX_AMOUNT = 1e12;
 
 const formSchema = z.object({
+  clientName: z.string().trim().max(80, "80 caractères au maximum.").optional(),
   marque: z.string().min(1).max(100, "100 caractères au maximum."),
   modele: z.string().min(1).max(100, "100 caractères au maximum."),
   annee: z.coerce.number().min(1990).max(MAX_YEAR),
@@ -471,6 +472,7 @@ export default function Simulateur() {
       annee: undefined as unknown as number,
       condition: "Occasion",
       typeVehicule: "tourisme",
+      clientName: "",
       cylindree: undefined as unknown as CylindreeKey,
       carburant: "",
       mode: "cif",
@@ -599,6 +601,7 @@ export default function Simulateur() {
       calculatorVersion: "historical",
       regulatoryConfigVersion: "2026.1-announced",
     } as const;
+    const clientName = user ? values.clientName?.trim() || undefined : undefined;
     if (user) {
       // Signed in: the server checks the monthly quota and saves the
       // simulation; the result is shown only once it has been accepted.
@@ -617,7 +620,10 @@ export default function Simulateur() {
             totalPort: result.totalPort,
             totalGeneral: result.totalGeneral,
             ...metadata,
-            details: { schemaVersion: 1, valueInput: determined.value, situation: values.situation, paid: paidInputFrom(values), vehicleType: values.typeVehicule },
+            details: {
+              schemaVersion: 1, valueInput: determined.value, situation: values.situation, paid: paidInputFrom(values), vehicleType: values.typeVehicule,
+              ...(clientName ? { clientName } : {}),
+            },
           },
         });
       } catch (err: unknown) {
@@ -640,6 +646,7 @@ export default function Simulateur() {
 
     const entry = addHistory({
       input, result, ...metadata,
+      ...(clientName ? { clientName } : {}),
       valueInput: determined.value,
       vehicleType: values.typeVehicule,
       situation: values.situation,
@@ -671,6 +678,24 @@ export default function Simulateur() {
                     <CardTitle className="text-sm font-semibold">{t.vehicleInfo}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-2">
+                    {user && (
+                      <FormField control={form.control} name="clientName" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{lang === "fr" ? "Client (facultatif)" : "Client (optional)"}</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value ?? ""}
+                              maxLength={80}
+                              autoComplete="off"
+                              placeholder={lang === "fr" ? "Ex. : M. Koffi — pour retrouver la simulation et l'afficher sur le PDF" : "E.g. Mr Koffi — shown on the PDF and in your history"}
+                              data-testid="input-client"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField control={form.control} name="marque" render={({ field }) => (
                         <FormItem>

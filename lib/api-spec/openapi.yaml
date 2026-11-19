@@ -937,6 +937,10 @@ components:
           description: not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou
         paid:
           $ref: "#/components/schemas/SimulationPaidInput"
+        clientName:
+          type: string
+          maxLength: 80
+          description: Name of the client the simulation was made for (professionals). Optional.
         vehicleType:
           type: string
           enum: [tourisme, utilitaire]

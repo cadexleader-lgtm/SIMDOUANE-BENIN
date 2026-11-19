@@ -62,6 +62,8 @@ export const getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMax =
 export const getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMin = 0;
 export const getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMax = 1000000000000;
 
+export const getSimulationsResponseSimulationsItemDetailsOneClientNameMax = 80;
+
 
 
 export const GetSimulationsResponse = zod.object({
@@ -118,6 +120,7 @@ export const GetSimulationsResponse = zod.object({
   "customsPaid": zod.number().min(getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMin).max(getSimulationsResponseSimulationsItemDetailsOnePaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
   "portPaid": zod.number().min(getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMin).max(getSimulationsResponseSimulationsItemDetailsOnePaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
 }).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n'),
+  "clientName": zod.string().max(getSimulationsResponseSimulationsItemDetailsOneClientNameMax).optional().describe('Name of the client the simulation was made for (professionals). Optional.'),
   "vehicleType": zod.enum(['tourisme', 'utilitaire']).optional().describe('tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.\n')
 }).describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n'),zod.null()]).optional().describe('Null for simulations saved before the details were kept'),
   "createdAt": zod.coerce.date()
@@ -191,6 +194,8 @@ export const createSimulationBodyDetailsPaidCustomsPaidMax = 1000000000000;
 export const createSimulationBodyDetailsPaidPortPaidMin = 0;
 export const createSimulationBodyDetailsPaidPortPaidMax = 1000000000000;
 
+export const createSimulationBodyDetailsClientNameMax = 80;
+
 
 
 export const CreateSimulationBody = zod.object({
@@ -244,6 +249,7 @@ export const CreateSimulationBody = zod.object({
   "customsPaid": zod.number().min(createSimulationBodyDetailsPaidCustomsPaidMin).max(createSimulationBodyDetailsPaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
   "portPaid": zod.number().min(createSimulationBodyDetailsPaidPortPaidMin).max(createSimulationBodyDetailsPaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
 }).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n'),
+  "clientName": zod.string().max(createSimulationBodyDetailsClientNameMax).optional().describe('Name of the client the simulation was made for (professionals). Optional.'),
   "vehicleType": zod.enum(['tourisme', 'utilitaire']).optional().describe('tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.\n')
 }).optional().describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n')
 })
@@ -485,6 +491,8 @@ export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsP
 export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMin = 0;
 export const getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMax = 1000000000000;
 
+export const getAdminSimulationsResponseSimulationsItemOneDetailsOneClientNameMax = 80;
+
 
 
 export const GetAdminSimulationsResponse = zod.object({
@@ -541,6 +549,7 @@ export const GetAdminSimulationsResponse = zod.object({
   "customsPaid": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidCustomsPaidMax).optional().describe('Amount actually paid for customs duties and taxes, in FCFA (absent = not paid yet)'),
   "portPaid": zod.number().min(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMin).max(getAdminSimulationsResponseSimulationsItemOneDetailsOnePaidPortPaidMax).optional().describe('Amount actually paid for port and provider fees, in FCFA (absent = not paid yet)')
 }).optional().describe('What the user had already paid. A real amount paid replaces the estimate of the same line, it is never added to it.\n'),
+  "clientName": zod.string().max(getAdminSimulationsResponseSimulationsItemOneDetailsOneClientNameMax).optional().describe('Name of the client the simulation was made for (professionals). Optional.'),
   "vehicleType": zod.enum(['tourisme', 'utilitaire']).optional().describe('tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.\n')
 }).describe('What the simulation was based on, kept with it: how the vehicle value was entered, where the vehicle was and what had already been paid. Validated by the server (at most 20 KB of JSON); unknown properties are dropped.\n'),zod.null()]).optional().describe('Null for simulations saved before the details were kept'),
   "createdAt": zod.coerce.date()

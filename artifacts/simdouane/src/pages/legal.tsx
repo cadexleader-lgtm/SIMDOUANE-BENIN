@@ -87,7 +87,7 @@ export function Confidentialite() {
           <li>les informations de profil que vous choisissez de donner (téléphone, WhatsApp, activité, entreprise et IFU) ;</li>
           <li>les simulations que vous enregistrez et vos dossiers véhicules ;</li>
           <li>pour une demande d'abonnement : le numéro Mobile Money, la référence et le montant du paiement que vous déclarez ;</li>
-          <li>pour une demande d'accès transitaire : le numéro d'agrément déclaré et les justificatifs que vous déposez ;</li>
+          <li>le nom de client que vous indiquez, le cas échéant, sur une simulation ;</li>
           <li>un journal de sécurité (qui a fait quoi, et quand), sans adresse IP.</li>
         </ul>
       </Block>

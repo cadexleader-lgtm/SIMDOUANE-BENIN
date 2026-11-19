@@ -24,6 +24,11 @@ export interface SimulationDetails {
   /** not_arrived = not shipped or not arrived yet; in_transit = at sea; at_port = at the port of Cotonou */
   situation?: SimulationDetailsSituation;
   paid?: SimulationPaidInput;
+  /**
+     * Name of the client the simulation was made for (professionals). Optional.
+     * @maxLength 80
+     */
+  clientName?: string;
   /** tourisme = passenger car; utilitaire = utility vehicle (pick-up, van). Only used for warnings: it does not change the amounts.
    */
   vehicleType?: SimulationDetailsVehicleType;

@@ -314,6 +314,7 @@ export function exportSimulationPDF(simulation: HistoryEntry): void {
   w.text(vehicleName, MARGIN + 5, w.y + 7.5);
   const cyl = T.fr.sim.cylOptions[input.cylindree]?.label;
   const details = [
+    ...(simulation.clientName ? [`Client : ${simulation.clientName}`] : []),
     `Année ${input.annee}`,
     input.carburant,
     ...(cyl ? [cyl] : []),

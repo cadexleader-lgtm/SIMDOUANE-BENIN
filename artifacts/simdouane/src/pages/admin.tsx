@@ -29,7 +29,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TransitairesAdmin } from "@/components/admin/transitaires-admin";
 
 /* ─── Assign subscription modal ─────────────────────────────────────────── */
 interface AssignModalProps {
@@ -284,7 +283,6 @@ export default function Admin() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="transitaires" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg text-sm">Transitaires</TabsTrigger>
         </TabsList>
 
         {/* ── Dashboard ── */}
@@ -686,10 +684,6 @@ export default function Admin() {
               </table>
             </div>
           </Card>
-        </TabsContent>
-        {/* ── Accès transitaire ── */}
-        <TabsContent value="transitaires" className="mt-0">
-          {activeTab === "transitaires" && <TransitairesAdmin />}
         </TabsContent>
       </Tabs>
 

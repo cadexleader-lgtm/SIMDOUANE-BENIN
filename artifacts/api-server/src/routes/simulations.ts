@@ -22,7 +22,12 @@ router.get("/", requireAuth, async (req, res) => {
 
     if (search) {
       const s = String(search);
-      const orCond = or(ilike(simulationsTable.marque, `%${s}%`), ilike(simulationsTable.modele, `%${s}%`));
+      const orCond = or(
+        ilike(simulationsTable.marque, `%${s}%`),
+        ilike(simulationsTable.modele, `%${s}%`),
+        // Client name kept in the simulation detail (professionals).
+        sql`${simulationsTable.details}->>'clientName' ilike ${`%${s}%`}`,
+      );
       if (orCond) conditions.push(orCond);
     }
     if (dateFrom) conditions.push(gte(simulationsTable.createdAt, new Date(String(dateFrom))));

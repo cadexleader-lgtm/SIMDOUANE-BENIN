@@ -219,9 +219,9 @@ const STEPS = [
 ];
 
 const PLANS = [
-  { name: "Gratuit", price: "0", period: "FCFA", desc: "Pour découvrir SimDouane", features: ["3 estimations par mois", "Détail complet du calcul", "Export PDF", "Dossiers véhicules"], cta: "Commencer gratuitement", highlighted: false },
-  { name: "Standard", price: "2 500", period: "FCFA / mois", desc: "Pour les importateurs réguliers", features: ["30 estimations par mois", "Tout ce que contient la formule Gratuit"], cta: "Choisir Standard", highlighted: true },
-  { name: "Pro", price: "5 000", period: "FCFA / mois", desc: "Pour les transitaires et les professionnels", features: ["Estimations illimitées", "Tout ce que contient la formule Standard"], cta: "Choisir Pro", highlighted: false },
+  { name: "Gratuit", price: "0", period: "FCFA", desc: "Pour les particuliers", features: ["3 estimations par mois", "Détail complet du calcul", "Export PDF", "Dossiers véhicules"], cta: "Commencer gratuitement", highlighted: false },
+  { name: "Standard", price: "2 500", period: "FCFA / mois", desc: "Pour les transitaires", features: ["30 estimations par mois", "Nom du client sur chaque simulation et sur le PDF", "Historique en ligne, recherche par client"], cta: "Choisir Standard", highlighted: true },
+  { name: "Pro", price: "5 000", period: "FCFA / mois", desc: "Pour les transitaires très actifs", features: ["Estimations illimitées", "Tout ce que contient la formule Standard"], cta: "Choisir Pro", highlighted: false },
 ];
 
 const FAQ = [

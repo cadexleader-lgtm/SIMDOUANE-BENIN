@@ -22,6 +22,8 @@ export interface HistoryEntry {
   /** Where the vehicle was (phase S6) and what the user had already paid. */
   situation?: ImportSituation;
   paid?: PaidInput;
+  /** Client the simulation was made for (professionals), optional. */
+  clientName?: string;
   /** Phase S7: passenger car or utility vehicle (warnings only, no effect on the amounts). */
   vehicleType?: VehicleType;
 }

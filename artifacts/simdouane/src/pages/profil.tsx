@@ -15,12 +15,10 @@ import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { ChangePasswordCard } from "@/components/auth/change-password-card";
 import { AccountKindCard } from "@/components/profile/account-kind-card";
-import { TransitaireAccessCard } from "@/components/profile/transitaire-access-card";
 
-const POSTES = [
-  "Transitaire", "Importateur de véhicules", "Commissionnaire en douane",
-  "Courtier en douane", "Agent maritime", "Particulier importateur", "Autre",
-];
+// Same two choices as at sign-up. Older accounts may hold another value
+// (shown as is until changed).
+const POSTES = ["Particulier", "Transitaire"];
 
 const profileSchema = z.object({
   fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -182,7 +180,7 @@ export default function Profil() {
                     name="poste"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Poste / Fonction</FormLabel>
+                        <FormLabel>Vous êtes</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10" />
@@ -191,8 +189,8 @@ export default function Profil() {
                               className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none text-slate-900"
                             >
                               <option value="">-- Sélectionner --</option>
-                              {POSTES.map(p => (
-                                <option key={p} value={p}>{p}</option>
+                              {[...POSTES, ...(field.value && !POSTES.includes(field.value) ? [field.value] : [])].map(p => (
+                                <option key={p} value={p}>{p === "Transitaire" ? "Transitaire / professionnel" : p}</option>
                               ))}
                             </select>
                           </div>
@@ -223,7 +221,6 @@ export default function Profil() {
           </Card>
 
           {profile && <AccountKindCard profile={profile} />}
-          <TransitaireAccessCard />
         </div>
 
         <div className="space-y-6">

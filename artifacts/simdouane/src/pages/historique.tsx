@@ -109,7 +109,8 @@ export default function Historique() {
     const term = search.toLowerCase();
     return !search || 
       entry.input.marque.toLowerCase().includes(term) || 
-      entry.input.modele.toLowerCase().includes(term);
+      entry.input.modele.toLowerCase().includes(term) ||
+      (entry.clientName ?? "").toLowerCase().includes(term);
   }) : [];
 
   const displayItems = isCloud ? listItems : filteredLocalList;
@@ -191,7 +192,7 @@ export default function Historique() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Rechercher par marque, modèle..." 
+              placeholder="Rechercher par client, marque, modèle..." 
               className="pl-9"
               value={search}
               onChange={handleSearchChange}
@@ -240,6 +241,7 @@ export default function Historique() {
             const date = new Date(entry.createdAt || entry.date);
             const input = isCloud ? entry : entry.input;
             const resultTotal = isCloud ? entry.totalGeneral : entry.result.totalGeneral;
+            const clientName: string | undefined = isCloud ? entry.details?.clientName : entry.clientName;
             
             return (
               <Card
@@ -267,6 +269,7 @@ export default function Historique() {
                         id: entry.id,
                         date: entry.createdAt,
                         input: reconstructedInput,
+                        ...(entry.details?.clientName ? { clientName: entry.details.clientName } : {}),
                         result: {
                           ...result,
                           totalDouane: entry.totalDouane,
@@ -292,6 +295,9 @@ export default function Historique() {
                         {input.annee}
                       </span>
                     </div>
+                    {clientName && (
+                      <p className="text-sm font-semibold text-[#003D24] truncate mb-1" data-testid="history-client">Client : {clientName}</p>
+                    )}
                     <div className="flex flex-wrap items-center text-xs text-slate-500 gap-x-4 gap-y-1">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
