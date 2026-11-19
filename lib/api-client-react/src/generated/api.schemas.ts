@@ -679,6 +679,16 @@ export interface AdminDashboard {
   activeSubscribers: number;
   totalSimulations: number;
   newUsersThisMonth: number;
+  /** Simulations saved by accounts since the 1st of the month */
+  simulationsThisMonth: number;
+  /** Browsers without an account that ran at least one estimate */
+  anonymousVisitors: number;
+  /** Estimates run without an account */
+  anonymousEstimates: number;
+  /** Browsers that used all their free estimates */
+  anonymousBlocked: number;
+  /** Upgrade requests waiting for the administrator */
+  pendingUpgradeRequests: number;
   revenueThisMonth: number;
   revenueThisYear: number;
 }
@@ -693,6 +703,10 @@ export const AdminUserStatus = {
 } as const;
 
 export interface AdminUser {
+  /** Simulations saved by this account */
+  simulationsCount: number;
+  /** Simulations saved by this account since the 1st of the month */
+  simulationsThisMonth: number;
   id: string;
   /** Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes) */
   clerkId: string | null;

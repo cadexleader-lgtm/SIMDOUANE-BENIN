@@ -1,7 +1,8 @@
 import { Router, type Request } from "express";
 import { db } from "@workspace/db";
-import { usersTable, subscriptionsTable, subscriptionPlansTable, simulationsTable, adminLogsTable, upgradeRequestsTable } from "@workspace/db";
-import { eq, and, desc, ilike, or, count, gte, SQL } from "drizzle-orm";
+import { usersTable, subscriptionsTable, subscriptionPlansTable, simulationsTable, adminLogsTable, upgradeRequestsTable, anonymousDevicesTable } from "@workspace/db";
+import { eq, and, desc, ilike, or, count, gte, inArray, sql, SQL } from "drizzle-orm";
+import { ANONYMOUS_FREE_ESTIMATES } from "./anonymous-estimates";
 import { requireAdmin, type AuthedRequest } from "../middlewares/requireAuth";
 
 function param(req: Request, name: string): string {
@@ -11,6 +12,12 @@ function param(req: Request, name: string): string {
 
 const router = Router();
 
+/** First day of the current month, as stored by the database (timestamp without time zone). */
+function monthStartIso(): string {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+}
+
 // GET /api/admin/dashboard
 router.get("/dashboard", requireAdmin, async (req, res) => {
   try {
@@ -18,11 +25,20 @@ router.get("/dashboard", requireAdmin, async (req, res) => {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const yearStart = new Date(now.getFullYear(), 0, 1);
 
-    const [totalUsers, activeSubscribers, totalSimulations, newUsersThisMonth] = await Promise.all([
+    const [totalUsers, activeSubscribers, totalSimulations, newUsersThisMonth, simulationsThisMonth, visitors, pendingRequests] = await Promise.all([
       db.select({ count: count() }).from(usersTable),
       db.select({ count: count() }).from(subscriptionsTable).where(eq(subscriptionsTable.status, "active")),
       db.select({ count: count() }).from(simulationsTable),
       db.select({ count: count() }).from(usersTable).where(gte(usersTable.createdAt, monthStart)),
+      db.select({ count: count() }).from(simulationsTable).where(gte(simulationsTable.createdAt, monthStart)),
+      // Visitors without an account (one row per browser that ran an estimate).
+      db.select({
+        devices: count(),
+        estimates: sql<number>`coalesce(sum(${anonymousDevicesTable.estimatesCount}), 0)::int`,
+        blocked: sql<number>`(count(*) filter (where ${anonymousDevicesTable.estimatesCount} >= ${ANONYMOUS_FREE_ESTIMATES}))::int`,
+      }).from(anonymousDevicesTable),
+      db.select({ count: count() }).from(upgradeRequestsTable)
+        .where(inArray(upgradeRequestsTable.status, ["pending", "submitted", "payment_under_review"])),
     ]);
 
     res.json({
@@ -30,6 +46,11 @@ router.get("/dashboard", requireAdmin, async (req, res) => {
       activeSubscribers: activeSubscribers[0]?.count ?? 0,
       totalSimulations: totalSimulations[0]?.count ?? 0,
       newUsersThisMonth: newUsersThisMonth[0]?.count ?? 0,
+      simulationsThisMonth: simulationsThisMonth[0]?.count ?? 0,
+      anonymousVisitors: visitors[0]?.devices ?? 0,
+      anonymousEstimates: visitors[0]?.estimates ?? 0,
+      anonymousBlocked: visitors[0]?.blocked ?? 0,
+      pendingUpgradeRequests: pendingRequests[0]?.count ?? 0,
       revenueThisMonth: 0,  // will connect to payment gateway later
       revenueThisYear: 0,
     });
@@ -57,6 +78,8 @@ router.get("/users", requireAdmin, async (req, res) => {
         .select({
           user: usersTable,
           planName: subscriptionPlansTable.name,
+          simulationsCount: sql<number>`(select count(*) from ${simulationsTable} where ${simulationsTable.userId} = ${usersTable.id})::int`,
+          simulationsThisMonth: sql<number>`(select count(*) from ${simulationsTable} where ${simulationsTable.userId} = ${usersTable.id} and ${simulationsTable.createdAt} >= ${monthStartIso()}::timestamp)::int`,
         })
         .from(usersTable)
         .leftJoin(
@@ -83,6 +106,8 @@ router.get("/users", requireAdmin, async (req, res) => {
         phone: r.user.phone ?? null,
         status: r.user.status,
         planName: r.planName ?? "Gratuit",
+        simulationsCount: r.simulationsCount ?? 0,
+        simulationsThisMonth: r.simulationsThisMonth ?? 0,
         createdAt: r.user.createdAt.toISOString(),
       })),
       total: totalRows[0]?.count ?? 0,

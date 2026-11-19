@@ -16,15 +16,28 @@ import { formatFCFA } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UpgradeRequestForm } from "@/components/upgrade-request-form";
 
+function LoadError({ what }: { what: string }) {
+  return (
+    <div role="alert" data-testid="load-error" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2">
+      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+      <span>
+        Impossible de charger {what} : le serveur ne répond pas correctement. Les chiffres ci-dessous ne sont pas fiables.
+        Réessayez dans un instant ; si cela continue, contactez SimDouane.
+      </span>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [requestSent, setRequestSent] = useState(false);
   const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const { user } = useAuth();
   
-  const { data: stats, isLoading: statsLoading } = useGetSimulationStats();
-  const { data: subscription, isLoading: subLoading } = useGetUserSubscription();
-  const { data: recentSims, isLoading: simsLoading } = useGetSimulations({ limit: 5 });
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetSimulationStats();
+  const { data: subscription, isLoading: subLoading, isError: subError } = useGetUserSubscription();
+  const { data: recentSims, isLoading: simsLoading, isError: simsError } = useGetSimulations({ limit: 5 });
+  const loadFailed = statsError || subError || simsError;
 
   const isLoading = statsLoading || subLoading || simsLoading;
 
@@ -75,6 +88,8 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {loadFailed && <LoadError what="votre activité" />}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -105,12 +120,16 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 mb-3">
-              <div className="text-lg font-bold text-slate-900">{subscription?.plan.name}</div>
-              <span className="bg-[#003D24]/10 text-[#003D24] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                Actif
-              </span>
+              <div className="text-lg font-bold text-slate-900">{subscription?.plan.name ?? "—"}</div>
+              {subscription && (
+                <span className="bg-[#003D24]/10 text-[#003D24] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                  Actif
+                </span>
+              )}
             </div>
-            {subscription?.plan.simulationsPerMonth ? (
+            {!subscription ? (
+              <p className="text-xs font-medium text-slate-500">Formule indisponible pour le moment.</p>
+            ) : subscription.plan.simulationsPerMonth ? (
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-medium text-slate-600">
                   <span>{subscription.simUsedThisMonth} utilisées</span>

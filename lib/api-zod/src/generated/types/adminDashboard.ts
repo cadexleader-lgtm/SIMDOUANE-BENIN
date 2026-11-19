@@ -11,6 +11,16 @@ export interface AdminDashboard {
   activeSubscribers: number;
   totalSimulations: number;
   newUsersThisMonth: number;
+  /** Simulations saved by accounts since the 1st of the month */
+  simulationsThisMonth: number;
+  /** Browsers without an account that ran at least one estimate */
+  anonymousVisitors: number;
+  /** Estimates run without an account */
+  anonymousEstimates: number;
+  /** Browsers that used all their free estimates */
+  anonymousBlocked: number;
+  /** Upgrade requests waiting for the administrator */
+  pendingUpgradeRequests: number;
   revenueThisMonth: number;
   revenueThisYear: number;
 }

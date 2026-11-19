@@ -387,6 +387,11 @@ export const GetAdminDashboardResponse = zod.object({
   "activeSubscribers": zod.number(),
   "totalSimulations": zod.number(),
   "newUsersThisMonth": zod.number(),
+  "simulationsThisMonth": zod.number().describe('Simulations saved by accounts since the 1st of the month'),
+  "anonymousVisitors": zod.number().describe('Browsers without an account that ran at least one estimate'),
+  "anonymousEstimates": zod.number().describe('Estimates run without an account'),
+  "anonymousBlocked": zod.number().describe('Browsers that used all their free estimates'),
+  "pendingUpgradeRequests": zod.number().describe('Upgrade requests waiting for the administrator'),
   "revenueThisMonth": zod.number(),
   "revenueThisYear": zod.number()
 })
@@ -406,6 +411,8 @@ export const GetAdminUsersQueryParams = zod.object({
 
 export const GetAdminUsersResponse = zod.object({
   "users": zod.array(zod.object({
+  "simulationsCount": zod.number().describe('Simulations saved by this account'),
+  "simulationsThisMonth": zod.number().describe('Simulations saved by this account since the 1st of the month'),
   "id": zod.string(),
   "clerkId": zod.string().nullable().describe('Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)'),
   "email": zod.string(),

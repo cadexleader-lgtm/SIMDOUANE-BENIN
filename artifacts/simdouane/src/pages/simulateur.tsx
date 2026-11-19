@@ -449,16 +449,18 @@ export default function Simulateur() {
   }, [isAnonymous]);
   const anonBlocked = isAnonymous && anonQuota !== null && anonQuota.remaining === 0;
   const createSimulation = useCreateSimulation();
-  const createMutationRef = useRef(createSimulation.mutate);
-  createMutationRef.current = createSimulation.mutate;
+  const createMutationRef = useRef(createSimulation.mutateAsync);
+  createMutationRef.current = createSimulation.mutateAsync;
 
-  const { data: subscription } = useGetUserSubscription({
-    query: { enabled: !!user, queryKey: getGetUserSubscriptionQueryKey() },
+  const { data: subscription, isError: subscriptionError, refetch: refetchSubscription } = useGetUserSubscription({
+    query: { enabled: !!user, queryKey: getGetUserSubscriptionQueryKey(), retry: 1 },
   });
+  // Message shown when a signed-in simulation could not be checked or saved by the server.
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const simUsed    = subscription?.simUsedThisMonth ?? 0;
-  const simLimit   = subscription?.plan.simulationsPerMonth ?? 3;
-  const isAtQuota  = !!user && simLimit !== null && simUsed >= simLimit;
+  const simLimit   = subscription ? subscription.plan.simulationsPerMonth : 3;
+  const isAtQuota  = !!user && !!subscription && simLimit !== null && simUsed >= simLimit;
   const quotaRatio = simLimit ? Math.min((simUsed / simLimit) * 100, 100) : 0;
 
   const form = useForm<FormValues>({
@@ -561,6 +563,7 @@ export default function Simulateur() {
     }
     if (!determined.ok || !paidOk) return;
 
+    setServerError(null);
     setIsCalculating(true);
     if (!user) {
       // Counted by the server only once the form is valid.
@@ -596,18 +599,11 @@ export default function Simulateur() {
       calculatorVersion: "historical",
       regulatoryConfigVersion: "2026.1-announced",
     } as const;
-    const entry = addHistory({
-      input, result, ...metadata,
-      valueInput: determined.value,
-      vehicleType: values.typeVehicule,
-      situation: values.situation,
-      paid: paidInputFrom(values),
-    });
-    setCurrentSimulation(entry);
-    
     if (user) {
-      createMutationRef.current(
-        {
+      // Signed in: the server checks the monthly quota and saves the
+      // simulation; the result is shown only once it has been accepted.
+      try {
+        await createMutationRef.current({
           data: {
             marque: input.marque,
             modele: input.modele,
@@ -622,17 +618,34 @@ export default function Simulateur() {
             totalGeneral: result.totalGeneral,
             ...metadata,
             details: { schemaVersion: 1, valueInput: determined.value, situation: values.situation, paid: paidInputFrom(values), vehicleType: values.typeVehicule },
-          }
-        },
-        {
-          onError: (err: any) => {
-            // If quota exceeded mid-session (edge case), show modal
-            if (err?.status === 403) setQuotaModal(true);
-          }
+          },
+        });
+      } catch (err: unknown) {
+        setIsCalculating(false);
+        const status = (err as { status?: number })?.status;
+        if (status === 403 && (err as { data?: { error?: string } })?.data?.error === "QUOTA_EXCEEDED") {
+          void refetchSubscription();
+          setQuotaModal(true);
+        } else if (status === 403) {
+          setServerError(lang === "fr" ? "Votre compte est désactivé. Contactez SimDouane." : "Your account is disabled. Contact SimDouane.");
+        } else {
+          setServerError(lang === "fr"
+            ? "Le serveur n'a pas pu enregistrer votre simulation. Vérifiez votre connexion et réessayez dans un instant."
+            : "The server could not save your simulation. Check your connection and try again in a moment.");
         }
-      );
+        return;
+      }
+      void refetchSubscription();
     }
-    
+
+    const entry = addHistory({
+      input, result, ...metadata,
+      valueInput: determined.value,
+      vehicleType: values.typeVehicule,
+      situation: values.situation,
+      paid: paidInputFrom(values),
+    });
+    setCurrentSimulation(entry);
     setIsCalculating(false);
     setLocation("/resultats");
   }
@@ -1023,8 +1036,19 @@ export default function Simulateur() {
                   </Card>
                 )}
 
+                {serverError && (
+                  <div role="alert" data-testid="server-error" className="rounded-xl p-3 flex items-start gap-2 text-sm bg-red-50 border border-red-200 text-red-800">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" /> {serverError}
+                  </div>
+                )}
+                {user && subscriptionError && !serverError && (
+                  <div data-testid="quota-unknown" className="rounded-xl p-3 flex items-start gap-2 text-xs font-semibold bg-amber-50 border border-amber-200 text-amber-800">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    {lang === "fr" ? "Impossible de vérifier vos simulations restantes pour le moment." : "Your remaining simulations cannot be checked right now."}
+                  </div>
+                )}
                 {/* Quota warning banner for logged-in users */}
-                {user && simLimit !== null && (
+                {user && subscription && simLimit !== null && (
                   <div className={`rounded-xl p-3 flex items-center justify-between gap-3 text-sm ${
                     isAtQuota
                       ? "bg-red-50 border border-red-200"

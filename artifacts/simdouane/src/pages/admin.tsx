@@ -200,6 +200,18 @@ function AssignModal({ userId, userName, currentPlan, requestId, onClose }: Assi
 }
 
 /* ─── Main Admin page ───────────────────────────────────────────────────── */
+function LoadError({ what }: { what: string }) {
+  return (
+    <div role="alert" data-testid="load-error" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2">
+      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+      <span>
+        Impossible de charger {what} : le serveur ne répond pas correctement. Les chiffres ci-dessous ne sont pas fiables.
+        Réessayez dans un instant ; si cela continue, contactez SimDouane.
+      </span>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchUsers, setSearchUsers] = useState("");
@@ -217,10 +229,10 @@ export default function Admin() {
     );
   };
 
-  const { data: dashboard, isLoading: dashLoading } = useGetAdminDashboard({
+  const { data: dashboard, isLoading: dashLoading, isError: dashError } = useGetAdminDashboard({
     query: { enabled: activeTab === "dashboard", queryKey: getGetAdminDashboardQueryKey() },
   });
-  const { data: usersData, isLoading: usersLoading } = useGetAdminUsers(
+  const { data: usersData, isLoading: usersLoading, isError: usersError } = useGetAdminUsers(
     { search: searchUsers || undefined, limit: 50 },
     { query: { enabled: activeTab === "users", queryKey: getGetAdminUsersQueryKey({ search: searchUsers || undefined, limit: 50 }) } }
   );
@@ -277,6 +289,7 @@ export default function Admin() {
 
         {/* ── Dashboard ── */}
         <TabsContent value="dashboard" className="space-y-6 mt-0">
+          {dashError && <LoadError what="les statistiques" />}
           {dashLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1,2,3,4].map(i => <Skeleton key={i} className="h-28 w-full" />)}
@@ -325,6 +338,26 @@ export default function Admin() {
             </div>
           )}
 
+          {/* Activity: accounts, visitors without an account, requests */}
+          {!dashLoading && dashboard && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-testid="admin-activity">
+              {[
+                { label: "Simulations ce mois", value: dashboard.simulationsThisMonth, note: "par des comptes" },
+                { label: "Visiteurs sans compte", value: dashboard.anonymousVisitors, note: `${dashboard.anonymousEstimates} estimation${dashboard.anonymousEstimates > 1 ? "s" : ""} faite${dashboard.anonymousEstimates > 1 ? "s" : ""}` },
+                { label: "Bloqués sans compte", value: dashboard.anonymousBlocked, note: "ont utilisé leurs 2 essais" },
+                { label: "Demandes d'abonnement", value: dashboard.pendingUpgradeRequests, note: "à traiter (onglet Demandes)" },
+              ].map((c) => (
+                <Card key={c.label}>
+                  <CardContent className="pt-5 pb-4">
+                    <p className="text-xs font-semibold text-slate-500">{c.label}</p>
+                    <p className="text-2xl font-black text-slate-900 mt-1 tabular-nums">{c.value}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{c.note}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
           {/* Info card about manual subscription */}
           <Card className="border-[#FCD116]/30 bg-[#FCD116]/5">
             <CardContent className="pt-5 pb-5">
@@ -365,6 +398,7 @@ export default function Admin() {
                   <tr>
                     <th className="px-4 py-3">Utilisateur</th>
                     <th className="px-4 py-3">Plan actuel</th>
+                    <th className="px-4 py-3">Simulations</th>
                     <th className="px-4 py-3">Statut compte</th>
                     <th className="px-4 py-3">Inscription</th>
                     <th className="px-4 py-3 text-right">Actions</th>
@@ -372,9 +406,11 @@ export default function Admin() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {usersLoading ? (
-                    <tr><td colSpan={5} className="p-4 text-center text-slate-500">Chargement...</td></tr>
+                    <tr><td colSpan={6} className="p-4 text-center text-slate-500">Chargement...</td></tr>
+                  ) : usersError ? (
+                    <tr><td colSpan={6} className="p-4"><LoadError what="la liste des utilisateurs" /></td></tr>
                   ) : usersData?.users.length === 0 ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-slate-500">Aucun utilisateur trouvé</td></tr>
+                    <tr><td colSpan={6} className="p-8 text-center text-slate-500">Aucun utilisateur trouvé</td></tr>
                   ) : (
                     usersData?.users.map((user) => (
                       <tr key={user.id} className="hover:bg-slate-50/50">
@@ -394,6 +430,10 @@ export default function Admin() {
                             {user.planName !== "Gratuit" && <Crown className="h-2.5 w-2.5" />}
                             {user.planName}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 tabular-nums">
+                          <div className="font-semibold text-slate-900">{user.simulationsThisMonth} ce mois</div>
+                          <div className="text-xs text-slate-400">{user.simulationsCount} au total</div>
                         </td>
                         <td className="px-4 py-3">
                           <span className={cn(

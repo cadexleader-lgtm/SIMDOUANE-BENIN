@@ -8,6 +8,10 @@
 import type { AdminUserStatus } from './adminUserStatus';
 
 export interface AdminUser {
+  /** Simulations saved by this account */
+  simulationsCount: number;
+  /** Simulations saved by this account since the 1st of the month */
+  simulationsThisMonth: number;
   id: string;
   /** Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes) */
   clerkId: string | null;

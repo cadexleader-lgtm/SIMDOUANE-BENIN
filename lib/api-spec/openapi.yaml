@@ -1316,19 +1316,26 @@ components:
     # ── Admin schemas ─────────────────────────────────────────────────────────
     AdminDashboard:
       type: object
-      required: [totalUsers, activeSubscribers, totalSimulations, newUsersThisMonth, revenueThisMonth, revenueThisYear]
+      required: [totalUsers, activeSubscribers, totalSimulations, newUsersThisMonth, simulationsThisMonth, anonymousVisitors, anonymousEstimates, anonymousBlocked, pendingUpgradeRequests, revenueThisMonth, revenueThisYear]
       properties:
         totalUsers:           { type: integer }
         activeSubscribers:    { type: integer }
         totalSimulations:     { type: integer }
         newUsersThisMonth:    { type: integer }
+        simulationsThisMonth: { type: integer, description: Simulations saved by accounts since the 1st of the month }
+        anonymousVisitors:    { type: integer, description: Browsers without an account that ran at least one estimate }
+        anonymousEstimates:   { type: integer, description: Estimates run without an account }
+        anonymousBlocked:     { type: integer, description: Browsers that used all their free estimates }
+        pendingUpgradeRequests: { type: integer, description: Upgrade requests waiting for the administrator }
         revenueThisMonth:     { type: number }
         revenueThisYear:      { type: number }
 
     AdminUser:
       type: object
-      required: [id, clerkId, email, fullName, status, planName, createdAt]
+      required: [id, clerkId, email, fullName, status, planName, simulationsCount, simulationsThisMonth, createdAt]
       properties:
+        simulationsCount:     { type: integer, description: Simulations saved by this account }
+        simulationsThisMonth: { type: integer, description: Simulations saved by this account since the 1st of the month }
         id:        { type: string }
         clerkId:   { type: string, nullable: true, description: "Identifiant Clerk des comptes créés avant le passage à Supabase Auth (vide pour les nouveaux comptes)" }
         email:     { type: string }
